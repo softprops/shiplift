@@ -8,6 +8,7 @@ use hyper::method::Method;
 use hyper::net::NetworkConnector;
 use openssl::x509::X509FileType;
 use std::io::{ Read, Write };
+use std::io;
 use std::{ env, result };
 use std::path::Path;
 use std::io::Error;
@@ -18,6 +19,7 @@ pub type Result<T> = result::Result<T, Error>;
 
 trait Transport {
   fn request(&mut self, method: Method, endpoint: &str) -> Result<String>;
+  fn stream(&mut self, method: Method, endpoint: &str) -> Result<Box<Read>>;
 }
 
 pub struct Docker {
@@ -26,7 +28,7 @@ pub struct Docker {
 
 impl Transport for UnixStream {
   fn request(&mut self, method: Method, endpoint: &str) -> Result<String> {
-     let method_str = match method {
+      let method_str = match method {
        Method::Put    => "PUT",
        Method::Post   => "POST",
        Method::Delete => "DELETE",
@@ -36,6 +38,10 @@ impl Transport for UnixStream {
      try!(self.write_all(req.as_bytes()));
      let mut result = String::new();
      self.read_to_string(&mut result).map(|_| result)
+  }
+
+  fn stream(&mut self, method: Method, endpoint: &str) -> Result<Box<Read>> {
+    Err(io::Error::new(io::ErrorKind::InvalidInput, "Not yet implemented", None))
   }
 }
 
@@ -54,6 +60,21 @@ impl<C: NetworkConnector> Transport for (Client<C>, String) {
     };
     let mut body = String::new();
     res.read_to_string(&mut body).map(|_| body)
+  }
+
+  fn stream(&mut self, method: Method, endpoint: &str) -> Result<Box<Read>> {
+    let uri = format!("{}{}", self.1, endpoint);
+    let req = match method {
+       Method::Put    => self.0.put(&uri[..]),
+       Method::Post   => self.0.post(&uri[..]),
+       Method::Delete => self.0.delete(&uri[..]),
+                    _ => self.0.get(&uri[..])
+    };
+    let mut res = match req.send() {
+      Ok(r) => r,
+      Err(e) => panic!("failed request {:?}", e)
+    };
+    Ok(Box::new(res))
   }
 }
 
@@ -159,6 +180,15 @@ impl<'a, 'b> Container<'a, 'b> {
   pub fn unpause(self) -> Result<String> {
     self.docker.post(&format!("/containers/{}/unpause", self.id)[..])
   }
+
+  pub fn wait(self) -> Result<String> {
+    self.docker.post(&format!("/containers/{}/wait", self.id)[..])
+  }
+
+  pub fn delete(self) -> Result<String> {
+    self.docker.delete(&format!("/containers/{}", self.id)[..])
+  }
+  // todo attach, attach/ws,
 }
 
 pub struct Containers<'a> {
