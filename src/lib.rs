@@ -115,6 +115,50 @@ impl<'a, 'b> Container<'a, 'b> {
   pub fn inspect(self) -> Result<String> {
     self.docker.get(&format!("/containers/{}/json", self.id)[..])
   }
+
+  pub fn top(self) -> Result<String> {
+    self.docker.get(&format!("/containers/{}/top", self.id)[..])
+  }
+
+  pub fn logs(self) -> Result<String> {
+    self.docker.get(&format!("/containers/{}/logs", self.id)[..])
+  }
+
+  pub fn changes(self) -> Result<String> {
+    self.docker.get(&format!("/containers/{}/changes", self.id)[..])
+  }
+
+  pub fn stats(self) -> Result<String> {
+    self.docker.get(&format!("/containers/{}/stats", self.id)[..])
+  }
+
+  pub fn start(self) -> Result<String> {
+    self.docker.post(&format!("/containers/{}/start", self.id)[..])
+  }
+
+  pub fn stop(self) -> Result<String> {
+    self.docker.post(&format!("/containers/{}/stop", self.id)[..])
+  }
+
+  pub fn restart(self) -> Result<String> {
+    self.docker.post(&format!("/containers/{}/restart", self.id)[..])
+  }
+
+  pub fn kill(self) -> Result<String> {
+    self.docker.post(&format!("/containers/{}/kill", self.id)[..])
+  }
+
+  pub fn rename(self, name: &str) -> Result<String> {
+    self.docker.post(&format!("/containers/{}/rename?name={}", self.id, name)[..])
+  }
+
+  pub fn pause(self) -> Result<String> {
+    self.docker.post(&format!("/containers/{}/pause", self.id)[..])
+  }
+
+  pub fn unpause(self) -> Result<String> {
+    self.docker.post(&format!("/containers/{}/unpause", self.id)[..])
+  }
 }
 
 pub struct Containers<'a> {
@@ -212,6 +256,10 @@ impl Docker {
  
   fn get(&mut self, endpoint: &str) -> Result<String> {
     (*self.transport).request(Method::Get, endpoint)
+  }
+
+  fn post(&mut self, endpoint: &str) -> Result<String> {
+    (*self.transport).request(Method::Post, endpoint)
   }
 
   fn delete(&mut self, endpoint: &str) -> Result<String> {
