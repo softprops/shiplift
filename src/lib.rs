@@ -57,7 +57,83 @@ impl<C: NetworkConnector> Transport for (Client<C>, String) {
   }
 }
 
+pub struct Image<'a, 'b> {
+  docker: &'a mut Docker,
+  name: &'b str
+}
 
+impl<'a, 'b> Image<'a, 'b> {
+  pub fn new(docker: &'a mut Docker, name: &'b str) -> Image<'a, 'b> {
+    Image { docker: docker, name: name }
+  }
+
+  pub fn inspect(self) -> Result<String> {
+    self.docker.get(&format!("/images/{}/json", self.name)[..])
+  }
+
+  pub fn history(self) -> Result<String> {
+    self.docker.get(&format!("/images/{}/history", self.name)[..])
+  }
+
+  pub fn delete(self) -> Result<String> {
+    self.docker.delete(&format!("/images/{}", self.name)[..])
+  }
+}
+
+pub struct Images<'a> {
+  docker: &'a mut Docker
+}
+
+impl<'a> Images<'a> {
+  pub fn new(docker: &'a mut Docker) -> Images<'a> {
+    Images { docker: docker }
+  }
+  
+  pub fn list(self) -> Result<String> {
+    self.docker.get("/images/json")
+  }
+
+  pub fn get(&'a mut self, name: &'a str) -> Image {
+    Image::new(self.docker, name)
+  }
+
+  pub fn search(self, term: &str) -> Result<String> {
+    self.docker.get(&format!("/images/search?term={}", term)[..])
+  }
+}
+
+pub struct Container<'a, 'b> {
+  docker: &'a mut Docker,
+  id: &'b str
+}
+
+impl<'a, 'b> Container<'a, 'b> {
+  pub fn new(docker: &'a mut Docker, id: &'b str) -> Container<'a, 'b> {
+    Container { docker: docker, id: id }
+  }
+
+  pub fn inspect(self) -> Result<String> {
+    self.docker.get(&format!("/containers/{}/json", self.id)[..])
+  }
+}
+
+pub struct Containers<'a> {
+  docker: &'a mut Docker
+}
+
+impl<'a> Containers<'a> {
+  pub fn new(docker: &'a mut Docker) -> Containers<'a> {
+    Containers { docker: docker }
+  }
+  
+  pub fn list(self) -> Result<String> {
+    self.docker.get("/containers/json")
+  }
+
+  pub fn get(&'a mut self, name: &'a str) -> Container {
+    Container::new(self.docker, name)
+  }
+}
 
 // https://docs.docker.com/reference/api/docker_remote_api_v1.17/
 impl Docker {
@@ -109,8 +185,12 @@ impl Docker {
     }
   }
  
-  pub fn images(&mut self) -> Result<String> {
-    self.get("/images/json")
+  pub fn images<'a>(&'a mut self) -> Images {
+    Images::new(self)
+  }
+
+  pub fn containers<'a>(&'a mut self) -> Containers {
+    Containers::new(self)
   }
 
   pub fn version(&mut self) -> Result<String> {
@@ -121,7 +201,20 @@ impl Docker {
     self.get("/info")
   }
 
-  fn get(&mut self, endpoint: &str) -> Result<String> {
-     (*self.transport).request(Method::Get, endpoint)
+  pub fn ping(&mut self) -> Result<String> {
+    self.get("/_ping")
   }
+
+  // todo stream
+  pub fn events(&mut self) -> Result<String> {
+    self.get("/events")
+  }
+ 
+  fn get(&mut self, endpoint: &str) -> Result<String> {
+    (*self.transport).request(Method::Get, endpoint)
+  }
+
+  fn delete(&mut self, endpoint: &str) -> Result<String> {
+     (*self.transport).request(Method::Delete, endpoint)
+   }
 }
