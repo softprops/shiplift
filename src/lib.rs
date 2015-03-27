@@ -1,3 +1,5 @@
+#![feature(io)]
+
 extern crate hyper;
 extern crate openssl;
 extern crate unix_socket;
