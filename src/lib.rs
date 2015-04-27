@@ -1,5 +1,3 @@
-#![feature(io)]
-
 extern crate hyper;
 extern crate openssl;
 extern crate unix_socket;
@@ -7,7 +5,6 @@ extern crate url;
 
 use hyper::{ Client, Url };
 use hyper::method::Method;
-use hyper::net::NetworkConnector;
 use openssl::x509::X509FileType;
 use std::io::{ Read, Write };
 use std::io;
@@ -43,11 +40,11 @@ impl Transport for UnixStream {
   }
 
   fn stream(&mut self, method: Method, endpoint: &str) -> Result<Box<Read>> {
-    Err(io::Error::new(io::ErrorKind::InvalidInput, "Not yet implemented", None))
+    Err(io::Error::new(io::ErrorKind::InvalidInput, "Not yet implemented"))
   }
 }
 
-impl<C: NetworkConnector> Transport for (Client<C>, String) {
+impl Transport for (Client, String) {
   fn request(&mut self, method: Method, endpoint: &str) -> Result<String> {
     let uri = format!("{}{}", self.1, endpoint);
     let req = match method {
@@ -122,6 +119,10 @@ impl<'a> Images<'a> {
 
   pub fn search(self, term: &str) -> Result<String> {
     self.docker.get(&format!("/images/search?term={}", term)[..])
+  }
+
+  pub fn create(self, from: &str) -> Result<Box<Read>> {
+    self.docker.stream_post(&format!("/images/create?fromImage={}", from)[..])
   }
 }
 
@@ -260,7 +261,7 @@ impl Docker {
       }
     }
   }
- 
+
   pub fn images<'a>(&'a mut self) -> Images {
     Images::new(self)
   }
@@ -282,8 +283,8 @@ impl Docker {
   }
 
   // todo stream
-  pub fn events(&mut self) -> Result<String> {
-    self.get("/events")
+  pub fn events(&mut self) -> Result<Box<Read>> {
+    self.stream_get("/events?since=1374067924")
   }
  
   fn get(&mut self, endpoint: &str) -> Result<String> {
@@ -295,6 +296,14 @@ impl Docker {
   }
 
   fn delete(&mut self, endpoint: &str) -> Result<String> {
-     (*self.transport).request(Method::Delete, endpoint)
-   }
+    (*self.transport).request(Method::Delete, endpoint)
+  }
+
+  fn stream_post(&mut self, endpoint: &str) -> Result<Box<Read>> {
+    (*self.transport).stream(Method::Post, endpoint)
+  }
+
+  fn stream_get(&mut self, endpoint: &str) -> Result<Box<Read>> {
+    (*self.transport).stream(Method::Get, endpoint)
+  }
 }

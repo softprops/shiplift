@@ -8,6 +8,8 @@ authors = ["softprops <d.tangren@gmail.com>"]
 path="/Users/dougtangren/code/rust/hyper"
 
 [dependencies]
-openssl = "0.5.2"
-unix_socket = "0.2.2"
-url = "0.2.28"
+jed = "0.1.0"
+openssl = "0.6.1"
+unix_socket = "0.3.2"
+url = "0.2.31"
+rustc-serialize = "0.3.13"

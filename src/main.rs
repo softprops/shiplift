@@ -1,11 +1,12 @@
 extern crate shiplift;
+extern crate jed;
 
 use shiplift::Docker;
 
 fn main() {
   let mut docker = Docker::new();
-  match docker.images().search("rust") {
-    Ok(e) => println!("-> {:?}", e),
-    Err(e) => panic!("<- {:?}", e)
-  };
+  let read = docker.images().create("redis:3.0.0").unwrap();
+  for e in jed::Iter::new(read) {
+    println!("\n -> {:?}", e);
+  }  
 }
