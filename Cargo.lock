@@ -2,7 +2,7 @@
 name = "shiplift"
 version = "0.0.1"
 dependencies = [
- "hyper 0.3.14",
+ "hyper 0.3.14 (registry+https://github.com/rust-lang/crates.io-index)",
  "jed 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "openssl 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "rustc-serialize 0.3.13 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -44,6 +44,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "hyper"
 version = "0.3.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "cookie 0.1.19 (registry+https://github.com/rust-lang/crates.io-index)",
  "httparse 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",

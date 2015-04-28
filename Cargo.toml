@@ -4,10 +4,9 @@ name = "shiplift"
 version = "0.0.1"
 authors = ["softprops <d.tangren@gmail.com>"]
 
-[dependencies.hyper]
-path="/Users/dougtangren/code/rust/hyper"
 
 [dependencies]
+hyper = "0.3.14"
 jed = "0.1.0"
 openssl = "0.6.1"
 unix_socket = "0.3.2"
