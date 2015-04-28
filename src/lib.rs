@@ -1,11 +1,13 @@
 extern crate hyper;
 extern crate openssl;
+extern crate rustc_serialize;
 extern crate unix_socket;
 extern crate url;
 
 use hyper::{ Client, Url };
 use hyper::method::Method;
 use openssl::x509::X509FileType;
+use rustc_serialize::{ Decoder, Decodable, json };
 use std::io::{ Read, Write };
 use std::io;
 use std::{ env, result };
@@ -13,6 +15,10 @@ use std::path::Path;
 use std::io::Error;
 use unix_socket::UnixStream;
 use url::{ Host, RelativeSchemeData, SchemeData };
+
+pub mod rep;
+use rep::Image as ImageRep;
+use rep::Container as ContainerRep;
 
 pub type Result<T> = result::Result<T, Error>;
 
@@ -109,8 +115,9 @@ impl<'a> Images<'a> {
     Images { docker: docker }
   }
   
-  pub fn list(self) -> Result<String> {
-    self.docker.get("/images/json")
+  pub fn list(self) -> Result<Vec<ImageRep>> {
+    let raw = try!(self.docker.get("/images/json"));
+    Ok(json::decode::<Vec<ImageRep>>(&raw).unwrap())
   }
 
   pub fn get(&'a mut self, name: &'a str) -> Image {
@@ -152,8 +159,8 @@ impl<'a, 'b> Container<'a, 'b> {
     self.docker.get(&format!("/containers/{}/changes", self.id)[..])
   }
 
-  pub fn stats(self) -> Result<String> {
-    self.docker.get(&format!("/containers/{}/stats", self.id)[..])
+  pub fn stats(self) -> Result<Box<Read>> {
+    self.docker.stream_get(&format!("/containers/{}/stats", self.id)[..])
   }
 
   pub fn start(self) -> Result<String> {
@@ -191,6 +198,7 @@ impl<'a, 'b> Container<'a, 'b> {
   pub fn delete(self) -> Result<String> {
     self.docker.delete(&format!("/containers/{}", self.id)[..])
   }
+
   // todo attach, attach/ws,
 }
 
@@ -203,8 +211,9 @@ impl<'a> Containers<'a> {
     Containers { docker: docker }
   }
   
-  pub fn list(self) -> Result<String> {
-    self.docker.get("/containers/json")
+  pub fn list(self) -> Result<Vec<ContainerRep>> {
+    let raw = try!(self.docker.get("/containers/json"));
+    Ok(json::decode::<Vec<ContainerRep>>(&raw).unwrap())
   }
 
   pub fn get(&'a mut self, name: &'a str) -> Container {
