@@ -4,10 +4,12 @@ extern crate rustc_serialize;
 extern crate unix_socket;
 extern crate url;
 
+pub mod rep;
+
 use hyper::{ Client, Url };
 use hyper::method::Method;
 use openssl::x509::X509FileType;
-use rustc_serialize::{ Decoder, Decodable, json };
+use rustc_serialize::json;
 use std::io::{ Read, Write };
 use std::io;
 use std::{ env, result };
@@ -16,9 +18,9 @@ use std::io::Error;
 use unix_socket::UnixStream;
 use url::{ Host, RelativeSchemeData, SchemeData };
 
-pub mod rep;
 use rep::Image as ImageRep;
 use rep::Container as ContainerRep;
+use rep::{ ContainerDetails, ImageDetails, SearchResult };
 
 pub type Result<T> = result::Result<T, Error>;
 
@@ -93,8 +95,9 @@ impl<'a, 'b> Image<'a, 'b> {
     Image { docker: docker, name: name }
   }
 
-  pub fn inspect(self) -> Result<String> {
-    self.docker.get(&format!("/images/{}/json", self.name)[..])
+  pub fn inspect(self) -> Result<ImageDetails> {
+    let raw = try!(self.docker.get(&format!("/images/{}/json", self.name)[..]));
+    Ok(json::decode::<ImageDetails>(&raw).unwrap())
   }
 
   pub fn history(self) -> Result<String> {
@@ -124,8 +127,9 @@ impl<'a> Images<'a> {
     Image::new(self.docker, name)
   }
 
-  pub fn search(self, term: &str) -> Result<String> {
-    self.docker.get(&format!("/images/search?term={}", term)[..])
+  pub fn search(self, term: &str) -> Result<Vec<SearchResult>> {
+    let raw = try!(self.docker.get(&format!("/images/search?term={}", term)[..]));
+    Ok(json::decode::<Vec<SearchResult>>(&raw).unwrap())
   }
 
   pub fn create(self, from: &str) -> Result<Box<Read>> {
@@ -143,8 +147,9 @@ impl<'a, 'b> Container<'a, 'b> {
     Container { docker: docker, id: id }
   }
 
-  pub fn inspect(self) -> Result<String> {
-    self.docker.get(&format!("/containers/{}/json", self.id)[..])
+  pub fn inspect(self) -> Result<ContainerDetails> {
+    let raw = try!(self.docker.get(&format!("/containers/{}/json", self.id)[..]));
+    Ok(json::decode::<ContainerDetails>(&raw).unwrap())
   }
 
   pub fn top(self) -> Result<String> {
