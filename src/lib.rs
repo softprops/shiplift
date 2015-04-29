@@ -1,3 +1,18 @@
+//! Shiplift maneuvering [docker](https://www.docker.com/) containers
+//!
+//! # examples
+//!
+//! ```
+//! extern crate shiplift;
+//!
+//! let mut docker = shiplift::Docker::new();
+//! let mut images = docker.images().list().unwrap();
+//! println!("docker images in stock");
+//! for i in images {
+//!   println!("{:?}", i.RepoTags);
+//! }
+//! ```
+
 extern crate hyper;
 extern crate openssl;
 extern crate rustc_serialize;
