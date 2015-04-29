@@ -233,3 +233,10 @@ pub struct BlkioStat {
   pub op: String,
   pub value: u64
 }
+
+#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[allow(non_snake_case)]
+pub struct Change {
+  pub Kind: u64,
+  pub Path: String
+}

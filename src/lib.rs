@@ -20,7 +20,7 @@ use url::{ Host, RelativeSchemeData, SchemeData };
 
 use rep::Image as ImageRep;
 use rep::Container as ContainerRep;
-use rep::{ ContainerDetails, ImageDetails, SearchResult };
+use rep::{ Change, ContainerDetails, ImageDetails, SearchResult };
 
 pub type Result<T> = result::Result<T, Error>;
 
@@ -54,18 +54,12 @@ impl Transport for UnixStream {
 
 impl Transport for (Client, String) {
   fn request(&mut self, method: Method, endpoint: &str) -> Result<String> {
-    let uri = format!("{}{}", self.1, endpoint);
-    let req = match method {
-      Method::Put    => self.0.put(&uri[..]),
-      Method::Post   => self.0.post(&uri[..]),
-      Method::Delete => self.0.delete(&uri[..]),
-                   _ => self.0.get(&uri[..])
-    };
-    let mut res = match req.send() {
+    let mut res = match self.stream(method, endpoint) {
       Ok(r) => r,
       Err(e) => panic!("failed request {:?}", e)
     };
     let mut body = String::new();
+    
     res.read_to_string(&mut body).map(|_| body)
   }
 
@@ -156,12 +150,21 @@ impl<'a, 'b> Container<'a, 'b> {
     self.docker.get(&format!("/containers/{}/top", self.id)[..])
   }
 
-  pub fn logs(self) -> Result<String> {
-    self.docker.get(&format!("/containers/{}/logs", self.id)[..])
+  pub fn logs(self) -> Result<Box<Read>> {
+    let query = format!(
+      "follow={}&stdout={}&stderr={}&timestamps={}&tail={}",
+      true, true, true, true, "all");
+    println!("query {}", query);
+    self.docker.stream_get(&format!("/containers/{}/logs?{}", self.id, query)[..])
   }
 
-  pub fn changes(self) -> Result<String> {
-    self.docker.get(&format!("/containers/{}/changes", self.id)[..])
+  pub fn changes(self) -> Result<Vec<Change>> {
+    let raw = try!(self.docker.get(&format!("/containers/{}/changes", self.id)[..]));
+    Ok(json::decode::<Vec<Change>>(&raw).unwrap())
+  }
+
+  pub fn export(self) -> Result<Box<Read>> {
+    self.docker.stream_get(&format!("/containers/{}/export", self.id)[..])
   }
 
   pub fn stats(self) -> Result<Box<Read>> {
