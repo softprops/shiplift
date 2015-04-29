@@ -20,7 +20,9 @@ use url::{ Host, RelativeSchemeData, SchemeData };
 
 use rep::Image as ImageRep;
 use rep::Container as ContainerRep;
-use rep::{ Change, ContainerDetails, ImageDetails, SearchResult };
+use rep::{
+  Change, ContainerDetails, ImageDetails, Info, SearchResult, Top, Version
+};
 
 pub type Result<T> = result::Result<T, Error>;
 
@@ -131,6 +133,17 @@ impl<'a> Images<'a> {
   }
 }
 
+pub struct ContainerBuilder<'a, 'b> {
+  docker: &'a mut Docker,
+  image: &'b str
+}
+
+impl<'a, 'b> ContainerBuilder<'a, 'b> {
+  pub fn new(docker: &'a mut Docker, image: &'b str) -> ContainerBuilder<'a,'b> {
+    ContainerBuilder { docker: docker, image: image }
+  }
+}
+
 pub struct Container<'a, 'b> {
   docker: &'a mut Docker,
   id: &'b str
@@ -146,8 +159,9 @@ impl<'a, 'b> Container<'a, 'b> {
     Ok(json::decode::<ContainerDetails>(&raw).unwrap())
   }
 
-  pub fn top(self) -> Result<String> {
-    self.docker.get(&format!("/containers/{}/top", self.id)[..])
+  pub fn top(self) -> Result<Top> {
+    let raw = try!(self.docker.get(&format!("/containers/{}/top", self.id)[..]));
+    Ok(json::decode::<Top>(&raw).unwrap())
   }
 
   pub fn logs(self) -> Result<Box<Read>> {
@@ -227,6 +241,10 @@ impl<'a> Containers<'a> {
   pub fn get(&'a mut self, name: &'a str) -> Container {
     Container::new(self.docker, name)
   }
+
+  pub fn create(&'a mut self, image: &'a str) -> ContainerBuilder {
+    ContainerBuilder::new(self.docker, image)
+  }
 }
 
 // https://docs.docker.com/reference/api/docker_remote_api_v1.17/
@@ -287,12 +305,14 @@ impl Docker {
     Containers::new(self)
   }
 
-  pub fn version(&mut self) -> Result<String> {
-    self.get("/version")
+  pub fn version(&mut self) -> Result<Version> {
+    let raw = try!(self.get("/version"));
+    Ok(json::decode::<Version>(&raw).unwrap())
   }
 
-  pub fn info(&mut self) -> Result<String> {
-    self.get("/info")
+  pub fn info(&mut self) -> Result<Info> {
+    let raw = try!(self.get("/info"));
+    Ok(json::decode::<Info>(&raw).unwrap())
   }
 
   pub fn ping(&mut self) -> Result<String> {
