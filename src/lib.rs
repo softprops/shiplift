@@ -139,35 +139,35 @@ impl<'a, 'b> Container<'a, 'b> {
   }
 
   pub fn start(self) -> Result<String> {
-    self.docker.post(&format!("/containers/{}/start", self.id)[..])
+    self.docker.post(&format!("/containers/{}/start", self.id)[..], None)
   }
 
   pub fn stop(self) -> Result<String> {
-    self.docker.post(&format!("/containers/{}/stop", self.id)[..])
+    self.docker.post(&format!("/containers/{}/stop", self.id)[..], None)
   }
 
   pub fn restart(self) -> Result<String> {
-    self.docker.post(&format!("/containers/{}/restart", self.id)[..])
+    self.docker.post(&format!("/containers/{}/restart", self.id)[..], None)
   }
 
   pub fn kill(self) -> Result<String> {
-    self.docker.post(&format!("/containers/{}/kill", self.id)[..])
+    self.docker.post(&format!("/containers/{}/kill", self.id)[..], None)
   }
 
   pub fn rename(self, name: &str) -> Result<String> {
-    self.docker.post(&format!("/containers/{}/rename?name={}", self.id, name)[..])
+    self.docker.post(&format!("/containers/{}/rename?name={}", self.id, name)[..], None)
   }
 
   pub fn pause(self) -> Result<String> {
-    self.docker.post(&format!("/containers/{}/pause", self.id)[..])
+    self.docker.post(&format!("/containers/{}/pause", self.id)[..], None)
   }
 
   pub fn unpause(self) -> Result<String> {
-    self.docker.post(&format!("/containers/{}/unpause", self.id)[..])
+    self.docker.post(&format!("/containers/{}/unpause", self.id)[..], None)
   }
 
   pub fn wait(self) -> Result<String> {
-    self.docker.post(&format!("/containers/{}/wait", self.id)[..])
+    self.docker.post(&format!("/containers/{}/wait", self.id)[..], None)
   }
 
   pub fn delete(self) -> Result<String> {
@@ -281,8 +281,8 @@ impl Docker {
     (*self.transport).request(Method::Get, endpoint, None)
   }
 
-  fn post(&mut self, endpoint: &str) -> Result<String> {
-    (*self.transport).request(Method::Post, endpoint, None)
+  fn post(&mut self, endpoint: &str, body: Option<Body>) -> Result<String> {
+    (*self.transport).request(Method::Post, endpoint, body)
   }
 
   fn delete(&mut self, endpoint: &str) -> Result<String> {

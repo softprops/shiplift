@@ -28,6 +28,6 @@ impl<'a, 'b> ContainerBuilder<'a, 'b> {
   }
 
   pub fn build(self) -> Result<String> {
-    self.docker.post("/containers/create")
+    self.docker.post("/containers/create", None)
   }
 }
