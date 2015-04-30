@@ -276,3 +276,10 @@ pub struct Info {
   pub SwapLimit: u64,
   pub SystemTime: String
 }
+
+#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[allow(non_snake_case)]
+pub struct ContainerCreateInfo {
+  pub Id: String,
+  pub Warnings: Option<Vec<String>>
+}

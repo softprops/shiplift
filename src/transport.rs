@@ -5,7 +5,7 @@ extern crate unix_socket;
 use std::ops::DerefMut;
 use hyper::Client;
 use hyper::client;
-use self::hyper::header::{ ContentType, UserAgent, qitem };
+use self::hyper::header::{ ContentType, qitem };
 use hyper::method::Method;
 use self::mime::{ Attr, Mime, Value };
 use self::mime::TopLevel::Application;
@@ -67,7 +67,7 @@ impl Transport for (Client, String) {
 
   fn stream(&mut self, method: Method, endpoint: &str, body: Option<Body>) -> Result<Box<Read>> {
     let uri = format!("{}{}", self.1, endpoint);
-    let mut req = match method {
+    let req = match method {
       Method::Put    => self.0.put(&uri[..]),
       Method::Post   => self.0.post(&uri[..]),
       Method::Delete => self.0.delete(&uri[..]),
@@ -81,7 +81,7 @@ impl Transport for (Client, String) {
       },
       _ => req
     };
-    let mut res = match embodied.send() {
+    let res = match embodied.send() {
       Ok(r) => r,
       Err(e) => panic!("failed request {:?}", e)
     };

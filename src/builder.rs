@@ -1,5 +1,11 @@
+extern crate rustc_serialize;
+
 use self::super::Docker;
+use self::super::transport::Body;
+use self::super::rep::ContainerCreateInfo;
+use std::collections::BTreeMap;
 use std::io::Result;
+use rustc_serialize::json::{self, Json, ToJson};
 
 pub struct ContainerBuilder<'a, 'b> {
   docker: &'a mut Docker,
@@ -27,7 +33,13 @@ impl<'a, 'b> ContainerBuilder<'a, 'b> {
     self
   }
 
-  pub fn build(self) -> Result<String> {
-    self.docker.post("/containers/create", None)
+  pub fn build(self) -> Result<ContainerCreateInfo> {
+    let mut body = BTreeMap::new();
+    body.insert("Image".to_string(), self.image.to_json());
+    let json_obj: Json = body.to_json();
+    let data = json::encode(&json_obj).unwrap();
+    let mut bytes = data.as_bytes();
+    let raw = try!(self.docker.post("/containers/create", Some(Body::new(&mut Box::new(&mut bytes), bytes.len() as u64))));
+    Ok(json::decode::<ContainerCreateInfo>(&raw).unwrap())
   }
 }
