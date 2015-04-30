@@ -33,6 +33,15 @@ pub trait Transport {
 
 impl Transport for UnixStream {
   fn request(&mut self, method: Method, endpoint: &str, body: Option<Body>) -> Result<String> {
+    let mut res = match self.stream(method, endpoint, body) {
+      Ok(r) => r,
+      Err(e) => panic!("failed request {:?}", e)
+    };
+    let mut body = String::new();
+    res.read_to_string(&mut body).map(|_| body)
+  }
+
+  fn stream(&mut self, method: Method, endpoint: &str, body: Option<Body>) -> Result<Box<Read>> {
     let method_str = match method {
       Method::Put    => "PUT",
       Method::Post   => "POST",
@@ -41,12 +50,8 @@ impl Transport for UnixStream {
     };
     let req = format!("{} {} HTTP/1.0\r\n\r\n", method_str, endpoint);
     try!(self.write_all(req.as_bytes()));
-    let mut result = String::new();
-    self.read_to_string(&mut result).map(|_| result)
-  }
-
-  fn stream(&mut self, method: Method, endpoint: &str, body: Option<Body>) -> Result<Box<Read>> {
-    Err(io::Error::new(io::ErrorKind::InvalidInput, "Not yet implemented"))
+    let clone = try!(self.try_clone());
+    Ok(Box::new(clone))
   }
 }
 
@@ -57,7 +62,6 @@ impl Transport for (Client, String) {
       Err(e) => panic!("failed request {:?}", e)
     };
     let mut body = String::new();
-    
     res.read_to_string(&mut body).map(|_| body)
   }
 
