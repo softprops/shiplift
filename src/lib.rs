@@ -19,9 +19,11 @@ extern crate rustc_serialize;
 extern crate unix_socket;
 extern crate url;
 
+pub mod builder;
 pub mod rep;
 pub mod transport;
 
+use builder::ContainerBuilder;
 use hyper::{ Client, Url };
 use hyper::method::Method;
 use openssl::x509::X509FileType;
@@ -34,7 +36,7 @@ use rep::{
 use std::env;
 use std::path::Path;
 use std::io::{ Read, Result };
-use transport::Transport;
+use transport::{ Body, Transport };
 use unix_socket::UnixStream;
 use url::{ Host, RelativeSchemeData, SchemeData };
 
@@ -94,16 +96,6 @@ impl<'a> Images<'a> {
   }
 }
 
-pub struct ContainerBuilder<'a, 'b> {
-  docker: &'a mut Docker,
-  image: &'b str
-}
-
-impl<'a, 'b> ContainerBuilder<'a, 'b> {
-  pub fn new(docker: &'a mut Docker, image: &'b str) -> ContainerBuilder<'a,'b> {
-    ContainerBuilder { docker: docker, image: image }
-  }
-}
 
 pub struct Container<'a, 'b> {
   docker: &'a mut Docker,
@@ -286,22 +278,22 @@ impl Docker {
   }
  
   fn get(&mut self, endpoint: &str) -> Result<String> {
-    (*self.transport).request(Method::Get, endpoint)
+    (*self.transport).request(Method::Get, endpoint, None)
   }
 
   fn post(&mut self, endpoint: &str) -> Result<String> {
-    (*self.transport).request(Method::Post, endpoint)
+    (*self.transport).request(Method::Post, endpoint, None)
   }
 
   fn delete(&mut self, endpoint: &str) -> Result<String> {
-    (*self.transport).request(Method::Delete, endpoint)
+    (*self.transport).request(Method::Delete, endpoint, None)
   }
 
   fn stream_post(&mut self, endpoint: &str) -> Result<Box<Read>> {
-    (*self.transport).stream(Method::Post, endpoint)
+    (*self.transport).stream(Method::Post, endpoint, None)
   }
 
   fn stream_get(&mut self, endpoint: &str) -> Result<Box<Read>> {
-    (*self.transport).stream(Method::Get, endpoint)
+    (*self.transport).stream(Method::Get, endpoint, None)
   }
 }

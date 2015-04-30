@@ -6,6 +6,7 @@ authors = ["softprops <d.tangren@gmail.com>"]
 
 
 [dependencies]
+mime = "0.0.10"
 hyper = "0.3.14"
 jed = "0.1.0"
 openssl = "0.6.1"
