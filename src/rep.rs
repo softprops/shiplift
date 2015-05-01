@@ -274,7 +274,7 @@ pub struct Info {
   pub OperatingSystem: String,
   //pub RegistryConfig:???
   pub SwapLimit: u64,
-  pub SystemTime: String
+  pub SystemTime: Option<String>
 }
 
 #[derive(Debug, RustcEncodable, RustcDecodable)]
