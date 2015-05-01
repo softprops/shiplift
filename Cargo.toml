@@ -3,7 +3,12 @@
 name = "shiplift"
 version = "0.0.1"
 authors = ["softprops <d.tangren@gmail.com>"]
-
+description = "A modern multi-transport syslog appender."
+documentation = "https://github.com/softprops/shiplift"
+homepage = "https://github.com/softprops/shiplift"
+repository = "https://github.com/softprops/shiplift"
+keywords = ["docker", "unix", "containers", "hyper"]
+license = "MIT"
 
 [dependencies]
 mime = "0.0.10"
