@@ -15,7 +15,7 @@ pub struct Image {
   pub ParentId: String,
   //pub Labels: ???,
   pub RepoTags: Vec<String>,
-  pub RepoDigests: Vec<String>,
+  pub RepoDigests: Option<Vec<String>>,
   pub Size: u64,
   pub VirtualSize: u64
 }

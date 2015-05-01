@@ -33,7 +33,7 @@ use rep::Container as ContainerRep;
 use rep::{
   Change, ContainerDetails, ImageDetails, Info, SearchResult, Top, Version
 };
-use std::env;
+use std::env::{ self, VarError };
 use std::path::Path;
 use std::io::{ Read, Result };
 use transport::{ Body, Transport };
@@ -79,6 +79,7 @@ impl<'a> Images<'a> {
   
   pub fn list(self) -> Result<Vec<ImageRep>> {
     let raw = try!(self.docker.get("/images/json"));
+    println!("raw {:?}", raw);
     Ok(json::decode::<Vec<ImageRep>>(&raw).unwrap())
   }
 
@@ -203,11 +204,13 @@ impl<'a> Containers<'a> {
 // https://docs.docker.com/reference/api/docker_remote_api_v1.17/
 impl Docker {
   pub fn new() -> Docker {
+    let fallback: std::result::Result<String, VarError> = Ok("unix:///var/run/docker.sock".to_string());
     let host = env::var("DOCKER_HOST")
+        .or(fallback)
         .map(|h| Url::parse(&h).ok()
              .expect("invalid url"))
-          .ok()
-          .expect("expected host");
+         .ok()
+         .expect("expected host");
     let domain = match host.scheme_data {
         SchemeData::NonRelative(s) => s,
         SchemeData::Relative(RelativeSchemeData { host: host, .. }) => 

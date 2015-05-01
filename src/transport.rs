@@ -5,6 +5,9 @@ extern crate unix_socket;
 use std::ops::DerefMut;
 use hyper::Client;
 use hyper::client;
+use self::hyper::buffer::BufReader;
+use self::hyper::http::{ parse_response };
+use self::hyper::http::HttpReader::{ ChunkedReader, EofReader };
 use self::hyper::header::{ ContentType, qitem };
 use hyper::method::Method;
 use self::mime::{ Attr, Mime, Value };
@@ -50,8 +53,14 @@ impl Transport for UnixStream {
     };
     let req = format!("{} {} HTTP/1.0\r\n\r\n", method_str, endpoint);
     try!(self.write_all(req.as_bytes()));
-    let clone = try!(self.try_clone());
-    Ok(Box::new(clone))
+    // read the body -- https://github.com/hyperium/hyper/blob/06d072bca1b4af3507af370cbd0ca2ac8f64fc00/src/client/response.rs#L36-L74
+    let cloned = try!(self.try_clone());
+    let mut stream = BufReader::new(cloned);
+    let head = parse_response(&mut stream).unwrap();
+    let headers = head.headers;
+    println!("parsed {:?}", headers);
+    println!("sending clone");
+    Ok(Box::new(ChunkedReader(stream, None)))
   }
 }
 

@@ -2,6 +2,7 @@
 name = "shiplift"
 version = "0.0.1"
 dependencies = [
+ "httparse 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "hyper 0.3.14 (registry+https://github.com/rust-lang/crates.io-index)",
  "jed 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "mime 0.0.10 (registry+https://github.com/rust-lang/crates.io-index)",
