@@ -7,7 +7,7 @@ use hyper::Client;
 use hyper::client;
 use self::hyper::buffer::BufReader;
 use self::hyper::http::{ parse_response };
-use self::hyper::http::HttpReader::{ ChunkedReader, EofReader };
+use self::hyper::http::HttpReader::EofReader;
 use self::hyper::header::ContentType;
 use hyper::method::Method;
 use self::mime::{ Attr, Mime, Value };
