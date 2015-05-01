@@ -1,4 +1,4 @@
-//! Shiplift maneuvering [docker](https://www.docker.com/) containers
+//! Shiplift maneuvers [docker](https://www.docker.com/) containers
 //!
 //! # examples
 //!
@@ -40,10 +40,12 @@ use transport::{ Body, Transport };
 use unix_socket::UnixStream;
 use url::{ Host, RelativeSchemeData, SchemeData };
 
+/// Entrypoint interface for communicating with docker daemon
 pub struct Docker {
   transport: Box<Transport>
 }
 
+/// Interface for accessing and manipulating a named docker image
 pub struct Image<'a, 'b> {
   docker: &'a mut Docker,
   name: &'b str
@@ -68,6 +70,7 @@ impl<'a, 'b> Image<'a, 'b> {
   }
 }
 
+/// Interface for docker images
 pub struct Images<'a> {
   docker: &'a mut Docker
 }
@@ -96,6 +99,7 @@ impl<'a> Images<'a> {
   }
 }
 
+/// Interface for accessing and manipulating a docker container
 pub struct Container<'a, 'b> {
   docker: &'a mut Docker,
   id: &'b str
@@ -175,6 +179,7 @@ impl<'a, 'b> Container<'a, 'b> {
   // todo attach, attach/ws,
 }
 
+/// Interface for docker containers
 pub struct Containers<'a> {
   docker: &'a mut Docker
 }

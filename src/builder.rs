@@ -1,3 +1,5 @@
+//! Interfaces for building [docker](https://www.docker.com/) containers
+
 extern crate rustc_serialize;
 
 use self::super::Docker;
@@ -7,6 +9,7 @@ use std::collections::BTreeMap;
 use std::io::Result;
 use rustc_serialize::json::{self, Json, ToJson};
 
+/// Interface for building a new docker container from an existing image
 pub struct ContainerBuilder<'a, 'b> {
   docker: &'a mut Docker,
   image: &'b str,

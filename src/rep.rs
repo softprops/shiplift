@@ -1,3 +1,5 @@
+//! Rust representations of docker json structures
+
 #[derive(Debug, RustcEncodable, RustcDecodable)]
 pub struct SearchResult {
   pub description: String,

@@ -1,3 +1,5 @@
+//! Transports for communicating with the docker daemon
+
 extern crate hyper;
 extern crate mime;
 extern crate unix_socket;
@@ -29,6 +31,7 @@ impl<'a> Body<'a> {
   }
 }
 
+/// Primary interface for communicating with docker daemon
 pub trait Transport {
   fn request(&mut self, method: Method, endpoint: &str, body: Option<Body>) -> Result<String>;
   fn stream(&mut self, method: Method, endpoint: &str, body: Option<Body>) -> Result<Box<Read>>;

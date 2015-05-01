@@ -11,9 +11,9 @@ fn main() {
   //for i in docker.images().list().unwrap() {
   //  println!("{:?}", i.RepoTags);
   //}
-  let mut ps = docker.containers();
-  let mut c = ps.get("c60700a29d14");  
-  println!("container {:?}", c.inspect().unwrap());
+ // let mut ps = docker.containers();
+  //let mut c = ps.get("c60700a29d14");  
+  println!("container {:?}", docker.info());
   //for i in jed::Iter::new(c.logs().unwrap()) {
   //  println!("{:?}", i);
   //}
