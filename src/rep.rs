@@ -65,18 +65,18 @@ pub struct ContainerDetails {
 #[derive(Debug, RustcEncodable, RustcDecodable)]
 #[allow(non_snake_case)]
 pub struct HostConfig {
-  pub CgroupParent: String,
+  pub CgroupParent: Option<String>,
   pub ContainerIDFile: String,
-  pub CpuShares: u64,
-  pub CpusetCpus: String,
-  pub Memory: u64,
-  pub MemorySwap: u64,
+  pub CpuShares: Option<u64>,
+  pub CpusetCpus: Option<String>,
+  pub Memory: Option<u64>,
+  pub MemorySwap: Option<u64>,
   pub NetworkMode: String,
-  pub PidMode: String,
+  pub PidMode: Option<String>,
   //pub PortBindings: ???
   pub Privileged: bool,
   pub PublishAllPorts: bool,
-  pub ReadonlyRootfs: bool
+  pub ReadonlyRootfs: Option<bool>
   //pub RestartPolicy: ???
   //pub SecurityOpt: Option<???>,
   //pub Ulimits: Option<???>

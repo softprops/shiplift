@@ -8,12 +8,12 @@ use hyper::client;
 use self::hyper::buffer::BufReader;
 use self::hyper::http::{ parse_response };
 use self::hyper::http::HttpReader::{ ChunkedReader, EofReader };
-use self::hyper::header::{ ContentType, qitem };
+use self::hyper::header::ContentType;
 use hyper::method::Method;
 use self::mime::{ Attr, Mime, Value };
 use self::mime::TopLevel::Application;
 use self::mime::SubLevel::Json;
-use std::io::{ self, Read, Result, Write };
+use std::io::{ Read, Result, Write };
 use unix_socket::UnixStream;
 
 #[doc(hidden)]
@@ -56,11 +56,8 @@ impl Transport for UnixStream {
     // read the body -- https://github.com/hyperium/hyper/blob/06d072bca1b4af3507af370cbd0ca2ac8f64fc00/src/client/response.rs#L36-L74
     let cloned = try!(self.try_clone());
     let mut stream = BufReader::new(cloned);
-    let head = parse_response(&mut stream).unwrap();
-    let headers = head.headers;
-    println!("parsed {:?}", headers);
-    println!("sending clone");
-    Ok(Box::new(ChunkedReader(stream, None)))
+    let _ = parse_response(&mut stream).unwrap();
+    Ok(Box::new(EofReader(stream)))
   }
 }
 

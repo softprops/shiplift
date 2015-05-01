@@ -79,7 +79,6 @@ impl<'a> Images<'a> {
   
   pub fn list(self) -> Result<Vec<ImageRep>> {
     let raw = try!(self.docker.get("/images/json"));
-    println!("raw {:?}", raw);
     Ok(json::decode::<Vec<ImageRep>>(&raw).unwrap())
   }
 
@@ -96,7 +95,6 @@ impl<'a> Images<'a> {
     self.docker.stream_post(&format!("/images/create?fromImage={}", from)[..])
   }
 }
-
 
 pub struct Container<'a, 'b> {
   docker: &'a mut Docker,
@@ -122,7 +120,6 @@ impl<'a, 'b> Container<'a, 'b> {
     let query = format!(
       "follow={}&stdout={}&stderr={}&timestamps={}&tail={}",
       true, true, true, true, "all");
-    println!("query {}", query);
     self.docker.stream_get(&format!("/containers/{}/logs?{}", self.id, query)[..])
   }
 

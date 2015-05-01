@@ -8,10 +8,16 @@ use shiplift::Docker;
 
 fn main() {
   let mut docker = Docker::new();
-  for i in docker.images().list().unwrap() {
-    println!("{:?}", i.RepoTags);
-  }
-  println!("new container {:?}", docker.containers().create("jplock/zookeeper:latest").build().unwrap())
+  //for i in docker.images().list().unwrap() {
+  //  println!("{:?}", i.RepoTags);
+  //}
+  let mut ps = docker.containers();
+  let mut c = ps.get("c60700a29d14");  
+  println!("container {:?}", c.inspect().unwrap());
+  //for i in jed::Iter::new(c.logs().unwrap()) {
+  //  println!("{:?}", i);
+  //}
+  //println!("new container {:?}", docker.containers().create("jplock/zookeeper:latest").build().unwrap())
   //let data = docker.containers().get("160bbff9ff12e10f73c16a4f20d5ac785bf43066017e28cb24d53cc1c128ee36").stats().unwrap();
   //for e in jed::Iter::new(data) {
   //  let s = json::encode(&e).unwrap();
@@ -25,6 +31,6 @@ fn main() {
 
   //let read = docker.images().create("redis:3.0.0").unwrap();
   //for e in jed::Iter::new(read) {
-  //  println!("\n -> {:?}", e);
+    //println!("\n -> {:?}", e);
   //}  
 }
