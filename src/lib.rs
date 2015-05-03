@@ -31,7 +31,7 @@ use rustc_serialize::json;
 use rep::Image as ImageRep;
 use rep::Container as ContainerRep;
 use rep::{
-  Change, ContainerDetails, ImageDetails, Info, SearchResult, Top, Version
+  Change, ContainerDetails, History, ImageDetails, Info, SearchResult, Top, Version
 };
 use std::env::{ self, VarError };
 use std::path::Path;
@@ -61,8 +61,9 @@ impl<'a, 'b> Image<'a, 'b> {
     Ok(json::decode::<ImageDetails>(&raw).unwrap())
   }
 
-  pub fn history(self) -> Result<String> {
-    self.docker.get(&format!("/images/{}/history", self.name)[..])
+  pub fn history(self) -> Result<Vec<History>> {
+    let raw = try!(self.docker.get(&format!("/images/{}/history", self.name)[..]));
+    Ok(json::decode::<Vec<History>>(&raw).unwrap())
   }
 
   pub fn delete(self) -> Result<String> {

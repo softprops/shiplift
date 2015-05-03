@@ -285,3 +285,11 @@ pub struct ContainerCreateInfo {
   pub Id: String,
   pub Warnings: Option<Vec<String>>
 }
+
+#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[allow(non_snake_case)]
+pub struct History {
+  pub Id: String,
+  pub Created: u64,
+  pub CreatedBy: String
+}
