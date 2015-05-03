@@ -33,11 +33,6 @@ impl<'a> Body<'a> {
 
 /// Primary interface for communicating with docker daemon
 pub trait Transport {
-  fn request(&mut self, method: Method, endpoint: &str, body: Option<Body>) -> Result<String>;
-  fn stream(&mut self, method: Method, endpoint: &str, body: Option<Body>) -> Result<Box<Read>>;
-}
-
-impl Transport for UnixStream {
   fn request(&mut self, method: Method, endpoint: &str, body: Option<Body>) -> Result<String> {
     let mut res = match self.stream(method, endpoint, body) {
       Ok(r) => r,
@@ -46,7 +41,10 @@ impl Transport for UnixStream {
     let mut body = String::new();
     res.read_to_string(&mut body).map(|_| body)
   }
+  fn stream(&mut self, method: Method, endpoint: &str, body: Option<Body>) -> Result<Box<Read>>;
+}
 
+impl Transport for UnixStream {
   fn stream(&mut self, method: Method, endpoint: &str, body: Option<Body>) -> Result<Box<Read>> {
     let method_str = match method {
       Method::Put    => "PUT",
@@ -65,15 +63,6 @@ impl Transport for UnixStream {
 }
 
 impl Transport for (Client, String) {
-  fn request(&mut self, method: Method, endpoint: &str, body: Option<Body>) -> Result<String> {
-    let mut res = match self.stream(method, endpoint, body) {
-      Ok(r) => r,
-      Err(e) => panic!("failed request {:?}", e)
-    };
-    let mut body = String::new();
-    res.read_to_string(&mut body).map(|_| body)
-  }
-
   fn stream(&mut self, method: Method, endpoint: &str, body: Option<Body>) -> Result<Box<Read>> {
     let uri = format!("{}{}", self.1, endpoint);
     let req = match method {
