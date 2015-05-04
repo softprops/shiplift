@@ -293,3 +293,9 @@ pub struct History {
   pub Created: u64,
   pub CreatedBy: String
 }
+
+#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[allow(non_snake_case)]
+pub struct Exit {
+  pub StatusCode: u64
+}
