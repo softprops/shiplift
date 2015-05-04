@@ -72,7 +72,7 @@ impl Transport for UnixStream {
     let mut stream = BufReader::new(cloned);
     let res = parse_response(&mut stream).unwrap();
     match res.subject {
-      RawStatus(200, _) | RawStatus(201, _) =>
+      RawStatus(200, _) | RawStatus(201, _) | RawStatus(101, _) =>
         Ok(Box::new(EofReader(stream))),
       RawStatus(204, _) =>
         Ok(Box::new(BufReader::new("".as_bytes()))),
@@ -105,7 +105,7 @@ impl Transport for (Client, String) {
     };
     println!("status {:?}", res.status);
     match res.status {
-      StatusCode::Ok | StatusCode::Created =>
+      StatusCode::Ok | StatusCode::Created | StatusCode::SwitchingProtocols =>
         Ok(Box::new(res)),
       StatusCode::NoContent =>
         Ok(Box::new(BufReader::new("".as_bytes()))),
