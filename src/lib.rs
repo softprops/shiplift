@@ -66,6 +66,7 @@ impl<'a, 'b> Image<'a, 'b> {
     Ok(json::decode::<Vec<History>>(&raw).unwrap())
   }
 
+  // todo: rep Untagged, Deleted stream
   pub fn delete(self) -> Result<String> {
     self.docker.delete(&format!("/images/{}", self.name)[..])
   }
