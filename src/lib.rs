@@ -31,7 +31,7 @@ use rustc_serialize::json;
 use rep::Image as ImageRep;
 use rep::Container as ContainerRep;
 use rep::{
-  Change, ContainerDetails, History, ImageDetails, Info, SearchResult, Top, Version
+  Change, ContainerDetails, Exit, History, ImageDetails, Info, SearchResult, Top, Version
 };
 use std::env::{ self, VarError };
 use std::path::Path;
@@ -141,40 +141,41 @@ impl<'a, 'b> Container<'a, 'b> {
     self.docker.stream_get(&format!("/containers/{}/stats", self.id)[..])
   }
 
-  pub fn start(self) -> Result<String> {
-    self.docker.post(&format!("/containers/{}/start", self.id)[..], None)
+  pub fn start(self) -> Result<()> {
+    self.docker.post(&format!("/containers/{}/start", self.id)[..], None).map(|_| ())
   }
 
-  pub fn stop(self) -> Result<String> {
-    self.docker.post(&format!("/containers/{}/stop", self.id)[..], None)
+  pub fn stop(self) -> Result<()> {
+    self.docker.post(&format!("/containers/{}/stop", self.id)[..], None).map(|_| ())
   }
 
-  pub fn restart(self) -> Result<String> {
-    self.docker.post(&format!("/containers/{}/restart", self.id)[..], None)
+  pub fn restart(self) -> Result<()> {
+    self.docker.post(&format!("/containers/{}/restart", self.id)[..], None).map(|_| ())
   }
 
-  pub fn kill(self) -> Result<String> {
-    self.docker.post(&format!("/containers/{}/kill", self.id)[..], None)
+  pub fn kill(self) -> Result<()> {
+    self.docker.post(&format!("/containers/{}/kill", self.id)[..], None).map(|_| ())
   }
 
-  pub fn rename(self, name: &str) -> Result<String> {
-    self.docker.post(&format!("/containers/{}/rename?name={}", self.id, name)[..], None)
+  pub fn rename(self, name: &str) -> Result<()> {
+    self.docker.post(&format!("/containers/{}/rename?name={}", self.id, name)[..], None).map(|_| ())
   }
 
-  pub fn pause(self) -> Result<String> {
-    self.docker.post(&format!("/containers/{}/pause", self.id)[..], None)
+  pub fn pause(self) -> Result<()> {
+    self.docker.post(&format!("/containers/{}/pause", self.id)[..], None).map(|_| ())
   }
 
-  pub fn unpause(self) -> Result<String> {
-    self.docker.post(&format!("/containers/{}/unpause", self.id)[..], None)
+  pub fn unpause(self) -> Result<()> {
+    self.docker.post(&format!("/containers/{}/unpause", self.id)[..], None).map(|_| ())
   }
 
-  pub fn wait(self) -> Result<String> {
-    self.docker.post(&format!("/containers/{}/wait", self.id)[..], None)
+  pub fn wait(self) -> Result<Exit> {
+    let raw = try!(self.docker.post(&format!("/containers/{}/wait", self.id)[..], None));
+    Ok(json::decode::<Exit>(&raw).unwrap())
   }
 
-  pub fn delete(self) -> Result<String> {
-    self.docker.delete(&format!("/containers/{}", self.id)[..])
+  pub fn delete(self) -> Result<()> {
+    self.docker.delete(&format!("/containers/{}", self.id)[..]).map(|_| ())
   }
 
   // todo attach, attach/ws,
