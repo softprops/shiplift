@@ -103,7 +103,6 @@ impl Transport for (Client, String) {
       Ok(r) => r,
       Err(e) => panic!("failed request {:?}", e)
     };
-    println!("status {:?}", res.status);
     match res.status {
       StatusCode::Ok | StatusCode::Created | StatusCode::SwitchingProtocols =>
         Ok(Box::new(res)),
