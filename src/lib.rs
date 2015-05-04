@@ -14,6 +14,7 @@
 //! ```
 
 extern crate hyper;
+extern crate jed;
 extern crate openssl;
 extern crate rustc_serialize;
 extern crate unix_socket;
@@ -31,7 +32,7 @@ use rustc_serialize::json;
 use rep::Image as ImageRep;
 use rep::Container as ContainerRep;
 use rep::{
-  Change, ContainerDetails, Exit, History, ImageDetails, Info, SearchResult, Top, Version
+  Change, ContainerDetails, Event, Exit, History, ImageDetails, Info, SearchResult, Stats, Top, Version
 };
 use std::env::{ self, VarError };
 use std::path::Path;
@@ -39,6 +40,7 @@ use std::io::{ Read, Result };
 use transport::{ Body, Transport };
 use unix_socket::UnixStream;
 use url::{ Host, RelativeSchemeData, SchemeData };
+use std::iter::IntoIterator;
 
 /// Entrypoint interface for communicating with docker daemon
 pub struct Docker {
@@ -138,8 +140,13 @@ impl<'a, 'b> Container<'a, 'b> {
     self.docker.stream_get(&format!("/containers/{}/export", self.id)[..])
   }
 
-  pub fn stats(self) -> Result<Box<Read>> {
-    self.docker.stream_get(&format!("/containers/{}/stats", self.id)[..])
+  pub fn stats(self) -> Result<Box<Iterator<Item=Stats>>> {
+    let raw = try!(self.docker.stream_get(&format!("/containers/{}/stats", self.id)[..]));
+    let it = jed::Iter::new(raw).into_iter().map(|j| {
+      let s = json::encode(&j).unwrap();
+      json::decode::<Stats>(&s).unwrap()
+    });
+    Ok(Box::new(it))
   }
 
   pub fn start(self) -> Result<()> {
@@ -280,9 +287,13 @@ impl Docker {
     self.get("/_ping")
   }
 
-  // todo stream
-  pub fn events(&mut self) -> Result<Box<Read>> {
-    self.stream_get("/events?since=1374067924")
+  pub fn events(&mut self) -> Result<Box<Iterator<Item=Event>>> {
+    let raw = try!(self.stream_get("/events?since=1374067924"));
+    let it = jed::Iter::new(raw).into_iter().map(|j| {
+     let s = json::encode(&j).unwrap();
+     json::decode::<Event>(&s).unwrap()
+    });
+    Ok(Box::new(it))
   }
  
   fn get(&mut self, endpoint: &str) -> Result<String> {

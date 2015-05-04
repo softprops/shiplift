@@ -300,3 +300,11 @@ pub struct Exit {
   pub StatusCode: u64
 }
 
+#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[allow(non_snake_case)]
+pub struct Event {
+  pub status: String,
+  pub id: String,
+  pub from: String,
+  pub time: u64
+}
