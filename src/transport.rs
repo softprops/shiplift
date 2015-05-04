@@ -4,19 +4,31 @@ extern crate hyper;
 extern crate mime;
 extern crate unix_socket;
 
-use std::ops::DerefMut;
 use hyper::Client;
 use hyper::client;
 use self::hyper::buffer::BufReader;
-use self::hyper::http::{ parse_response };
+use self::hyper::http::{ parse_response, RawStatus };
 use self::hyper::http::HttpReader::EofReader;
 use self::hyper::header::ContentType;
+use self::hyper::status::StatusCode;
 use hyper::method::Method;
 use self::mime::{ Attr, Mime, Value };
 use self::mime::TopLevel::Application;
 use self::mime::SubLevel::Json;
-use std::io::{ Read, Result, Write };
+use std::ops::DerefMut;
+use std::io::{ Error, ErrorKind, Read, Result, Write };
 use unix_socket::UnixStream;
+
+fn lift_status_err(status: u16) -> Result<Box<Read>> {
+  match status {
+    400 => Err(Error::new(ErrorKind::InvalidInput, "bad parameter")),
+    404 => Err(Error::new(ErrorKind::InvalidInput, "not found")),
+    406 => Err(Error::new(ErrorKind::InvalidInput, "not acceptable")),
+    409 => Err(Error::new(ErrorKind::InvalidInput, "conflict found")),
+    500 => Err(Error::new(ErrorKind::InvalidInput, "interal server error")),
+     _  => unreachable!()
+  }
+}
 
 #[doc(hidden)]
 pub struct Body<'a> {
@@ -41,6 +53,7 @@ pub trait Transport {
     let mut body = String::new();
     res.read_to_string(&mut body).map(|_| body)
   }
+
   fn stream(&mut self, method: Method, endpoint: &str, body: Option<Body>) -> Result<Box<Read>>;
 }
 
@@ -57,8 +70,15 @@ impl Transport for UnixStream {
     // read the body -- https://github.com/hyperium/hyper/blob/06d072bca1b4af3507af370cbd0ca2ac8f64fc00/src/client/response.rs#L36-L74
     let cloned = try!(self.try_clone());
     let mut stream = BufReader::new(cloned);
-    let _ = parse_response(&mut stream).unwrap();
-    Ok(Box::new(EofReader(stream)))
+    let res = parse_response(&mut stream).unwrap();
+    match res.subject {
+      RawStatus(200, _) | RawStatus(201, _) =>
+        Ok(Box::new(EofReader(stream))),
+      RawStatus(204, _) =>
+        Ok(Box::new(BufReader::new("".as_bytes()))),
+      RawStatus(status, _) =>
+        lift_status_err(status)
+    }
   }
 }
 
@@ -83,6 +103,14 @@ impl Transport for (Client, String) {
       Ok(r) => r,
       Err(e) => panic!("failed request {:?}", e)
     };
-    Ok(Box::new(res))
+    println!("status {:?}", res.status);
+    match res.status {
+      StatusCode::Ok | StatusCode::Created =>
+        Ok(Box::new(res)),
+      StatusCode::NoContent =>
+        Ok(Box::new(BufReader::new("".as_bytes()))),
+      status =>
+        lift_status_err(status.to_u16())
+    }
   }
 }
