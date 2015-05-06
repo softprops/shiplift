@@ -28,19 +28,21 @@ use builder::ContainerBuilder;
 use hyper::{ Client, Url };
 use hyper::method::Method;
 use openssl::x509::X509FileType;
-use rustc_serialize::json;
 use rep::Image as ImageRep;
 use rep::Container as ContainerRep;
 use rep::{
-  Change, ContainerDetails, Event, Exit, History, ImageDetails, Info, SearchResult, Stats, Top, Version
+  Change, ContainerDetails, Event, Exit, History,
+  ImageDetails, Info, SearchResult, Stats, Status,
+  Top, Version
 };
+use rustc_serialize::json::{ self, Json };
 use std::env::{ self, VarError };
-use std::path::Path;
 use std::io::{ Read, Result };
+use std::iter::IntoIterator;
+use std::path::Path;
 use transport::{ Body, Transport };
 use unix_socket::UnixStream;
 use url::{ Host, RelativeSchemeData, SchemeData };
-use std::iter::IntoIterator;
 
 /// Entrypoint interface for communicating with docker daemon
 pub struct Docker {
@@ -69,8 +71,17 @@ impl<'a, 'b> Image<'a, 'b> {
   }
 
   // todo: rep Untagged, Deleted stream
-  pub fn delete(self) -> Result<String> {
-    self.docker.delete(&format!("/images/{}", self.name)[..])
+  pub fn delete(self) -> Result<Vec<Status>> {
+    let raw = try!(self.docker.delete(&format!("/images/{}", self.name)[..]));
+    Ok(match Json::from_str(&raw).unwrap() {
+      Json::Array(ref xs) => xs.iter().map(|j| {
+        let obj = j.as_object().unwrap();
+        obj.get("Untagged").map(|sha| Status::Untagged(sha.as_string().unwrap().to_string()))
+           .or(obj.get("Deleted").map(|sha| Status::Deleted(sha.as_string().unwrap().to_string())))
+           .unwrap()
+      }),
+      _ => unreachable!("")
+    }.collect())
   }
 }
 
