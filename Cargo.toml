@@ -11,11 +11,11 @@ keywords = ["docker", "unix", "containers", "hyper"]
 license = "MIT"
 
 [dependencies]
-mime = "0.0.10"
+mime = "0.0.11"
 httparse = "0.1.1"
-hyper = "0.3.14"
+hyper = "0.3.16"
 jed = "0.1.0"
 openssl = "0.6.1"
 unix_socket = "0.3.2"
 url = "0.2.31"
-rustc-serialize = "0.3.13"
+rustc-serialize = "0.3.14"
