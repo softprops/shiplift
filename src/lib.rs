@@ -1,4 +1,4 @@
-//! Shiplift is a multi-transport for utility for maneuvering [docker](https://www.docker.com/) containers
+//! Shiplift is a multi-transport utility for maneuvering [docker](https://www.docker.com/) containers
 //!
 //! # examples
 //!
@@ -226,6 +226,8 @@ impl<'a> Containers<'a> {
 
 // https://docs.docker.com/reference/api/docker_remote_api_v1.17/
 impl Docker {
+  /// constructs a new Docker instance for a docker host listening at a url specified by an env var `DOCKER_HOST`,
+  /// falling back on unix:///var/run/docker.sock
   pub fn new() -> Docker {
     let fallback: std::result::Result<String, VarError> = Ok("unix:///var/run/docker.sock".to_string());
     let host = env::var("DOCKER_HOST")
@@ -234,6 +236,11 @@ impl Docker {
              .expect("invalid url"))
          .ok()
          .expect("expected host");
+    Docker::host(host)
+  }
+
+  /// constructs a new Docker instance for docker host listening at the given host url
+  pub fn host(host: Url) -> Docker {
     let domain = match host.scheme_data {
         SchemeData::NonRelative(s) => s,
         SchemeData::Relative(RelativeSchemeData { host: host, .. }) => 
