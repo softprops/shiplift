@@ -10,7 +10,7 @@ Find them [here](https://softprops.github.io/shiplift)
 
 ## usage
 
-### communicating with host
+### communicating with hosts
 
 To use shiplift you must first have a running docker daemon readily accessible. Typically this daemon
 is reachable via url identified by an env named `DOCKER_HOST`. If you are using osx, boot2docker typically 
