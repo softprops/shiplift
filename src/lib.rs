@@ -24,7 +24,7 @@ pub mod builder;
 pub mod rep;
 pub mod transport;
 
-use builder::ContainerBuilder;
+use builder::{ ContainerBuilder, Events };
 use hyper::{ Client, Url };
 use hyper::method::Method;
 use openssl::x509::X509FileType;
@@ -56,21 +56,24 @@ pub struct Image<'a, 'b> {
 }
 
 impl<'a, 'b> Image<'a, 'b> {
+  /// Exports an interface for operations that may be performed against a named image
   pub fn new(docker: &'a mut Docker, name: &'b str) -> Image<'a, 'b> {
     Image { docker: docker, name: name }
   }
 
+  /// Inspects a named image's details
   pub fn inspect(self) -> Result<ImageDetails> {
     let raw = try!(self.docker.get(&format!("/images/{}/json", self.name)[..]));
     Ok(json::decode::<ImageDetails>(&raw).unwrap())
   }
 
+  /// Lists the history of the images set of changes
   pub fn history(self) -> Result<Vec<History>> {
     let raw = try!(self.docker.get(&format!("/images/{}/history", self.name)[..]));
     Ok(json::decode::<Vec<History>>(&raw).unwrap())
   }
 
-  // todo: rep Untagged, Deleted stream
+  /// Delete's an image
   pub fn delete(self) -> Result<Vec<Status>> {
     let raw = try!(self.docker.delete(&format!("/images/{}", self.name)[..]));
     Ok(match Json::from_str(&raw).unwrap() {
@@ -91,24 +94,29 @@ pub struct Images<'a> {
 }
 
 impl<'a> Images<'a> {
+  /// Exports an interface for interacting with docker images
   pub fn new(docker: &'a mut Docker) -> Images<'a> {
     Images { docker: docker }
   }
   
+  /// Lists the docker images on the current docker host
   pub fn list(self) -> Result<Vec<ImageRep>> {
     let raw = try!(self.docker.get("/images/json"));
     Ok(json::decode::<Vec<ImageRep>>(&raw).unwrap())
   }
 
+  /// Returns a reference to a set of operations available for a named image
   pub fn get(&'a mut self, name: &'a str) -> Image {
     Image::new(self.docker, name)
   }
 
+  /// Search for docker images by term
   pub fn search(self, term: &str) -> Result<Vec<SearchResult>> {
     let raw = try!(self.docker.get(&format!("/images/search?term={}", term)[..]));
     Ok(json::decode::<Vec<SearchResult>>(&raw).unwrap())
   }
 
+  /// Create a new docker images from an existing image
   pub fn create(self, from: &str) -> Result<Box<Read>> {
     self.docker.stream_post(&format!("/images/create?fromImage={}", from)[..])
   }
@@ -121,20 +129,24 @@ pub struct Container<'a, 'b> {
 }
 
 impl<'a, 'b> Container<'a, 'b> {
+  /// Exports an interface exposing operations against a container instance
   pub fn new(docker: &'a mut Docker, id: &'b str) -> Container<'a, 'b> {
     Container { docker: docker, id: id }
   }
 
+  /// Inspects the current docker container instance's details
   pub fn inspect(self) -> Result<ContainerDetails> {
     let raw = try!(self.docker.get(&format!("/containers/{}/json", self.id)[..]));
     Ok(json::decode::<ContainerDetails>(&raw).unwrap())
   }
 
+  /// Returns a `top` view of information about the container process
   pub fn top(self) -> Result<Top> {
     let raw = try!(self.docker.get(&format!("/containers/{}/top", self.id)[..]));
     Ok(json::decode::<Top>(&raw).unwrap())
   }
 
+  /// Returns a stream of logs emitted but the container instance
   pub fn logs(self) -> Result<Box<Read>> {
     let query = format!(
       "follow={}&stdout={}&stderr={}&timestamps={}&tail={}",
@@ -142,15 +154,18 @@ impl<'a, 'b> Container<'a, 'b> {
     self.docker.stream_get(&format!("/containers/{}/logs?{}", self.id, query)[..])
   }
 
+  /// Returns a set of changes made to the container instance
   pub fn changes(self) -> Result<Vec<Change>> {
     let raw = try!(self.docker.get(&format!("/containers/{}/changes", self.id)[..]));
     Ok(json::decode::<Vec<Change>>(&raw).unwrap())
   }
 
+  /// Exports the current docker container
   pub fn export(self) -> Result<Box<Read>> {
     self.docker.stream_get(&format!("/containers/{}/export", self.id)[..])
   }
 
+  /// Returns a stream of stats specific to this container instance
   pub fn stats(self) -> Result<Box<Iterator<Item=Stats>>> {
     let raw = try!(self.docker.stream_get(&format!("/containers/{}/stats", self.id)[..]));
     let it = jed::Iter::new(raw).into_iter().map(|j| {
@@ -160,39 +175,49 @@ impl<'a, 'b> Container<'a, 'b> {
     Ok(Box::new(it))
   }
 
+  /// Start the container instance
   pub fn start(self) -> Result<()> {
     self.docker.post(&format!("/containers/{}/start", self.id)[..], None).map(|_| ())
   }
 
+  /// Stop the container instance
   pub fn stop(self) -> Result<()> {
     self.docker.post(&format!("/containers/{}/stop", self.id)[..], None).map(|_| ())
   }
 
+
+  /// Restart the container instance
   pub fn restart(self) -> Result<()> {
     self.docker.post(&format!("/containers/{}/restart", self.id)[..], None).map(|_| ())
   }
 
+  /// Kill the container instance
   pub fn kill(self) -> Result<()> {
     self.docker.post(&format!("/containers/{}/kill", self.id)[..], None).map(|_| ())
   }
 
+  /// Rename the container instance
   pub fn rename(self, name: &str) -> Result<()> {
     self.docker.post(&format!("/containers/{}/rename?name={}", self.id, name)[..], None).map(|_| ())
   }
 
+  /// Pause the container instance
   pub fn pause(self) -> Result<()> {
     self.docker.post(&format!("/containers/{}/pause", self.id)[..], None).map(|_| ())
   }
 
+  /// Unpause the container instance
   pub fn unpause(self) -> Result<()> {
     self.docker.post(&format!("/containers/{}/unpause", self.id)[..], None).map(|_| ())
   }
 
+  /// Wait until the container stops
   pub fn wait(self) -> Result<Exit> {
     let raw = try!(self.docker.post(&format!("/containers/{}/wait", self.id)[..], None));
     Ok(json::decode::<Exit>(&raw).unwrap())
   }
 
+  /// Delete the container instance
   pub fn delete(self) -> Result<()> {
     self.docker.delete(&format!("/containers/{}", self.id)[..]).map(|_| ())
   }
@@ -206,19 +231,23 @@ pub struct Containers<'a> {
 }
 
 impl<'a> Containers<'a> {
+  /// Exports an interface for interacting with docker containers
   pub fn new(docker: &'a mut Docker) -> Containers<'a> {
     Containers { docker: docker }
   }
   
+  /// Lists the container instances on the docker host
   pub fn list(self) -> Result<Vec<ContainerRep>> {
     let raw = try!(self.docker.get("/containers/json"));
     Ok(json::decode::<Vec<ContainerRep>>(&raw).unwrap())
   }
 
+  /// Returns a reference to a set of operations available to a specific container instance
   pub fn get(&'a mut self, name: &'a str) -> Container {
     Container::new(self.docker, name)
   }
 
+  /// Returns a builder interface for creating a new container instance
   pub fn create(&'a mut self, image: &'a str) -> ContainerBuilder {
     ContainerBuilder::new(self.docker, image)
   }
@@ -283,35 +312,36 @@ impl Docker {
     }
   }
 
+  /// Exports an interface for interacting with docker images
   pub fn images<'a>(&'a mut self) -> Images {
     Images::new(self)
   }
 
+  /// Exports an interface for interacting with docker containers
   pub fn containers<'a>(&'a mut self) -> Containers {
     Containers::new(self)
   }
 
+  /// Returns version information associated with the docker daemon
   pub fn version(&mut self) -> Result<Version> {
     let raw = try!(self.get("/version"));
     Ok(json::decode::<Version>(&raw).unwrap())
   }
 
+  /// Returns information associated with the docker daemon
   pub fn info(&mut self) -> Result<Info> {
     let raw = try!(self.get("/info"));
     Ok(json::decode::<Info>(&raw).unwrap())
   }
 
+  /// Returns a simple ping response indicating the docker daemon is accessible
   pub fn ping(&mut self) -> Result<String> {
     self.get("/_ping")
   }
 
-  pub fn events(&mut self) -> Result<Box<Iterator<Item=Event>>> {
-    let raw = try!(self.stream_get("/events?since=1374067924"));
-    let it = jed::Iter::new(raw).into_iter().map(|j| {
-     let s = json::encode(&j).unwrap();
-     json::decode::<Event>(&s).unwrap()
-    });
-    Ok(Box::new(it))
+  /// Retruns a stream of events ocurring on the current docker host
+  pub fn events(&mut self) -> Events {
+    Events::new(self)
   }
  
   fn get(&mut self, endpoint: &str) -> Result<String> {
