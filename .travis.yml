@@ -1,4 +1,10 @@
 language: rust
+matrix:
+  fast_finish: true
+  include:
+    - rust: nightly
+    - rust: beta
+    - rust: stable
 script:
 - cargo build
 - cargo doc --no-deps
