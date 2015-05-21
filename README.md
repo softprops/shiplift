@@ -35,13 +35,129 @@ let docker = Docker::host(Url::parse("http://yourhost").unwrap());
 
 ### images
 
-If you are interacting with docker containers, chances are you will also need to interact with docker image information.
+If you are interacting with docker containers, chances are you will also need to interact with docker image information. You can interact docker images with `docker.images()`.
 
-todoc
+```rust
+extern crate shiplift;
+
+use shiplift::Docker;
+
+let mut docker = Docker.new();
+let mut images = docker.images();
+```
+
+#### list host-local images
+
+```rust
+for i in images.list().unwrap() {
+  println!("-> {:?}", i);
+}
+```
+
+#### find remote images
+
+```rust
+for i in image.search("rust").unwrap() {
+  println!("- {:?}", i);
+}
+```
+
+#### creating new images from existing image
+
+todo
+
+#### accessing image info
+
+```rust
+let mut img = images.get("imagename");
+```
+
+##### inspecting image info
+
+```rust
+println!("- {:?}", img.inspect().unwrap());
+```
+
+##### getting image history
+
+```rust
+for h in img.history().unwrap() {
+  println!("- {:?}", h);
+}
+```
+
+###### deleting image
+
+```rust
+println!("- {:?}", img.delete().unwrap());
+```
 
 ### containers
 
-todoc
+Containers are instances of images. To gain access to this interface use `docker.containers()`
+
+```rust
+extern crate shiplift;
+
+use shiplift::Docker;
+
+let mut docker = Docker.new();
+let mut containers = docker.containers();
+```
+
+#### listing host local containers
+
+```rust
+for c in contains.list().unwrap() {
+  println!("- {:?}", c);
+}
+```
+
+#### get a container reference
+
+```rust
+let mut container = containers.get("containerid");
+```
+
+#### inspect container details
+
+```rust
+println!("- {:?}", container.inspect());
+```
+
+#### access `top` info
+
+```rust
+println!("- {:?}", container.top().unwrap());
+```
+
+#### view container logs
+
+(todoc)
+
+#### view a list of container changes
+
+```rust
+for c in container.changes().unwrap() {
+  println!("- {:?}", c);
+}
+```
+
+#### stream container stats
+
+```rust
+for stats in container.stats().unwrap() {
+  println!("- {:?}", stats);
+}
+```
+
+### stop, start, restart container
+
+```rust
+container.stop();
+container.start();
+container.restart();
+```
 
 ### misc
 
