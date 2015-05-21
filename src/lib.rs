@@ -258,13 +258,14 @@ impl Docker {
   /// constructs a new Docker instance for a docker host listening at a url specified by an env var `DOCKER_HOST`,
   /// falling back on unix:///var/run/docker.sock
   pub fn new() -> Docker {
-    let fallback: std::result::Result<String, VarError> = Ok("unix:///var/run/docker.sock".to_string());
+    let fallback: std::result::Result<String, VarError> =
+      Ok("unix:///var/run/docker.sock".to_string());
     let host = env::var("DOCKER_HOST")
         .or(fallback)
         .map(|h| Url::parse(&h).ok()
              .expect("invalid url"))
-         .ok()
-         .expect("expected host");
+        .ok()
+        .expect("expected host");
     Docker::host(host)
   }
 
