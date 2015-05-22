@@ -86,7 +86,7 @@ impl<'a,'b,'c> Events<'a,'b,'c> {
       params.push(format!("until={}", u));
     }
     let mut path = vec!("/events".to_string());
-    if (!params.is_empty()) {
+    if !params.is_empty() {
       path.push(params.connect("&"))
     }
     let raw = try!(self.docker.stream_get(&path.connect("?")[..]));
