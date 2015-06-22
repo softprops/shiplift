@@ -1,5 +1,7 @@
 //! Rust representations of docker json structures
 
+use std::collections::HashMap;
+
 #[derive(Debug, RustcEncodable, RustcDecodable)]
 pub struct SearchResult {
   pub description: String,
@@ -35,7 +37,7 @@ pub struct ImageDetails {
   pub Os: String,
   pub Parent: String,
   pub Size: u64,
-  pub VirtualSize: u64  
+  pub VirtualSize: u64
 }
 
 #[derive(Debug, RustcEncodable, RustcDecodable)]
@@ -95,7 +97,7 @@ pub struct Config {
   CpuShares: u64,
   Cpuset: String,
   Domainname: String,
-  Entrypoint: Vec<String>,
+  Entrypoint: Option<Vec<String>>,
   Env: Vec<String>,
   //ExposedPorts
   Hostname: String,
@@ -113,6 +115,17 @@ pub struct Config {
   User: String,
   //Volumes: ??,
   WorkingDir: String
+}
+
+impl Config {
+  pub fn env(&self) -> HashMap<String, String> {
+    let mut map = HashMap::new();
+    for e in self.Env.clone() {
+      let pair: Vec<&str> = e.split("=").collect();
+      map.insert(pair[0].to_owned(), pair[1].to_owned());
+    }
+    map
+  }
 }
 
 #[derive(Debug, RustcEncodable, RustcDecodable)]
