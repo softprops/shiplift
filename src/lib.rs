@@ -86,6 +86,11 @@ impl<'a, 'b> Image<'a, 'b> {
       _ => unreachable!("")
     }.collect())
   }
+
+  /// Export this image to a tarball
+  pub fn export(self) -> Result<Box<Read>> {
+    self.docker.stream_get(&format!("/images/{}/get", self.name)[..])
+  }
 }
 
 /// Interface for docker images
@@ -119,6 +124,16 @@ impl<'a> Images<'a> {
   /// Create a new docker images from an existing image
   pub fn create(self, from: &str) -> Result<Box<Read>> {
     self.docker.stream_post(&format!("/images/create?fromImage={}", from)[..])
+  }
+
+  /// exports a collection of named images,
+  /// either by name, name:tag, or image id, into a tarball
+  pub fn export(self, names: Vec<&str>) -> Result<Box<Read>> {
+    let query = names.iter()
+      .map(|n| format!("names={}", n))
+      .collect::<Vec<String>>()
+      .connect("&");
+    self.docker.stream_get(&format!("/images/get?{}", query)[..])
   }
 }
 
@@ -160,7 +175,7 @@ impl<'a, 'b> Container<'a, 'b> {
     Ok(json::decode::<Vec<Change>>(&raw).unwrap())
   }
 
-  /// Exports the current docker container
+  /// Exports the current docker container into a tarball
   pub fn export(self) -> Result<Box<Read>> {
     self.docker.stream_get(&format!("/containers/{}/export", self.id)[..])
   }
