@@ -98,7 +98,7 @@ impl<'a> Images<'a> {
   pub fn new(docker: &'a mut Docker) -> Images<'a> {
     Images { docker: docker }
   }
-  
+
   /// Lists the docker images on the current docker host
   pub fn list(self) -> Result<Vec<ImageRep>> {
     let raw = try!(self.docker.get("/images/json"));
@@ -235,7 +235,7 @@ impl<'a> Containers<'a> {
   pub fn new(docker: &'a mut Docker) -> Containers<'a> {
     Containers { docker: docker }
   }
-  
+
   /// Lists the container instances on the docker host
   pub fn list(self) -> Result<Vec<ContainerRep>> {
     let raw = try!(self.docker.get("/containers/json"));
@@ -273,7 +273,7 @@ impl Docker {
   pub fn host(host: Url) -> Docker {
     let domain = match host.scheme_data {
         SchemeData::NonRelative(s) => s,
-        SchemeData::Relative(RelativeSchemeData { host: host, .. }) => 
+        SchemeData::Relative(RelativeSchemeData { host: host, .. }) =>
           match host {
               Host::Domain(s) => s,
               Host::Ipv6(a)   => a.to_string()
@@ -344,7 +344,7 @@ impl Docker {
   pub fn events(&mut self) -> Events {
     Events::new(self)
   }
- 
+
   fn get(&mut self, endpoint: &str) -> Result<String> {
     (*self.transport).request(Method::Get, endpoint, None)
   }
