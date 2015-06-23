@@ -93,12 +93,12 @@ pub struct Config {
   AttachStderr: bool,
   AttachStdin: bool,
   AttachStdout: bool,
-  Cmd: Vec<String>,
+  Cmd: Option<Vec<String>>,
   CpuShares: u64,
   Cpuset: String,
   Domainname: String,
   Entrypoint: Option<Vec<String>>,
-  Env: Vec<String>,
+  Env: Option<Vec<String>>,
   //ExposedPorts
   Hostname: String,
   Image: String,
@@ -120,10 +120,15 @@ pub struct Config {
 impl Config {
   pub fn env(&self) -> HashMap<String, String> {
     let mut map = HashMap::new();
-    for e in self.Env.clone() {
-      let pair: Vec<&str> = e.split("=").collect();
-      map.insert(pair[0].to_owned(), pair[1].to_owned());
-    }
+    match self.Env {
+      Some(ref vars) => {
+        for e in vars {
+          let pair: Vec<&str> = e.split("=").collect();
+          map.insert(pair[0].to_owned(), pair[1].to_owned());
+        }
+      },
+      _ => ()
+    };
     map
   }
 }
