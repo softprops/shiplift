@@ -24,14 +24,13 @@ pub mod builder;
 pub mod rep;
 pub mod transport;
 
-use builder::{ ContainerBuilder, Events };
+use builder::{ ContainerBuilder, ContainerListBuilder, Events };
 use hyper::{ Client, Url };
 use hyper::method::Method;
 use openssl::x509::X509FileType;
 use rep::Image as ImageRep;
-use rep::Container as ContainerRep;
 use rep::{
-  Change, ContainerDetails, Event, Exit, History,
+  Change, ContainerDetails, Exit, History,
   ImageDetails, Info, SearchResult, Stats, Status,
   Top, Version
 };
@@ -135,6 +134,10 @@ impl<'a> Images<'a> {
       .connect("&");
     self.docker.stream_get(&format!("/images/get?{}", query)[..])
   }
+
+  //pub fn import(self, tarball: Box<Read>) -> Result<()> {
+  //  self.docker.post
+  //}
 }
 
 /// Interface for accessing and manipulating a docker container
@@ -200,7 +203,6 @@ impl<'a, 'b> Container<'a, 'b> {
     self.docker.post(&format!("/containers/{}/stop", self.id)[..], None).map(|_| ())
   }
 
-
   /// Restart the container instance
   pub fn restart(self) -> Result<()> {
     self.docker.post(&format!("/containers/{}/restart", self.id)[..], None).map(|_| ())
@@ -252,9 +254,8 @@ impl<'a> Containers<'a> {
   }
 
   /// Lists the container instances on the docker host
-  pub fn list(self) -> Result<Vec<ContainerRep>> {
-    let raw = try!(self.docker.get("/containers/json"));
-    Ok(json::decode::<Vec<ContainerRep>>(&raw).unwrap())
+  pub fn list(self) -> ContainerListBuilder<'a> {
+    ContainerListBuilder::new(self.docker)
   }
 
   /// Returns a reference to a set of operations available to a specific container instance

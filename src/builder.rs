@@ -7,9 +7,58 @@ extern crate url;
 use self::super::Docker;
 use self::super::transport::Body;
 use self::super::rep::{ ContainerCreateInfo, Event };
-use std::collections::BTreeMap;
+use self::super::rep::Container as ContainerRep;
+use std::collections::{ BTreeMap, HashMap };
 use std::io::Result;
 use rustc_serialize::json::{self, Json, ToJson};
+
+/// Interface for building container list request
+pub struct ContainerListBuilder<'a> {
+  docker: &'a mut Docker,
+  params: HashMap<&'static str, String>
+}
+
+impl<'a> ContainerListBuilder<'a> {
+  pub fn new(docker: &'a mut Docker) -> ContainerListBuilder<'a> {
+    ContainerListBuilder {
+      docker: docker,
+      params: HashMap::new()
+    }
+  }
+
+  pub fn all(mut self) -> ContainerListBuilder<'a> {
+    self.params.insert("all", "true".to_owned());
+    self
+  }
+
+  pub fn since(mut self, since: &str) -> ContainerListBuilder<'a> {
+    self.params.insert("since", since.to_owned());
+    self
+  }
+
+  pub fn before(mut self, before: &str) -> ContainerListBuilder<'a> {
+    self.params.insert("before", before.to_owned());
+    self
+  }
+
+  pub fn sized(mut self) -> ContainerListBuilder<'a> {
+    self.params.insert("size", "true".to_owned());
+    self
+  }
+
+  pub fn get(self) -> Result<Vec<ContainerRep>> {
+    let mut params = Vec::new();
+    for (k, v) in self.params {
+      params.push(format!("{}={}", k, v))
+    }
+    let mut path = vec!["/containers/json".to_owned()];
+    if !params.is_empty() {
+      path.push(params.connect("&"))
+    }
+    let raw = try!(self.docker.get(&path.connect("?")));
+    Ok(json::decode::<Vec<ContainerRep>>(&raw).unwrap())
+  }
+}
 
 /// Interface for building a new docker container from an existing image
 pub struct ContainerBuilder<'a, 'b> {
@@ -29,18 +78,18 @@ impl<'a, 'b> ContainerBuilder<'a, 'b> {
     }
   }
   pub fn hostname(mut self, h: &str) -> ContainerBuilder<'a,'b> {
-    self.hostname = Some(h.to_string());
+    self.hostname = Some(h.to_owned());
     self
   }
 
   pub fn user(mut self, u: &str) -> ContainerBuilder<'a, 'b> {
-    self.user = Some(u.to_string());
+    self.user = Some(u.to_owned());
     self
   }
 
   pub fn build(self) -> Result<ContainerCreateInfo> {
     let mut body = BTreeMap::new();
-    body.insert("Image".to_string(), self.image.to_json());
+    body.insert("Image".to_owned(), self.image.to_json());
     let json_obj: Json = body.to_json();
     let data = json::encode(&json_obj).unwrap();
     let mut bytes = data.as_bytes();
@@ -85,7 +134,7 @@ impl<'a,'b,'c> Events<'a,'b,'c> {
     if let Some(u) = self.until {
       params.push(format!("until={}", u));
     }
-    let mut path = vec!("/events".to_string());
+    let mut path = vec!["/events".to_owned()];
     if !params.is_empty() {
       path.push(params.connect("&"))
     }
