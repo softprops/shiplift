@@ -26,8 +26,11 @@ pub mod transport;
 
 use builder::{ ContainerBuilder, ContainerListBuilder, Events };
 use hyper::{ Client, Url };
+use hyper::net::{ HttpsConnector, Openssl };
 use hyper::method::Method;
 use openssl::x509::X509FileType;
+use openssl::ssl::error::SslError;
+use openssl::ssl::{ SslContext, SslMethod, SSL_VERIFY_NONE };
 use rep::Image as ImageRep;
 use rep::{
   Change, ContainerDetails, Exit, History,
@@ -39,6 +42,7 @@ use std::env::{ self, VarError };
 use std::io::{ Read, Result };
 use std::iter::IntoIterator;
 use std::path::Path;
+use std::sync::Arc;
 use transport::{ Body, Transport };
 use unix_socket::UnixStream;
 use url::{ Host, RelativeSchemeData, SchemeData };
@@ -304,25 +308,24 @@ impl Docker {
           };
         Docker { transport: Box::new(stream) }
       },
-          _  => {
-        let mut client = Client::new();
-        client.set_ssl_verifier(Box::new(|ssl_ctx| {
-          match env::var("DOCKER_CERT_PATH").ok() {
-            Some(ref certs) => {
-              let cert = &format!("{}/cert.pem", certs);
-              let key = &format!("{}/key.pem", certs);
-              ssl_ctx.set_certificate_file(&Path::new(cert), X509FileType::PEM);
-              ssl_ctx.set_private_key_file(&Path::new(key), X509FileType::PEM);
-              match env::var("DOCKER_TLS_VERIFY").ok() {
-                Some(_) => {
-                  let ca = &format!("{}/ca.pem", certs);
-                  ssl_ctx.set_CA_file(&Path::new(ca));
-                }, _ => ()
-              };
-              ()
-            },  _ => ()
-          }
-        }));
+      _  => {
+        let client = if let Some(ref certs) = env::var("DOCKER_CERT_PATH").ok() {
+          // fixme: don't unwrap before you know what's in the box
+          // https://github.com/hyperium/hyper/blob/master/src/net.rs#L427-L428
+          let mut ssl_ctx = SslContext::new(SslMethod::Sslv23).unwrap();
+          ssl_ctx.set_cipher_list("DEFAULT").unwrap();
+          let cert = &format!("{}/cert.pem", certs);
+          let key  = &format!("{}/key.pem", certs);
+          let _    = ssl_ctx.set_certificate_file(&Path::new(cert), X509FileType::PEM);
+          let _    = ssl_ctx.set_private_key_file(&Path::new(key), X509FileType::PEM);
+          if let Some(_) = env::var("DOCKER_TLS_VERIFY").ok() {
+            let ca = &format!("{}/ca.pem", certs);
+            let _  = ssl_ctx.set_CA_file(&Path::new(ca));
+          };
+          Client::with_connector(HttpsConnector::new(Openssl { context: Arc::new(ssl_ctx) }))
+        } else {
+          Client::new()
+        };
         let tup = (client, format!("https:{}", domain.to_string()));
         Docker { transport: Box::new(tup) }
       }
