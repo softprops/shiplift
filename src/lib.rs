@@ -2,11 +2,11 @@
 //!
 //! # examples
 //!
-//! ```
+//! ```no_run
 //! extern crate shiplift;
 //!
 //! let mut docker = shiplift::Docker::new();
-//! let mut images = docker.images().list().unwrap();
+//! let images = docker.images().list().unwrap();
 //! println!("docker images in stock");
 //! for i in images {
 //!   println!("{:?}", i.RepoTags);
@@ -29,8 +29,7 @@ use hyper::{ Client, Url };
 use hyper::net::{ HttpsConnector, Openssl };
 use hyper::method::Method;
 use openssl::x509::X509FileType;
-use openssl::ssl::error::SslError;
-use openssl::ssl::{ SslContext, SslMethod, SSL_VERIFY_NONE };
+use openssl::ssl::{ SslContext, SslMethod };
 use rep::Image as ImageRep;
 use rep::{
   Change, ContainerDetails, Exit, History,
@@ -135,7 +134,7 @@ impl<'a> Images<'a> {
     let query = names.iter()
       .map(|n| format!("names={}", n))
       .collect::<Vec<String>>()
-      .connect("&");
+      .join("&");
     self.docker.stream_get(&format!("/images/get?{}", query)[..])
   }
 

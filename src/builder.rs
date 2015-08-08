@@ -53,9 +53,9 @@ impl<'a> ContainerListBuilder<'a> {
     }
     let mut path = vec!["/containers/json".to_owned()];
     if !params.is_empty() {
-      path.push(params.connect("&"))
+      path.push(params.join("&"))
     }
-    let raw = try!(self.docker.get(&path.connect("?")));
+    let raw = try!(self.docker.get(&path.join("?")));
     Ok(json::decode::<Vec<ContainerRep>>(&raw).unwrap())
   }
 }
@@ -136,9 +136,9 @@ impl<'a,'b,'c> Events<'a,'b,'c> {
     }
     let mut path = vec!["/events".to_owned()];
     if !params.is_empty() {
-      path.push(params.connect("&"))
+      path.push(params.join("&"))
     }
-    let raw = try!(self.docker.stream_get(&path.connect("?")[..]));
+    let raw = try!(self.docker.stream_get(&path.join("?")[..]));
     let it = jed::Iter::new(raw).into_iter().map(|j| {
      let s = json::encode(&j).unwrap();
      json::decode::<Event>(&s).unwrap()
