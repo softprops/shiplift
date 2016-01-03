@@ -26,9 +26,9 @@ pub mod transport;
 pub mod errors;
 
 pub use errors::Error;
-pub use builder::ContainerFilter;
+pub use builder::{ContainerListOptions, ContainerFilter, EventsOptions};
 
-use builder::{ContainerBuilder, ContainerListBuilder, EventsBuilder};
+use builder::ContainerBuilder;
 use hyper::{Client, Url};
 use hyper::net::{HttpsConnector, Openssl};
 use hyper::method::Method;
@@ -36,7 +36,7 @@ use hyperlocal::UnixSocketConnector;
 use openssl::x509::X509FileType;
 use openssl::ssl::{SslContext, SslMethod};
 use rep::Image as ImageRep;
-use rep::{Change, ContainerDetails, Exit, History, ImageDetails, Info, SearchResult, Stats,
+use rep::{Change, ContainerDetails, Container as ContainerRep, Event, Exit, History, ImageDetails, Info, SearchResult, Stats,
           Status, Top, Version};
 use rustc_serialize::json::{self, Json};
 use std::env::{self, VarError};
@@ -283,8 +283,13 @@ impl<'a> Containers<'a> {
     }
 
     /// Lists the container instances on the docker host
-    pub fn list(&self) -> ContainerListBuilder<'a> {
-        ContainerListBuilder::new(self.docker)
+    pub fn list(&self, opts: &ContainerListOptions) -> Result<Vec<ContainerRep>> {
+        let mut path = vec!["/containers/json".to_owned()];
+        if let Some(query) = opts.serialize() {
+            path.push(query)
+        }
+        let raw = try!(self.docker.get(&path.join("?")));
+        Ok(try!(json::decode::<Vec<ContainerRep>>(&raw)))
     }
 
     /// Returns a reference to a set of operations available to a specific container instance
@@ -395,9 +400,19 @@ impl Docker {
         self.get("/_ping")
     }
 
-    /// Retruns a stream of events ocurring on the current docker host
-    pub fn events(&self) -> EventsBuilder {
-        EventsBuilder::new(self)
+    /// Returns an interator over streamed docker events
+    pub fn events(&self, opts: &EventsOptions) -> Result<Box<Iterator<Item = Event>>> {
+        let mut path = vec!["/events".to_owned()];
+        if let Some(query) = opts.serialize() {
+            path.push(query);
+        }
+        let raw = try!(self.stream_get(&path.join("?")[..]));
+        let it = jed::Iter::new(raw).into_iter().map(|j| {
+            // fixme: better error handling
+            let s = json::encode(&j).unwrap();
+            json::decode::<Event>(&s).unwrap()
+        });
+        Ok(Box::new(it))
     }
 
     fn get(&self, endpoint: &str) -> Result<String> {

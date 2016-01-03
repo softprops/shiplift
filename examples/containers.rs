@@ -1,15 +1,11 @@
 extern crate shiplift;
 
-use shiplift::{ContainerFilter, Docker};
+use shiplift::Docker;
 
 fn main() {
     let docker = Docker::new();
     for c in docker.containers().
-        list()
-        .sized()
-        .filter(vec![
-            ContainerFilter::Label("foo".to_owned(), "bar".to_owned())
-                ]).build().unwrap() {
+        list(&Default::default()).unwrap() {
         println!("container -> {:?}", c)
     }
 }
