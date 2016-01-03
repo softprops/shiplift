@@ -13,8 +13,8 @@ Find them [here](https://softprops.github.io/shiplift)
 ### communicating with hosts
 
 To use shiplift you must first have a running docker daemon readily accessible. Typically this daemon
-is reachable via url identified by an env named `DOCKER_HOST`. If you are using osx, boot2docker typically 
-will have already set up every thing you need to get started.
+is reachable via url identified by an env named `DOCKER_HOST`. If you are using osx, [docker-machine](https://docs.docker.com/machine/) typically
+will have already set up every thing you need to get started when you run `docker-machine env {envid}`
 
 ```rust
 extern crate shiplift;
