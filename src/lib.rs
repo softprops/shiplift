@@ -23,7 +23,9 @@ extern crate url;
 pub mod builder;
 pub mod rep;
 pub mod transport;
+pub mod errors;
 
+pub use errors::Error;
 use builder::{ContainerBuilder, ContainerListBuilder, EventsBuilder};
 use hyper::{Client, Url};
 use hyper::net::{HttpsConnector, Openssl};
@@ -36,12 +38,14 @@ use rep::{Change, ContainerDetails, Exit, History, ImageDetails, Info, SearchRes
           Status, Top, Version};
 use rustc_serialize::json::{self, Json};
 use std::env::{self, VarError};
-use std::io::{Read, Result};
+use std::io::Read;
 use std::iter::IntoIterator;
 use std::path::Path;
 use std::sync::Arc;
 use transport::{Body, Transport};
 use url::{form_urlencoded, Host, RelativeSchemeData, SchemeData};
+
+pub type Result<T> = std::result::Result<T, Error>;
 
 /// Entrypoint interface for communicating with docker daemon
 pub struct Docker {

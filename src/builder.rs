@@ -4,12 +4,11 @@ extern crate rustc_serialize;
 extern crate jed;
 extern crate url;
 
-use self::super::Docker;
+use self::super::{Docker, Result};
 use self::super::transport::Body;
 use self::super::rep::{ContainerCreateInfo, Event};
 use self::super::rep::Container as ContainerRep;
 use std::collections::{BTreeMap, HashMap};
-use std::io::Result;
 use rustc_serialize::json::{self, Json, ToJson};
 use url::form_urlencoded;
 

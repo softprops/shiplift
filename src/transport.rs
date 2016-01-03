@@ -5,28 +5,15 @@ extern crate mime;
 
 use hyper::Client;
 use hyper::client;
+use self::super::{Error, Result};
 use self::hyper::buffer::BufReader;
 use self::hyper::header::ContentType;
 use self::hyper::status::StatusCode;
 use hyper::method::Method;
-use self::mime::{Attr, Mime, Value};
-use self::mime::TopLevel::Application;
-use self::mime::SubLevel::Json;
 use std::fmt;
 use std::ops::DerefMut;
-use std::io::{Error, ErrorKind, Read, Result, Write};
+use std::io::{Read, Write};
 use hyperlocal::DomainUrl;
-
-fn lift_status_err(status: u16) -> Result<Box<Read>> {
-    match status {
-        400 => Err(Error::new(ErrorKind::InvalidInput, "bad parameter")),
-        404 => Err(Error::new(ErrorKind::InvalidInput, "not found")),
-        406 => Err(Error::new(ErrorKind::InvalidInput, "not acceptable")),
-        409 => Err(Error::new(ErrorKind::InvalidInput, "conflict found")),
-        500 => Err(Error::new(ErrorKind::InvalidInput, "interal server error")),
-        _ => unreachable!(),
-    }
-}
 
 /// Transports are types which define the means of communication
 /// with the docker daemon
@@ -63,7 +50,8 @@ impl Transport {
             Err(e) => panic!("failed request {:?}", e),
         };
         let mut body = String::new();
-        res.read_to_string(&mut body).map(|_| body)
+        try!(res.read_to_string(&mut body));
+        Ok(body)
     }
 
     pub fn stream(&self,
@@ -83,23 +71,22 @@ impl Transport {
         let embodied = match body {
             Some(Body { read: r, size: l }) => {
                 let reader: &mut Read = *r.deref_mut();
-                let content_type: Mime = Mime(Application,
-                                              Json,
-                                              vec![(Attr::Charset, Value::Utf8)]);
-                req.header(ContentType(content_type)).body(client::Body::SizedBody(reader, l))
+                req.header(ContentType::json()).body(client::Body::SizedBody(reader, l))
             }
             _ => req,
         };
-        let res = match embodied.send() {
-            Ok(r) => r,
-            Err(e) => panic!("failed request {:?}", e),
-        };
+        let res = try!(embodied.send());
         match res.status {
             StatusCode::Ok | StatusCode::Created | StatusCode::SwitchingProtocols => {
                 Ok(Box::new(res))
             }
             StatusCode::NoContent => Ok(Box::new(BufReader::new("".as_bytes()))),
-            status => lift_status_err(status.to_u16()),
+            StatusCode::BadRequest => Err(Error::Fault { code: res.status, message: "bad parameter".to_owned() }),
+            StatusCode::NotFound => Err(Error::Fault { code: res.status, message: "not found".to_owned() }),
+            StatusCode::NotAcceptable => Err(Error::Fault { code: res.status, message: "not acceptable".to_owned() }),
+            StatusCode::Conflict => Err(Error::Fault { code: res.status, message: "conflict found".to_owned() }),
+            StatusCode::InternalServerError => Err(Error::Fault{ code: res.status, message: "internal server error".to_owned() }),
+            _ => unreachable!()
         }
     }
 }
