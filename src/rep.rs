@@ -47,7 +47,7 @@ pub struct Container {
     pub Command: String,
     pub Id: String,
     pub Image: String,
-    // pub Labels: ???,
+    pub Labels: HashMap<String, String>,
     pub Names: Vec<String>,
     pub Ports: Vec<Port>,
     pub Status: String,

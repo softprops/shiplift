@@ -53,7 +53,7 @@ impl<'a> ContainerListBuilder<'a> {
             path.push(encoded)
         }
         let raw = try!(self.docker.get(&path.join("?")));
-        Ok(json::decode::<Vec<ContainerRep>>(&raw).unwrap())
+        Ok(try!(json::decode::<Vec<ContainerRep>>(&raw)))
     }
 }
 
@@ -91,12 +91,12 @@ impl<'a, 'b> ContainerBuilder<'a, 'b> {
         let mut body = BTreeMap::new();
         body.insert("Image".to_owned(), self.image.to_json());
         let json_obj: Json = body.to_json();
-        let data = json::encode(&json_obj).unwrap();
+        let data = try!(json::encode(&json_obj));
         let mut bytes = data.as_bytes();
         let raw = try!(self.docker.post("/containers/create",
                                         Some(Body::new(&mut Box::new(&mut bytes),
                                                        bytes.len() as u64))));
-        Ok(json::decode::<ContainerCreateInfo>(&raw).unwrap())
+        Ok(try!(json::decode::<ContainerCreateInfo>(&raw)))
     }
 }
 
@@ -144,6 +144,7 @@ impl<'a, 'b, 'c> EventsBuilder<'a, 'b, 'c> {
         }
         let raw = try!(self.docker.stream_get(&path.join("?")[..]));
         let it = jed::Iter::new(raw).into_iter().map(|j| {
+            // fixme: better error handling
             let s = json::encode(&j).unwrap();
             json::decode::<Event>(&s).unwrap()
         });

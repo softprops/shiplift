@@ -45,6 +45,7 @@ use std::sync::Arc;
 use transport::{Body, Transport};
 use url::{form_urlencoded, Host, RelativeSchemeData, SchemeData};
 
+/// Represents the result of all docker operations
 pub type Result<T> = std::result::Result<T, Error>;
 
 /// Entrypoint interface for communicating with docker daemon
@@ -70,30 +71,30 @@ impl<'a, 'b> Image<'a, 'b> {
     /// Inspects a named image's details
     pub fn inspect(self) -> Result<ImageDetails> {
         let raw = try!(self.docker.get(&format!("/images/{}/json", self.name)[..]));
-        Ok(json::decode::<ImageDetails>(&raw).unwrap())
+        Ok(try!(json::decode::<ImageDetails>(&raw)))
     }
 
     /// Lists the history of the images set of changes
     pub fn history(self) -> Result<Vec<History>> {
         let raw = try!(self.docker.get(&format!("/images/{}/history", self.name)[..]));
-        Ok(json::decode::<Vec<History>>(&raw).unwrap())
+        Ok(try!(json::decode::<Vec<History>>(&raw)))
     }
 
     /// Delete's an image
     pub fn delete(self) -> Result<Vec<Status>> {
         let raw = try!(self.docker.delete(&format!("/images/{}", self.name)[..]));
-        Ok(match Json::from_str(&raw).unwrap() {
+        Ok(match try!(Json::from_str(&raw)) {
                Json::Array(ref xs) => {
                    xs.iter().map(|j| {
-                       let obj = j.as_object().unwrap();
+                       let obj = j.as_object().expect("expected json object");
                        obj.get("Untagged")
-                          .map(|sha| Status::Untagged(sha.as_string().unwrap().to_owned()))
+                          .map(|sha| Status::Untagged(sha.as_string().expect("expected Untagged to be a string").to_owned()))
                           .or(obj.get("Deleted")
-                                 .map(|sha| Status::Deleted(sha.as_string().unwrap().to_owned())))
-                          .unwrap()
+                                 .map(|sha| Status::Deleted(sha.as_string().expect("expected Deleted to be a string").to_owned())))
+                          .expect("expected Untagged or Deleted")
                    })
                }
-               _ => unreachable!(""),
+               _ => unreachable!(),
            }
            .collect())
     }
@@ -118,7 +119,7 @@ impl<'a> Images<'a> {
     /// Lists the docker images on the current docker host
     pub fn list(self) -> Result<Vec<ImageRep>> {
         let raw = try!(self.docker.get("/images/json"));
-        Ok(json::decode::<Vec<ImageRep>>(&raw).unwrap())
+        Ok(try!(json::decode::<Vec<ImageRep>>(&raw)))
     }
 
     /// Returns a reference to a set of operations available for a named image
@@ -130,7 +131,7 @@ impl<'a> Images<'a> {
     pub fn search(self, term: &str) -> Result<Vec<SearchResult>> {
         let query = form_urlencoded::serialize(vec![("term", term)]);
         let raw = try!(self.docker.get(&format!("/images/search?{}", query)[..]));
-        Ok(json::decode::<Vec<SearchResult>>(&raw).unwrap())
+        Ok(try!(json::decode::<Vec<SearchResult>>(&raw)))
     }
 
     /// Create a new docker images from an existing image
@@ -172,13 +173,13 @@ impl<'a, 'b> Container<'a, 'b> {
     /// Inspects the current docker container instance's details
     pub fn inspect(self) -> Result<ContainerDetails> {
         let raw = try!(self.docker.get(&format!("/containers/{}/json", self.id)[..]));
-        Ok(json::decode::<ContainerDetails>(&raw).unwrap())
+        Ok(try!(json::decode::<ContainerDetails>(&raw)))
     }
 
     /// Returns a `top` view of information about the container process
     pub fn top(self) -> Result<Top> {
         let raw = try!(self.docker.get(&format!("/containers/{}/top", self.id)[..]));
-        Ok(json::decode::<Top>(&raw).unwrap())
+        Ok(try!(json::decode::<Top>(&raw)))
     }
 
     /// Returns a stream of logs emitted but the container instance
@@ -196,7 +197,7 @@ impl<'a, 'b> Container<'a, 'b> {
     /// Returns a set of changes made to the container instance
     pub fn changes(self) -> Result<Vec<Change>> {
         let raw = try!(self.docker.get(&format!("/containers/{}/changes", self.id)[..]));
-        Ok(json::decode::<Vec<Change>>(&raw).unwrap())
+        Ok(try!(json::decode::<Vec<Change>>(&raw)))
     }
 
     /// Exports the current docker container into a tarball
@@ -208,6 +209,7 @@ impl<'a, 'b> Container<'a, 'b> {
     pub fn stats(self) -> Result<Box<Iterator<Item = Stats>>> {
         let raw = try!(self.docker.stream_get(&format!("/containers/{}/stats", self.id)[..]));
         let it = jed::Iter::new(raw).into_iter().map(|j| {
+            // fixme: better error handling
             let s = json::encode(&j).unwrap();
             json::decode::<Stats>(&s).unwrap()
         });
@@ -256,7 +258,7 @@ impl<'a, 'b> Container<'a, 'b> {
     /// Wait until the container stops
     pub fn wait(self) -> Result<Exit> {
         let raw = try!(self.docker.post(&format!("/containers/{}/wait", self.id)[..], None));
-        Ok(json::decode::<Exit>(&raw).unwrap())
+        Ok(try!(json::decode::<Exit>(&raw)))
     }
 
     /// Delete the container instance
@@ -377,13 +379,13 @@ impl Docker {
     /// Returns version information associated with the docker daemon
     pub fn version(&self) -> Result<Version> {
         let raw = try!(self.get("/version"));
-        Ok(json::decode::<Version>(&raw).unwrap())
+        Ok(try!(json::decode::<Version>(&raw)))
     }
 
     /// Returns information associated with the docker daemon
     pub fn info(&self) -> Result<Info> {
         let raw = try!(self.get("/info"));
-        Ok(json::decode::<Info>(&raw).unwrap())
+        Ok(try!(json::decode::<Info>(&raw)))
     }
 
     /// Returns a simple ping response indicating the docker daemon is accessible
