@@ -41,7 +41,7 @@ use std::iter::IntoIterator;
 use std::path::Path;
 use std::sync::Arc;
 use transport::{Body, Transport};
-use url::{Host, RelativeSchemeData, SchemeData};
+use url::{form_urlencoded, Host, RelativeSchemeData, SchemeData};
 
 /// Entrypoint interface for communicating with docker daemon
 pub struct Docker {
@@ -124,22 +124,24 @@ impl<'a> Images<'a> {
 
     /// Search for docker images by term
     pub fn search(self, term: &str) -> Result<Vec<SearchResult>> {
-        let raw = try!(self.docker.get(&format!("/images/search?term={}", term)[..]));
+        let query = form_urlencoded::serialize(vec![("term", term)]);
+        let raw = try!(self.docker.get(&format!("/images/search?{}", query)[..]));
         Ok(json::decode::<Vec<SearchResult>>(&raw).unwrap())
     }
 
     /// Create a new docker images from an existing image
     pub fn create(self, from: &str) -> Result<Box<Read>> {
-        self.docker.stream_post(&format!("/images/create?fromImage={}", from)[..])
+        let query = form_urlencoded::serialize(vec![("fromImage", from)]);
+        self.docker.stream_post(&format!("/images/create?{}", query)[..])
     }
 
     /// exports a collection of named images,
     /// either by name, name:tag, or image id, into a tarball
     pub fn export(self, names: Vec<&str>) -> Result<Box<Read>> {
-        let query = names.iter()
-                         .map(|n| format!("names={}", n))
-                         .collect::<Vec<String>>()
-                         .join("&");
+        let params = names.iter()
+            .map(|n| ("names", *n))
+            .collect::<Vec<(&str, &str)>>();
+        let query = form_urlencoded::serialize(params);
         self.docker.stream_get(&format!("/images/get?{}", query)[..])
     }
 
@@ -177,12 +179,13 @@ impl<'a, 'b> Container<'a, 'b> {
 
     /// Returns a stream of logs emitted but the container instance
     pub fn logs(self) -> Result<Box<Read>> {
-        let query = format!("follow={}&stdout={}&stderr={}&timestamps={}&tail={}",
-                            true,
-                            true,
-                            true,
-                            true,
-                            "all");
+        let query = form_urlencoded::serialize(vec![
+            ("follow", true.to_string()),
+            ("stdout", true.to_string()),
+            ("stderr", true.to_string()),
+            ("timestamps", true.to_string()),
+            ("tail", "all".to_owned())
+            ]);
         self.docker.stream_get(&format!("/containers/{}/logs?{}", self.id, query)[..])
     }
 
@@ -202,7 +205,6 @@ impl<'a, 'b> Container<'a, 'b> {
         let raw = try!(self.docker.stream_get(&format!("/containers/{}/stats", self.id)[..]));
         let it = jed::Iter::new(raw).into_iter().map(|j| {
             let s = json::encode(&j).unwrap();
-            println!("stat -> {:?}", s);
             json::decode::<Stats>(&s).unwrap()
         });
         Ok(Box::new(it))
@@ -230,8 +232,9 @@ impl<'a, 'b> Container<'a, 'b> {
 
     /// Rename the container instance
     pub fn rename(self, name: &str) -> Result<()> {
+        let query = form_urlencoded::serialize(vec![("name", name)]);
         self.docker
-            .post(&format!("/containers/{}/rename?name={}", self.id, name)[..],
+            .post(&format!("/containers/{}/rename?{}", self.id, query)[..],
                   None)
             .map(|_| ())
     }

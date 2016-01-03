@@ -11,6 +11,7 @@ use self::super::rep::Container as ContainerRep;
 use std::collections::{BTreeMap, HashMap};
 use std::io::Result;
 use rustc_serialize::json::{self, Json, ToJson};
+use url::form_urlencoded;
 
 /// Interface for building container list request
 pub struct ContainerListBuilder<'a> {
@@ -47,13 +48,10 @@ impl<'a> ContainerListBuilder<'a> {
     }
 
     pub fn build(self) -> Result<Vec<ContainerRep>> {
-        let mut params = Vec::new();
-        for (k, v) in self.params {
-            params.push(format!("{}={}", k, v))
-        }
         let mut path = vec!["/containers/json".to_owned()];
-        if !params.is_empty() {
-            path.push(params.join("&"))
+        if !self.params.is_empty() {
+            let encoded = form_urlencoded::serialize(self.params);
+            path.push(encoded)
         }
         let raw = try!(self.docker.get(&path.join("?")));
         Ok(json::decode::<Vec<ContainerRep>>(&raw).unwrap())
@@ -135,14 +133,15 @@ impl<'a, 'b, 'c> EventsBuilder<'a, 'b, 'c> {
     pub fn build(&self) -> Result<Box<Iterator<Item = Event>>> {
         let mut params = Vec::new();
         if let Some(s) = self.since {
-            params.push(format!("since={}", s));
+            params.push(("since", s.to_string()));
         }
         if let Some(u) = self.until {
-            params.push(format!("until={}", u));
+            params.push(("until", u.to_string()));
         }
         let mut path = vec!["/events".to_owned()];
         if !params.is_empty() {
-            path.push(params.join("&"))
+            let encoded = form_urlencoded::serialize(params);
+            path.push(encoded)
         }
         let raw = try!(self.docker.stream_get(&path.join("?")[..]));
         let it = jed::Iter::new(raw).into_iter().map(|j| {
