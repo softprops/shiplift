@@ -1,5 +1,6 @@
 # unreleased 0.2.0
 
+* better error representations
 * improve (remove) mut in interfaces where it was no longer needed
 * gitignore Cargo.lock
 * update deps
