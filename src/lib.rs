@@ -44,12 +44,12 @@ use std::io::{ Read, Result };
 use std::iter::IntoIterator;
 use std::path::Path;
 use std::sync::Arc;
-use transport::{ Body, Transporter };
+use transport::{ Body, Transport };
 use url::{ Host, RelativeSchemeData, SchemeData };
 
 /// Entrypoint interface for communicating with docker daemon
 pub struct Docker {
-  transport: Transporter
+  transport: Transport
 }
 
 /// Interface for accessing and manipulating a named docker image
@@ -304,7 +304,7 @@ impl Docker {
         "unix" => {
             println!("unix..");
           Docker {
-              transport: Transporter::Unix {
+              transport: Transport::Unix {
                   client: Client::with_connector(UnixSocketConnector), path: domain
               }
           }
@@ -328,7 +328,7 @@ impl Docker {
         } else {
           Client::new()
         };
-        Docker { transport: Transporter::Tcp { client: client, host: format!("https:{}", domain.to_string()) } }
+        Docker { transport: Transport::Tcp { client: client, host: format!("https:{}", domain.to_string()) } }
       }
     }
   }

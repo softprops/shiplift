@@ -29,25 +29,25 @@ fn lift_status_err(status: u16) -> Result<Box<Read>> {
   }
 }
 
-pub enum Transporter {
+pub enum Transport {
     Tcp { client: Client, host: String },
     Unix { client: Client, path: String }
 }
 
-impl fmt::Debug for Transporter {
+impl fmt::Debug for Transport {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Transporter::Tcp { ref host, .. } => {
+            Transport::Tcp { ref host, .. } => {
                 write!(f, "Tcp({})", host)
             },
-            Transporter::Unix { ref path, .. } => {
+            Transport::Unix { ref path, .. } => {
                 write!(f, "Unix({})", path)
             }
         }
     }
 }
 
-impl Transporter {
+impl Transport {
     pub fn request(&mut self, method: Method, endpoint: &str, body: Option<Body>) -> Result<String> {
     let mut res = match self.stream(method, endpoint, body) {
       Ok(r) => r,
@@ -60,10 +60,10 @@ impl Transporter {
     pub fn stream(&mut self, method: Method, endpoint: &str, body: Option<Body>) -> Result<Box<Read>> {
         println!("requesting {:?} {:?}", self, endpoint);
         let req = match *self {
-            Transporter::Tcp { ref client, ref host } => {
+            Transport::Tcp { ref client, ref host } => {
                 client.request(method, &format!("{}{}", host, endpoint)[..])
             },
-            Transporter::Unix {  ref client, ref path } => {
+            Transport::Unix {  ref client, ref path } => {
                 client.request(method, DomainUrl::new(&path, endpoint))
             }
         };
