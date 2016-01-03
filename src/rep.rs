@@ -51,6 +51,8 @@ pub struct Container {
     pub Names: Vec<String>,
     pub Ports: Vec<Port>,
     pub Status: String,
+    pub SizeRw: Option<u64>,
+    pub SizeRootFs: Option<u64>
 }
 
 #[derive(Debug, RustcEncodable, RustcDecodable)]
