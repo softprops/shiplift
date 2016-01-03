@@ -89,31 +89,31 @@ pub struct HostConfig {
 #[derive(Debug, RustcEncodable, RustcDecodable)]
 #[allow(non_snake_case)]
 pub struct Config {
-    AttachStderr: bool,
-    AttachStdin: bool,
-    AttachStdout: bool,
-    Cmd: Option<Vec<String>>,
-    CpuShares: u64,
-    Cpuset: String,
-    Domainname: String,
-    Entrypoint: Option<Vec<String>>,
-    Env: Option<Vec<String>>,
+    pub AttachStderr: bool,
+    pub AttachStdin: bool,
+    pub AttachStdout: bool,
+    pub Cmd: Option<Vec<String>>,
+    pub CpuShares: u64,
+    pub Cpuset: String,
+    pub Domainname: String,
+    pub Entrypoint: Option<Vec<String>>,
+    pub Env: Option<Vec<String>>,
     // ExposedPorts
-    Hostname: String,
-    Image: String,
+    pub Hostname: String,
+    pub Image: String,
     // Labels:???
-    MacAddress: String,
-    Memory: u64,
-    MemorySwap: u64,
-    NetworkDisabled: bool,
+    pub MacAddress: String,
+    pub Memory: u64,
+    pub MemorySwap: u64,
+    pub NetworkDisabled: bool,
     // OnBuild: Option<String>,
-    OpenStdin: bool,
+    pub OpenStdin: bool,
     // PortSpecs: ???,
-    StdinOnce: bool,
-    Tty: bool,
-    User: String,
+    pub StdinOnce: bool,
+    pub Tty: bool,
+    pub User: String,
     // Volumes: ??,
-    WorkingDir: String,
+    pub WorkingDir: String,
 }
 
 impl Config {
@@ -319,11 +319,13 @@ pub struct Exit {
 }
 
 #[derive(Debug, RustcEncodable, RustcDecodable)]
+#[allow(non_snake_case)]
 pub struct Event {
     pub status: String,
     pub id: String,
-    pub from: String,
+    pub from: Option<String>,
     pub time: u64,
+    pub timeNano: u64
 }
 
 #[derive(Debug)]
