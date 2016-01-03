@@ -7,7 +7,7 @@ use std::fs::OpenOptions;
 
 fn main() {
   let mut docker = Docker::new();
-  println!("{:?}", docker.info().unwrap());
+  println!("info {:?}", docker.info().unwrap());
 
   //let mut export = OpenOptions::new().write(true).create(true).open("export.tgz").unwrap();
   //let mut images = docker.images();
@@ -20,5 +20,9 @@ fn main() {
   //let stats = containers.get("f527f9be52b2").stats();
   //for s in stats.unwrap() {
   //  println!("{:?}", s);
-  //}
+    //}
+    println!("listening for events");
+    for e in docker.events().get().unwrap() {
+        println!("event -> {:?}", e)
+    }
 }

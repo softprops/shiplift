@@ -6,6 +6,7 @@ extern crate unix_socket;
 
 use hyper::Client;
 use hyper::client;
+use hyper::client::IntoUrl;
 use self::hyper::buffer::BufReader;
 use self::hyper::http::RawStatus;
 use self::hyper::http::h1::parse_response;
@@ -16,9 +17,11 @@ use hyper::method::Method;
 use self::mime::{ Attr, Mime, Value };
 use self::mime::TopLevel::Application;
 use self::mime::SubLevel::Json;
+use std::fmt;
 use std::ops::DerefMut;
 use std::io::{ Error, ErrorKind, Read, Result, Write };
 use unix_socket::UnixStream;
+use hyperlocal::DomainUrl;
 
 fn lift_status_err(status: u16) -> Result<Box<Read>> {
   match status {
@@ -28,6 +31,68 @@ fn lift_status_err(status: u16) -> Result<Box<Read>> {
     409 => Err(Error::new(ErrorKind::InvalidInput, "conflict found")),
     500 => Err(Error::new(ErrorKind::InvalidInput, "interal server error")),
      _  => unreachable!()
+  }
+}
+
+pub enum Transporter {
+    Tcp { client: Client, host: String },
+    Unix { client: Client, path: String }
+}
+
+impl fmt::Debug for Transporter {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Transporter::Tcp { ref host, .. } => {
+                write!(f, "Tcp({})", host)
+            },
+            Transporter::Unix { ref path, .. } => {
+                write!(f, "Unix({})", path)
+            }
+        }
+    }
+}
+
+impl Transporter {
+    pub fn request(&mut self, method: Method, endpoint: &str, body: Option<Body>) -> Result<String> {
+    let mut res = match self.stream(method, endpoint, body) {
+      Ok(r) => r,
+      Err(e) => panic!("failed request {:?}", e)
+    };
+    let mut body = String::new();
+    res.read_to_string(&mut body).map(|_| body)
+  }
+
+    pub fn stream(&mut self, method: Method, endpoint: &str, body: Option<Body>) -> Result<Box<Read>> {
+        println!("requesting {:?} {:?}", self, endpoint);
+        let req = match *self {
+            Transporter::Tcp { ref client, ref host } => {
+                client.request(method, &format!("{}{}", host, endpoint)[..])
+            },
+            Transporter::Unix {  ref client, ref path } => {
+                client.request(method, DomainUrl::new(&path, endpoint))
+            }
+        };
+
+        let embodied = match body {
+            Some(Body { read: r, size: l }) => {
+                let reader: &mut Read = *r.deref_mut();
+                let content_type: Mime = Mime(Application, Json, vec![(Attr::Charset, Value::Utf8)]);
+                req.header(ContentType(content_type)).body(client::Body::SizedBody(reader, l))
+            },
+            _ => req
+        };
+    let res = match embodied.send() {
+      Ok(r) => r,
+      Err(e) => panic!("failed request {:?}", e)
+    };
+    match res.status {
+      StatusCode::Ok | StatusCode::Created | StatusCode::SwitchingProtocols =>
+        Ok(Box::new(res)),
+      StatusCode::NoContent =>
+        Ok(Box::new(BufReader::new("".as_bytes()))),
+      status =>
+        lift_status_err(status.to_u16())
+    }
   }
 }
 

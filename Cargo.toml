@@ -14,11 +14,12 @@ license = "MIT"
 mime = "0.1"
 httparse = "0.1"
 jed = "0.1"
-openssl = "0.6"
-unix_socket = "0.4"
-url = "0.2"
+openssl = "0.7"
+hyperlocal = "0.1"
+unix_socket = "0.5"
+url = "0.5"
 rustc-serialize = "0.3"
 
 [dependencies.hyper]
-version = "0.6"
-features = ["openssl", "timeouts"]
+version = "0.7"
+features = ["openssl"]

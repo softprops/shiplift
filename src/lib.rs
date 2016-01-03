@@ -14,6 +14,7 @@
 //! ```
 
 extern crate hyper;
+extern crate hyperlocal;
 extern crate jed;
 extern crate openssl;
 extern crate rustc_serialize;
@@ -28,6 +29,7 @@ use builder::{ ContainerBuilder, ContainerListBuilder, Events };
 use hyper::{ Client, Url };
 use hyper::net::{ HttpsConnector, Openssl };
 use hyper::method::Method;
+use hyperlocal::UnixSocketConnector;
 use openssl::x509::X509FileType;
 use openssl::ssl::{ SslContext, SslMethod };
 use rep::Image as ImageRep;
@@ -42,13 +44,13 @@ use std::io::{ Read, Result };
 use std::iter::IntoIterator;
 use std::path::Path;
 use std::sync::Arc;
-use transport::{ Body, Transport };
+use transport::{ Body, Transporter };
 use unix_socket::UnixStream;
 use url::{ Host, RelativeSchemeData, SchemeData };
 
 /// Entrypoint interface for communicating with docker daemon
 pub struct Docker {
-  transport: Box<Transport>
+  transport: Transporter
 }
 
 /// Interface for accessing and manipulating a named docker image
@@ -295,19 +297,21 @@ impl Docker {
         SchemeData::Relative(RelativeSchemeData { host: host, .. }) =>
           match host {
               Host::Domain(s) => s,
-              Host::Ipv6(a)   => a.to_string()
+              Host::Ipv6(a)   => a.to_string(),
+              Host::Ipv4(a)   => a.to_string()
           }
     };
     match &host.scheme[..] {
-      "unix" => {
-        let stream =
-          match UnixStream::connect(domain) {
-            Err(_) => panic!("failed to connect to socket"),
-            Ok(s) => s
-          };
-        Docker { transport: Box::new(stream) }
+        "unix" => {
+            println!("unix..");
+          Docker {
+              transport: Transporter::Unix {
+                  client: Client::with_connector(UnixSocketConnector), path: domain
+              }
+          }
       },
-      _  => {
+        _  => {
+            println!("tcp...");
         let client = if let Some(ref certs) = env::var("DOCKER_CERT_PATH").ok() {
           // fixme: don't unwrap before you know what's in the box
           // https://github.com/hyperium/hyper/blob/master/src/net.rs#L427-L428
@@ -325,8 +329,7 @@ impl Docker {
         } else {
           Client::new()
         };
-        let tup = (client, format!("https:{}", domain.to_string()));
-        Docker { transport: Box::new(tup) }
+        Docker { transport: Transporter::Tcp { client: client, host: format!("https:{}", domain.to_string()) } }
       }
     }
   }
@@ -349,7 +352,8 @@ impl Docker {
 
   /// Returns information associated with the docker daemon
   pub fn info(&mut self) -> Result<Info> {
-    let raw = try!(self.get("/info"));
+      let raw = try!(self.get("/info"));
+      println!("{:?}", raw);
     Ok(json::decode::<Info>(&raw).unwrap())
   }
 
@@ -364,22 +368,22 @@ impl Docker {
   }
 
   fn get(&mut self, endpoint: &str) -> Result<String> {
-    (*self.transport).request(Method::Get, endpoint, None)
+    self.transport.request(Method::Get, endpoint, None)
   }
 
   fn post(&mut self, endpoint: &str, body: Option<Body>) -> Result<String> {
-    (*self.transport).request(Method::Post, endpoint, body)
+    self.transport.request(Method::Post, endpoint, body)
   }
 
   fn delete(&mut self, endpoint: &str) -> Result<String> {
-    (*self.transport).request(Method::Delete, endpoint, None)
+    self.transport.request(Method::Delete, endpoint, None)
   }
 
   fn stream_post(&mut self, endpoint: &str) -> Result<Box<Read>> {
-    (*self.transport).stream(Method::Post, endpoint, None)
+      self.transport.stream(Method::Post, endpoint, None)
   }
 
   fn stream_get(&mut self, endpoint: &str) -> Result<Box<Read>> {
-    (*self.transport).stream(Method::Get, endpoint, None)
+    self.transport.stream(Method::Get, endpoint, None)
   }
 }

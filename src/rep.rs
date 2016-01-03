@@ -286,14 +286,14 @@ pub struct Info {
   pub KernelVersion: String,
   //pub Labels: Option<???>,
   pub MemTotal: u64,
-  pub MemoryLimit: u64,
+  pub MemoryLimit: bool,
   pub NCPU: u64,
   pub NEventsListener: u64,
   pub NGoroutines: u64,
   pub Name: String,
   pub OperatingSystem: String,
   //pub RegistryConfig:???
-  pub SwapLimit: u64,
+  pub SwapLimit: bool,
   pub SystemTime: Option<String>
 }
 
