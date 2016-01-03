@@ -144,8 +144,9 @@ pub struct Port {
 #[derive(Debug, RustcEncodable, RustcDecodable)]
 pub struct Stats {
     pub read: String,
-    pub network: Network,
+    pub networks: HashMap<String, Network>,
     pub memory_stats: MemoryStats,
+    pub blkio_stats: BlkioStats,
     pub cpu_stats: CpuStats,
 }
 

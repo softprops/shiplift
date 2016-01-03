@@ -5,7 +5,7 @@
 //! ```no_run
 //! extern crate shiplift;
 //!
-//! let mut docker = shiplift::Docker::new();
+//! let docker = shiplift::Docker::new();
 //! let images = docker.images().list().unwrap();
 //! println!("docker images in stock");
 //! for i in images {
@@ -24,7 +24,7 @@ pub mod builder;
 pub mod rep;
 pub mod transport;
 
-use builder::{ContainerBuilder, ContainerListBuilder, Events};
+use builder::{ContainerBuilder, ContainerListBuilder, EventsBuilder};
 use hyper::{Client, Url};
 use hyper::net::{HttpsConnector, Openssl};
 use hyper::method::Method;
@@ -50,13 +50,13 @@ pub struct Docker {
 
 /// Interface for accessing and manipulating a named docker image
 pub struct Image<'a, 'b> {
-    docker: &'a mut Docker,
+    docker: &'a Docker,
     name: &'b str,
 }
 
 impl<'a, 'b> Image<'a, 'b> {
     /// Exports an interface for operations that may be performed against a named image
-    pub fn new(docker: &'a mut Docker, name: &'b str) -> Image<'a, 'b> {
+    pub fn new(docker: &'a Docker, name: &'b str) -> Image<'a, 'b> {
         Image {
             docker: docker,
             name: name,
@@ -102,12 +102,12 @@ impl<'a, 'b> Image<'a, 'b> {
 
 /// Interface for docker images
 pub struct Images<'a> {
-    docker: &'a mut Docker,
+    docker: &'a Docker,
 }
 
 impl<'a> Images<'a> {
     /// Exports an interface for interacting with docker images
-    pub fn new(docker: &'a mut Docker) -> Images<'a> {
+    pub fn new(docker: &'a Docker) -> Images<'a> {
         Images { docker: docker }
     }
 
@@ -118,7 +118,7 @@ impl<'a> Images<'a> {
     }
 
     /// Returns a reference to a set of operations available for a named image
-    pub fn get(&'a mut self, name: &'a str) -> Image {
+    pub fn get(&'a self, name: &'a str) -> Image {
         Image::new(self.docker, name)
     }
 
@@ -150,13 +150,13 @@ impl<'a> Images<'a> {
 
 /// Interface for accessing and manipulating a docker container
 pub struct Container<'a, 'b> {
-    docker: &'a mut Docker,
+    docker: &'a Docker,
     id: &'b str,
 }
 
 impl<'a, 'b> Container<'a, 'b> {
     /// Exports an interface exposing operations against a container instance
-    pub fn new(docker: &'a mut Docker, id: &'b str) -> Container<'a, 'b> {
+    pub fn new(docker: &'a Docker, id: &'b str) -> Container<'a, 'b> {
         Container {
             docker: docker,
             id: id,
@@ -202,6 +202,7 @@ impl<'a, 'b> Container<'a, 'b> {
         let raw = try!(self.docker.stream_get(&format!("/containers/{}/stats", self.id)[..]));
         let it = jed::Iter::new(raw).into_iter().map(|j| {
             let s = json::encode(&j).unwrap();
+            println!("stat -> {:?}", s);
             json::decode::<Stats>(&s).unwrap()
         });
         Ok(Box::new(it))
@@ -261,27 +262,27 @@ impl<'a, 'b> Container<'a, 'b> {
 
 /// Interface for docker containers
 pub struct Containers<'a> {
-    docker: &'a mut Docker,
+    docker: &'a Docker,
 }
 
 impl<'a> Containers<'a> {
     /// Exports an interface for interacting with docker containers
-    pub fn new(docker: &'a mut Docker) -> Containers<'a> {
+    pub fn new(docker: &'a Docker) -> Containers<'a> {
         Containers { docker: docker }
     }
 
     /// Lists the container instances on the docker host
-    pub fn list(self) -> ContainerListBuilder<'a> {
+    pub fn list(&self) -> ContainerListBuilder<'a> {
         ContainerListBuilder::new(self.docker)
     }
 
     /// Returns a reference to a set of operations available to a specific container instance
-    pub fn get(&'a mut self, name: &'a str) -> Container {
+    pub fn get(&'a self, name: &'a str) -> Container {
         Container::new(self.docker, name)
     }
 
     /// Returns a builder interface for creating a new container instance
-    pub fn create(&'a mut self, image: &'a str) -> ContainerBuilder {
+    pub fn create(&'a self, image: &'a str) -> ContainerBuilder {
         ContainerBuilder::new(self.docker, image)
     }
 }
@@ -357,54 +358,54 @@ impl Docker {
     }
 
     /// Exports an interface for interacting with docker images
-    pub fn images<'a>(&'a mut self) -> Images {
+    pub fn images<'a>(&'a self) -> Images {
         Images::new(self)
     }
 
     /// Exports an interface for interacting with docker containers
-    pub fn containers<'a>(&'a mut self) -> Containers {
+    pub fn containers<'a>(&'a self) -> Containers {
         Containers::new(self)
     }
 
     /// Returns version information associated with the docker daemon
-    pub fn version(&mut self) -> Result<Version> {
+    pub fn version(&self) -> Result<Version> {
         let raw = try!(self.get("/version"));
         Ok(json::decode::<Version>(&raw).unwrap())
     }
 
     /// Returns information associated with the docker daemon
-    pub fn info(&mut self) -> Result<Info> {
+    pub fn info(&self) -> Result<Info> {
         let raw = try!(self.get("/info"));
         Ok(json::decode::<Info>(&raw).unwrap())
     }
 
     /// Returns a simple ping response indicating the docker daemon is accessible
-    pub fn ping(&mut self) -> Result<String> {
+    pub fn ping(&self) -> Result<String> {
         self.get("/_ping")
     }
 
     /// Retruns a stream of events ocurring on the current docker host
-    pub fn events(&mut self) -> Events {
-        Events::new(self)
+    pub fn events(&self) -> EventsBuilder {
+        EventsBuilder::new(self)
     }
 
-    fn get(&mut self, endpoint: &str) -> Result<String> {
+    fn get(&self, endpoint: &str) -> Result<String> {
         self.transport.request(Method::Get, endpoint, None)
     }
 
-    fn post(&mut self, endpoint: &str, body: Option<Body>) -> Result<String> {
+    fn post(&self, endpoint: &str, body: Option<Body>) -> Result<String> {
         self.transport.request(Method::Post, endpoint, body)
     }
 
-    fn delete(&mut self, endpoint: &str) -> Result<String> {
+    fn delete(&self, endpoint: &str) -> Result<String> {
         self.transport.request(Method::Delete, endpoint, None)
     }
 
-    fn stream_post(&mut self, endpoint: &str) -> Result<Box<Read>> {
+    fn stream_post(&self, endpoint: &str) -> Result<Box<Read>> {
         self.transport.stream(Method::Post, endpoint, None)
     }
 
-    fn stream_get(&mut self, endpoint: &str) -> Result<Box<Read>> {
+    fn stream_get(&self, endpoint: &str) -> Result<Box<Read>> {
         self.transport.stream(Method::Get, endpoint, None)
     }
 }

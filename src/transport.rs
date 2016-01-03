@@ -53,7 +53,7 @@ impl fmt::Debug for Transport {
 }
 
 impl Transport {
-    pub fn request(&mut self,
+    pub fn request(&self,
                    method: Method,
                    endpoint: &str,
                    body: Option<Body>)
@@ -66,7 +66,7 @@ impl Transport {
         res.read_to_string(&mut body).map(|_| body)
     }
 
-    pub fn stream(&mut self,
+    pub fn stream(&self,
                   method: Method,
                   endpoint: &str,
                   body: Option<Body>)
