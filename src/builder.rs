@@ -120,19 +120,19 @@ impl<'a, 'b, 'c> EventsBuilder<'a, 'b, 'c> {
     }
 
     /// Filter events since a given timestamp
-    pub fn since(mut self, ts: &'b u64) -> EventsBuilder<'a, 'b, 'c> {
+    pub fn since(&mut self, ts: &'b u64) -> &mut EventsBuilder<'a, 'b, 'c> {
         self.since = Some(ts);
         self
     }
 
     /// Filter events until a given timestamp
-    pub fn until(mut self, ts: &'c u64) -> EventsBuilder<'a, 'b, 'c> {
+    pub fn until(&mut self, ts: &'c u64) -> &mut EventsBuilder<'a, 'b, 'c> {
         self.until = Some(ts);
         self
     }
 
     /// Returns an interator over streamed docker events
-    pub fn build(mut self) -> Result<Box<Iterator<Item = Event>>> {
+    pub fn build(&self) -> Result<Box<Iterator<Item = Event>>> {
         let mut params = Vec::new();
         if let Some(s) = self.since {
             params.push(format!("since={}", s));
