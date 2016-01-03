@@ -81,6 +81,7 @@ impl Transport {
                 Ok(Box::new(res))
             }
             StatusCode::NoContent => Ok(Box::new(BufReader::new("".as_bytes()))),
+            // todo: constantize these
             StatusCode::BadRequest => Err(Error::Fault { code: res.status, message: "bad parameter".to_owned() }),
             StatusCode::NotFound => Err(Error::Fault { code: res.status, message: "not found".to_owned() }),
             StatusCode::NotAcceptable => Err(Error::Fault { code: res.status, message: "not acceptable".to_owned() }),

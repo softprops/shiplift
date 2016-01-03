@@ -26,6 +26,8 @@ pub mod transport;
 pub mod errors;
 
 pub use errors::Error;
+pub use builder::ContainerFilter;
+
 use builder::{ContainerBuilder, ContainerListBuilder, EventsBuilder};
 use hyper::{Client, Url};
 use hyper::net::{HttpsConnector, Openssl};

@@ -18,12 +18,36 @@ pub struct ContainerListBuilder<'a> {
     params: HashMap<&'static str, String>,
 }
 
+pub enum ContainerFilter {
+    ExitCode(u64),
+    Status(String),
+    LabelName(String),
+    Label(String, String)
+}
+
 impl<'a> ContainerListBuilder<'a> {
     pub fn new(docker: &'a Docker) -> ContainerListBuilder<'a> {
         ContainerListBuilder {
             docker: docker,
             params: HashMap::new(),
         }
+    }
+
+    pub fn filter(&mut self, filters: Vec<ContainerFilter>) -> &mut ContainerListBuilder<'a> {
+        let mut param = HashMap::new();
+        for f in filters {
+            match f {
+                ContainerFilter::ExitCode(c) => param.insert("exit", vec![c.to_string()]),
+                ContainerFilter::Status(s) => param.insert("status", vec![s]),
+                ContainerFilter::LabelName(n) => param.insert("label", vec![n]),
+                ContainerFilter::Label(n,v) => param.insert("label", vec![format!("{}={}", n, v)])
+            };
+
+        }
+        // structure is a a json encoded object mapping string keys to a list
+        // of string values
+        self.params.insert("filters", json::encode(&param).unwrap());
+        self
     }
 
     pub fn all(&mut self) -> &mut ContainerListBuilder<'a> {
