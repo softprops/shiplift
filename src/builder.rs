@@ -46,10 +46,10 @@ impl<'a> ContainerListBuilder<'a> {
         self
     }
 
-    pub fn build(self) -> Result<Vec<ContainerRep>> {
+    pub fn build(&self) -> Result<Vec<ContainerRep>> {
         let mut path = vec!["/containers/json".to_owned()];
         if !self.params.is_empty() {
-            let encoded = form_urlencoded::serialize(self.params);
+            let encoded = form_urlencoded::serialize(&self.params);
             path.push(encoded)
         }
         let raw = try!(self.docker.get(&path.join("?")));
