@@ -12,11 +12,9 @@ license = "MIT"
 
 [dependencies]
 mime = "0.1"
-httparse = "0.1"
 jed = "0.1"
 openssl = "0.7"
 hyperlocal = "0.1"
-unix_socket = "0.5"
 url = "0.5"
 rustc-serialize = "0.3"
 
