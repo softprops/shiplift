@@ -45,7 +45,6 @@ use std::iter::IntoIterator;
 use std::path::Path;
 use std::sync::Arc;
 use transport::{ Body, Transporter };
-use unix_socket::UnixStream;
 use url::{ Host, RelativeSchemeData, SchemeData };
 
 /// Entrypoint interface for communicating with docker daemon
@@ -294,7 +293,7 @@ impl Docker {
   pub fn host(host: Url) -> Docker {
     let domain = match host.scheme_data {
         SchemeData::NonRelative(s) => s,
-        SchemeData::Relative(RelativeSchemeData { host: host, .. }) =>
+        SchemeData::Relative(RelativeSchemeData { host, .. }) =>
           match host {
               Host::Domain(s) => s,
               Host::Ipv6(a)   => a.to_string(),
