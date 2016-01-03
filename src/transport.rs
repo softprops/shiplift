@@ -28,11 +28,15 @@ fn lift_status_err(status: u16) -> Result<Box<Read>> {
     }
 }
 
+/// Transports are types which define the means of communication
+/// with the docker daemon
 pub enum Transport {
+    /// A network tcp interface
     Tcp {
         client: Client,
         host: String,
     },
+    /// A Unix domain socket
     Unix {
         client: Client,
         path: String,
@@ -67,7 +71,6 @@ impl Transport {
                   endpoint: &str,
                   body: Option<Body>)
                   -> Result<Box<Read>> {
-        println!("requesting {:?} {:?}", self, endpoint);
         let req = match *self {
             Transport::Tcp { ref client, ref host } => {
                 client.request(method, &format!("{}{}", host, endpoint)[..])
