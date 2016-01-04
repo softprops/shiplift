@@ -46,6 +46,7 @@ use std::io::Read;
 use std::iter::IntoIterator;
 use std::path::Path;
 use std::sync::Arc;
+use std::time::Duration;
 use transport::{Body, Transport};
 use url::{form_urlencoded, Host, RelativeSchemeData, SchemeData};
 
@@ -241,13 +242,23 @@ impl<'a, 'b> Container<'a, 'b> {
     }
 
     /// Stop the container instance
-    pub fn stop(&self) -> Result<()> {
-        self.docker.post(&format!("/containers/{}/stop", self.id)[..], None).map(|_| ())
+    pub fn stop(&self, wait: Option<Duration>) -> Result<()> {
+        let mut path = vec![format!("/containers/{}/stop", self.id)];
+        if let Some(w) = wait {
+            let encoded = form_urlencoded::serialize(vec![("t", w.as_secs().to_string())]);
+            path.push(encoded)
+        }
+        self.docker.post(&path.join("?"), None).map(|_| ())
     }
 
     /// Restart the container instance
-    pub fn restart(&self) -> Result<()> {
-        self.docker.post(&format!("/containers/{}/restart", self.id)[..], None).map(|_| ())
+    pub fn restart(&self, wait: Option<Duration>) -> Result<()> {
+        let mut path = vec![format!("/containers/{}/restart", self.id)];
+        if let Some(w) = wait {
+            let encoded = form_urlencoded::serialize(vec![("t", w.as_secs().to_string())]);
+            path.push(encoded)
+        }
+        self.docker.post(&path.join("?"), None).map(|_| ())
     }
 
     /// Kill the container instance
