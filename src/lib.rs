@@ -262,8 +262,13 @@ impl<'a, 'b> Container<'a, 'b> {
     }
 
     /// Kill the container instance
-    pub fn kill(&self) -> Result<()> {
-        self.docker.post(&format!("/containers/{}/kill", self.id)[..], None).map(|_| ())
+    pub fn kill(&self, signal: Option<&str>) -> Result<()> {
+        let mut path = vec![format!("/containers/{}/kill", self.id)];
+        if let Some(sig) = signal {
+            let encoded = form_urlencoded::serialize(vec![("signal", sig.to_owned())]);
+            path.push(encoded)
+        }
+        self.docker.post(&path.join("?"), None).map(|_| ())
     }
 
     /// Rename the container instance
