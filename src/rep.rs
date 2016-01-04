@@ -66,6 +66,54 @@ pub struct ContainerDetails {
     pub ExecDriver: String,
     // pub ExecIDs: ??
     pub HostConfig: HostConfig,
+    pub HostnamePath: String,
+    pub HostsPath: String,
+    pub LogPath: String,
+    pub Id: String,
+    pub Image: String,
+    pub MountLabel: String,
+    pub NetworkSettings: NetworkSettings,
+    pub Path: String,
+    pub ProcessLabel: String,
+    pub ResolvConfPath: String,
+    pub RestartCount: u64,
+    pub State: State,
+    pub Mounts: Vec<Mount>
+}
+
+#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[allow(non_snake_case)]
+pub struct Mount {
+    pub Source: String,
+    pub Destination: String,
+    pub Mode: String,
+    pub RW: bool
+}
+
+#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[allow(non_snake_case)]
+pub struct State {
+    pub Error: String,
+    pub ExitCode: u64,
+    pub FinishedAt: String,
+    pub OOMKilled: bool,
+    pub Paused: bool,
+    pub Pid: u64,
+    pub Restarting: bool,
+    pub Running: bool,
+    pub StartedAt: String
+}
+
+#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[allow(non_snake_case)]
+pub struct NetworkSettings {
+    pub Bridge: String,
+    pub Gateway: String,
+    pub IPAddress: String,
+    pub IPPrefixLen: u64,
+    pub MacAddress: String,
+//    pub PortMapping: Option<???>,
+ //   pub Ports: Option<???>
 }
 
 #[derive(Debug, RustcEncodable, RustcDecodable)]
@@ -101,14 +149,14 @@ pub struct Config {
     // ExposedPorts
     pub Hostname: String,
     pub Image: String,
-    // Labels:???
-    // OnBuild: Option<String>,
+    pub Labels: HashMap<String, String>,
+//    pub MacAddress: String,
+    pub OnBuild: Option<String>,
+//    pub NetworkDisabled: bool,
     pub OpenStdin: bool,
-    // PortSpecs: ???,
     pub StdinOnce: bool,
     pub Tty: bool,
     pub User: String,
-    // Volumes: ??,
     pub WorkingDir: String,
 }
 
