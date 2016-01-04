@@ -2,13 +2,24 @@
 
 [![Build Status](https://travis-ci.org/softprops/shiplift.svg)](https://travis-ci.org/softprops/shiplift)
 
-> a rust interface for maneuvering docker containers
+> a rust interface for maneuvering [docker](https://www.docker.com/) containers
+
+## install
+
+Add the following to your `Cargo.toml` file
+
+```toml
+[dependencies]
+shiplift = "0.2"
+```
 
 ## docs
 
-Find them [here](https://softprops.github.io/shiplift)
+Find them [here](https://softprops.github.io/shiplift).
 
 ## usage
+
+Some small example programs can be found [here](https://github.com/softprops/shiplift/tree/master/examples).
 
 ### communicating with hosts
 
