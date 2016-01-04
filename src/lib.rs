@@ -26,7 +26,7 @@ pub mod transport;
 pub mod errors;
 
 pub use errors::Error;
-pub use builder::{ContainerListOptions, ContainerFilter, EventsOptions, LogsOptions};
+pub use builder::{ContainerListOptions, ContainerFilter, EventsOptions, ImageFilter, ImageListOptions, LogsOptions};
 
 use builder::ContainerBuilder;
 use hyper::{Client, Url};
@@ -119,8 +119,12 @@ impl<'a> Images<'a> {
     }
 
     /// Lists the docker images on the current docker host
-    pub fn list(self) -> Result<Vec<ImageRep>> {
-        let raw = try!(self.docker.get("/images/json"));
+    pub fn list(&self, opts: &ImageListOptions) -> Result<Vec<ImageRep>> {
+        let mut path = vec!["/images/json".to_owned()];
+        if let Some(query) = opts.serialize() {
+            path.push(query);
+        }
+        let raw = try!(self.docker.get(&path.join("?")));
         Ok(try!(json::decode::<Vec<ImageRep>>(&raw)))
     }
 
@@ -130,21 +134,21 @@ impl<'a> Images<'a> {
     }
 
     /// Search for docker images by term
-    pub fn search(self, term: &str) -> Result<Vec<SearchResult>> {
+    pub fn search(&self, term: &str) -> Result<Vec<SearchResult>> {
         let query = form_urlencoded::serialize(vec![("term", term)]);
         let raw = try!(self.docker.get(&format!("/images/search?{}", query)[..]));
         Ok(try!(json::decode::<Vec<SearchResult>>(&raw)))
     }
 
     /// Create a new docker images from an existing image
-    pub fn create(self, from: &str) -> Result<Box<Read>> {
+    pub fn create(&self, from: &str) -> Result<Box<Read>> {
         let query = form_urlencoded::serialize(vec![("fromImage", from)]);
         self.docker.stream_post(&format!("/images/create?{}", query)[..])
     }
 
     /// exports a collection of named images,
     /// either by name, name:tag, or image id, into a tarball
-    pub fn export(self, names: Vec<&str>) -> Result<Box<Read>> {
+    pub fn export(&self, names: Vec<&str>) -> Result<Box<Read>> {
         let params = names.iter()
             .map(|n| ("names", *n))
             .collect::<Vec<(&str, &str)>>();

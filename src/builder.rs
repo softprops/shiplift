@@ -254,3 +254,78 @@ impl LogsOptionsBuilder {
         }
     }
 }
+
+
+/// Filter options for image listings
+pub enum ImageFilter {
+    Dangling,
+    LabelName(String),
+    Label(String, String)
+}
+
+#[derive(Default)]
+pub struct ImageListOptions {
+    params: HashMap<&'static str, String>
+}
+
+impl ImageListOptions {
+    pub fn builder() -> ImageListOptionsBuilder {
+        ImageListOptionsBuilder::new()
+    }
+    pub fn serialize(&self) -> Option<String> {
+        if self.params.is_empty() { None }
+        else {
+            Some(form_urlencoded::serialize(&self.params))
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct ImageListOptionsBuilder {
+    params: HashMap<&'static str, String>
+}
+
+impl ImageListOptionsBuilder {
+    pub fn new() -> ImageListOptionsBuilder {
+        ImageListOptionsBuilder {
+            ..Default::default()
+        }
+    }
+
+    pub fn digests(&mut self, d: bool) -> &mut ImageListOptionsBuilder {
+        self.params.insert("digests", d.to_string());
+        self
+    }
+
+    pub fn all(&mut self, a: bool) -> &mut ImageListOptionsBuilder {
+        self.params.insert("all", a.to_string());
+        self
+    }
+
+    pub fn filter_name(&mut self, name: &str) -> &mut ImageListOptionsBuilder {
+        self.params.insert("filter", name.to_owned());
+        self
+    }
+
+    pub fn filter(&mut self, filters: Vec<ImageFilter>) -> &mut ImageListOptionsBuilder {
+        let mut param = HashMap::new();
+        for f in filters {
+            match f {
+                ImageFilter::Dangling => param.insert("dangling", vec![true.to_string()]),
+                ImageFilter::LabelName(n) => param.insert("label", vec![n]),
+                ImageFilter::Label(n,v) => param.insert("label", vec![format!("{}={}", n, v)])
+            };
+
+        }
+        // structure is a a json encoded object mapping string keys to a list
+        // of string values
+        self.params.insert("filters", json::encode(&param).unwrap());
+        self
+    }
+
+    pub fn build(&self) -> ImageListOptions {
+        ImageListOptions {
+            params: self.params.clone()
+        }
+    }
+}
