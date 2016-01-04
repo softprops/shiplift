@@ -1,15 +1,11 @@
 extern crate shiplift;
 
-use shiplift::{Docker, ImageListOptions, ImageFilter};
+use shiplift::Docker;
 
 fn main() {
     let docker = Docker::new();
     for i in docker.images().
-        list(
-            &ImageListOptions::builder().filter(
-                vec![ImageFilter::Dangling]
-            ).build()
-        ).unwrap() {
+        list(&Default::default()).unwrap() {
         println!("image -> {:?}", i)
     }
 }

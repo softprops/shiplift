@@ -296,12 +296,12 @@ impl<'a, 'b> Container<'a, 'b> {
         Ok(try!(json::decode::<Exit>(&raw)))
     }
 
-    /// Delete the container instance
+    /// Delete the container instance (todo: force/v)
     pub fn delete(&self) -> Result<()> {
         self.docker.delete(&format!("/containers/{}", self.id)[..]).map(|_| ())
     }
 
-    // todo attach, attach/ws,
+    // todo attach, attach/ws, copy, archive
 }
 
 /// Interface for docker containers
