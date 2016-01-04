@@ -28,6 +28,7 @@ pub mod errors;
 pub use errors::Error;
 pub use builder::{ContainerListOptions, ContainerFilter, EventsOptions, ImageFilter, ImageListOptions, LogsOptions};
 
+// fixme: remove this here
 use builder::ContainerBuilder;
 use hyper::{Client, Url};
 use hyper::net::{HttpsConnector, Openssl};
