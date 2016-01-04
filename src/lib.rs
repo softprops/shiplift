@@ -28,11 +28,8 @@ pub mod transport;
 pub mod errors;
 
 pub use errors::Error;
-pub use builder::{ContainerListOptions, ContainerFilter, EventsOptions, ImageFilter,
+pub use builder::{ContainerOptions, ContainerListOptions, ContainerFilter, EventsOptions, ImageFilter,
                   ImageListOptions, LogsOptions};
-
-// fixme: remove this here
-use builder::ContainerBuilder;
 use hyper::{Client, Url};
 use hyper::net::{HttpsConnector, Openssl};
 use hyper::method::Method;
@@ -40,7 +37,7 @@ use hyperlocal::UnixSocketConnector;
 use openssl::x509::X509FileType;
 use openssl::ssl::{SslContext, SslMethod};
 use rep::Image as ImageRep;
-use rep::{Change, ContainerDetails, Container as ContainerRep, Event, Exit, History, ImageDetails,
+use rep::{Change, ContainerCreateInfo, ContainerDetails, Container as ContainerRep, Event, Exit, History, ImageDetails,
           Info, SearchResult, Stats, Status, Top, Version};
 use rustc_serialize::json::{self, Json};
 use std::env::{self, VarError};
@@ -333,8 +330,13 @@ impl<'a> Containers<'a> {
     }
 
     /// Returns a builder interface for creating a new container instance
-    pub fn create(&'a self, image: &'a str) -> ContainerBuilder {
-        ContainerBuilder::new(self.docker, image)
+    pub fn create(&'a self, opts: &ContainerOptions) -> Result<ContainerCreateInfo> {
+        let data = try!(opts.serialize());
+        let mut bytes = data.as_bytes();
+        let raw = try!(self.docker.post("/containers/create",
+                                        Some(Body::new(&mut Box::new(&mut bytes),
+                                                       bytes.len() as u64))));
+        Ok(try!(json::decode::<ContainerCreateInfo>(&raw)))
     }
 }
 

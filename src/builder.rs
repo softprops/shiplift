@@ -1,16 +1,11 @@
-//! Interfaces for building [docker](https://www.docker.com/) containers
+//! Interfaces for building various structures
 
-extern crate rustc_serialize;
-extern crate jed;
-extern crate url;
-
-use self::super::{Docker, Result};
-use self::super::transport::Body;
-use self::super::rep::ContainerCreateInfo;
+use self::super::Result;
 use std::collections::{BTreeMap, HashMap};
 use rustc_serialize::json::{self, Json, ToJson};
 use url::form_urlencoded;
 
+/// Options for filtering container list results
 #[derive(Default)]
 pub struct ContainerListOptions {
     params: HashMap<&'static str, String>,
@@ -40,7 +35,7 @@ pub enum ContainerFilter {
     Label(String, String),
 }
 
-/// Interface for building container list request
+/// Builder interface for `ContainerListOptions`
 #[derive(Default)]
 pub struct ContainerListOptionsBuilder {
     params: HashMap<&'static str, String>,
@@ -89,54 +84,55 @@ impl ContainerListOptionsBuilder {
     }
 
     pub fn build(&self) -> ContainerListOptions {
-        // Result<Vec<ContainerRep>> {
         ContainerListOptions { params: self.params.clone() }
     }
 }
 
 /// Interface for building a new docker container from an existing image
-pub struct ContainerBuilder<'a, 'b> {
-    docker: &'a Docker,
-    image: &'b str,
-    hostname: Option<String>,
-    user: Option<String>,
-    memory: Option<u64>,
+pub struct ContainerOptions {
+    params: HashMap<&'static str, String>
 }
 
-impl<'a, 'b> ContainerBuilder<'a, 'b> {
-    pub fn new(docker: &'a Docker, image: &'b str) -> ContainerBuilder<'a, 'b> {
-        ContainerBuilder {
-            docker: docker,
-            image: image,
-            hostname: None,
-            user: None,
-            memory: None,
+impl ContainerOptions {
+    /// return a new instance of a builder for options
+    pub fn builder(name: &str) -> ContainerOptionsBuilder {
+        ContainerOptionsBuilder::new(name)
+    }
+
+    /// serialize options as a string. returns None if no options are defined
+    pub fn serialize(&self) -> Result<String> {
+        let mut body = BTreeMap::new();
+        if let Some(image) = self.params.get("Image") {
+            body.insert("Image".to_owned(), image.to_json());
+        }
+        let json_obj: Json = body.to_json();
+        Ok(try!(json::encode(&json_obj)))
+    }
+}
+
+#[derive(Default)]
+pub struct ContainerOptionsBuilder {
+    params: HashMap<&'static str, String>
+}
+
+impl ContainerOptionsBuilder {
+    pub fn new(name: &str) -> ContainerOptionsBuilder {
+        let mut params = HashMap::new();
+        params.insert("Image", name.to_owned());
+        ContainerOptionsBuilder {
+            params: params
         }
     }
 
-    pub fn hostname(&mut self, h: &str) -> &mut ContainerBuilder<'a, 'b> {
-        self.hostname = Some(h.to_owned());
-        self
-    }
-
-    pub fn user(&mut self, u: &str) -> &mut ContainerBuilder<'a, 'b> {
-        self.user = Some(u.to_owned());
-        self
-    }
-
-    pub fn build(&self) -> Result<ContainerCreateInfo> {
-        let mut body = BTreeMap::new();
-        body.insert("Image".to_owned(), self.image.to_json());
-        let json_obj: Json = body.to_json();
-        let data = try!(json::encode(&json_obj));
-        let mut bytes = data.as_bytes();
-        let raw = try!(self.docker.post("/containers/create",
-                                        Some(Body::new(&mut Box::new(&mut bytes),
-                                                       bytes.len() as u64))));
-        Ok(try!(json::decode::<ContainerCreateInfo>(&raw)))
+    pub fn build(&self) -> ContainerOptions {
+        ContainerOptions {
+            params: self.params.clone()
+        }
     }
 }
 
+
+/// Options for filtering streams of Docker events
 #[derive(Default)]
 pub struct EventsOptions {
     params: HashMap<&'static str, String>,
@@ -156,7 +152,7 @@ impl EventsOptions {
     }
 }
 
-/// Interface for buiding an events request
+/// Builder interface for `EventOptions`
 #[derive(Default)]
 pub struct EventsOptionsBuilder {
     params: HashMap<&'static str, String>,
@@ -185,6 +181,7 @@ impl EventsOptionsBuilder {
 }
 
 
+/// Options for controlling log request results
 #[derive(Default)]
 pub struct LogsOptions {
     params: HashMap<&'static str, String>,
@@ -206,6 +203,7 @@ impl LogsOptions {
     }
 }
 
+/// Builder interface for `LogsOptions`
 #[derive(Default)]
 pub struct LogsOptionsBuilder {
     params: HashMap<&'static str, String>,
@@ -255,6 +253,7 @@ pub enum ImageFilter {
     Label(String, String),
 }
 
+/// Options for filtering image list results
 #[derive(Default)]
 pub struct ImageListOptions {
     params: HashMap<&'static str, String>,
@@ -273,6 +272,7 @@ impl ImageListOptions {
     }
 }
 
+/// Builder interface for `ImageListOptions`
 #[derive(Default)]
 pub struct ImageListOptionsBuilder {
     params: HashMap<&'static str, String>,
