@@ -6,7 +6,7 @@
 //! extern crate shiplift;
 //!
 //! let docker = shiplift::Docker::new();
-//! let images = docker.images().list().unwrap();
+//! let images = docker.images().list(&Default::default()).unwrap();
 //! println!("docker images in stock");
 //! for i in images {
 //!   println!("{:?}", i.RepoTags);
@@ -71,19 +71,19 @@ impl<'a, 'b> Image<'a, 'b> {
     }
 
     /// Inspects a named image's details
-    pub fn inspect(self) -> Result<ImageDetails> {
+    pub fn inspect(&self) -> Result<ImageDetails> {
         let raw = try!(self.docker.get(&format!("/images/{}/json", self.name)[..]));
         Ok(try!(json::decode::<ImageDetails>(&raw)))
     }
 
     /// Lists the history of the images set of changes
-    pub fn history(self) -> Result<Vec<History>> {
+    pub fn history(&self) -> Result<Vec<History>> {
         let raw = try!(self.docker.get(&format!("/images/{}/history", self.name)[..]));
         Ok(try!(json::decode::<Vec<History>>(&raw)))
     }
 
     /// Delete's an image
-    pub fn delete(self) -> Result<Vec<Status>> {
+    pub fn delete(&self) -> Result<Vec<Status>> {
         let raw = try!(self.docker.delete(&format!("/images/{}", self.name)[..]));
         Ok(match try!(Json::from_str(&raw)) {
                Json::Array(ref xs) => {
@@ -102,7 +102,7 @@ impl<'a, 'b> Image<'a, 'b> {
     }
 
     /// Export this image to a tarball
-    pub fn export(self) -> Result<Box<Read>> {
+    pub fn export(&self) -> Result<Box<Read>> {
         self.docker.stream_get(&format!("/images/{}/get", self.name)[..])
     }
 }
@@ -177,13 +177,13 @@ impl<'a, 'b> Container<'a, 'b> {
     }
 
     /// Inspects the current docker container instance's details
-    pub fn inspect(self) -> Result<ContainerDetails> {
+    pub fn inspect(&self) -> Result<ContainerDetails> {
         let raw = try!(self.docker.get(&format!("/containers/{}/json", self.id)[..]));
         Ok(try!(json::decode::<ContainerDetails>(&raw)))
     }
 
     /// Returns a `top` view of information about the container process
-    pub fn top(self, psargs: Option<&str>) -> Result<Top> {
+    pub fn top(&self, psargs: Option<&str>) -> Result<Top> {
         let mut path = vec![format!("/containers/{}/top", self.id)];
         if let Some(ref args) = psargs {
             let encoded = form_urlencoded::serialize(
@@ -198,7 +198,7 @@ impl<'a, 'b> Container<'a, 'b> {
     }
 
     /// Returns a stream of logs emitted but the container instance
-    pub fn logs(self, opts: &LogsOptions) -> Result<Box<Read>> {
+    pub fn logs(&self, opts: &LogsOptions) -> Result<Box<Read>> {
         let mut path = vec![format!("/containers/{}/logs", self.id)];
         if let Some(query) = opts.serialize() {
             path.push(query)
@@ -207,18 +207,18 @@ impl<'a, 'b> Container<'a, 'b> {
     }
 
     /// Returns a set of changes made to the container instance
-    pub fn changes(self) -> Result<Vec<Change>> {
+    pub fn changes(&self) -> Result<Vec<Change>> {
         let raw = try!(self.docker.get(&format!("/containers/{}/changes", self.id)[..]));
         Ok(try!(json::decode::<Vec<Change>>(&raw)))
     }
 
     /// Exports the current docker container into a tarball
-    pub fn export(self) -> Result<Box<Read>> {
+    pub fn export(&self) -> Result<Box<Read>> {
         self.docker.stream_get(&format!("/containers/{}/export", self.id)[..])
     }
 
     /// Returns a stream of stats specific to this container instance
-    pub fn stats(self) -> Result<Box<Iterator<Item = Stats>>> {
+    pub fn stats(&self) -> Result<Box<Iterator<Item = Stats>>> {
         let raw = try!(self.docker.stream_get(&format!("/containers/{}/stats", self.id)[..]));
         let it = jed::Iter::new(raw).into_iter().map(|j| {
             // fixme: better error handling
@@ -229,27 +229,27 @@ impl<'a, 'b> Container<'a, 'b> {
     }
 
     /// Start the container instance
-    pub fn start(self) -> Result<()> {
+    pub fn start(&self) -> Result<()> {
         self.docker.post(&format!("/containers/{}/start", self.id)[..], None).map(|_| ())
     }
 
     /// Stop the container instance
-    pub fn stop(self) -> Result<()> {
+    pub fn stop(&self) -> Result<()> {
         self.docker.post(&format!("/containers/{}/stop", self.id)[..], None).map(|_| ())
     }
 
     /// Restart the container instance
-    pub fn restart(self) -> Result<()> {
+    pub fn restart(&self) -> Result<()> {
         self.docker.post(&format!("/containers/{}/restart", self.id)[..], None).map(|_| ())
     }
 
     /// Kill the container instance
-    pub fn kill(self) -> Result<()> {
+    pub fn kill(&self) -> Result<()> {
         self.docker.post(&format!("/containers/{}/kill", self.id)[..], None).map(|_| ())
     }
 
     /// Rename the container instance
-    pub fn rename(self, name: &str) -> Result<()> {
+    pub fn rename(&self, name: &str) -> Result<()> {
         let query = form_urlencoded::serialize(vec![("name", name)]);
         self.docker
             .post(&format!("/containers/{}/rename?{}", self.id, query)[..],
@@ -258,23 +258,23 @@ impl<'a, 'b> Container<'a, 'b> {
     }
 
     /// Pause the container instance
-    pub fn pause(self) -> Result<()> {
+    pub fn pause(&self) -> Result<()> {
         self.docker.post(&format!("/containers/{}/pause", self.id)[..], None).map(|_| ())
     }
 
     /// Unpause the container instance
-    pub fn unpause(self) -> Result<()> {
+    pub fn unpause(&self) -> Result<()> {
         self.docker.post(&format!("/containers/{}/unpause", self.id)[..], None).map(|_| ())
     }
 
     /// Wait until the container stops
-    pub fn wait(self) -> Result<Exit> {
+    pub fn wait(&self) -> Result<Exit> {
         let raw = try!(self.docker.post(&format!("/containers/{}/wait", self.id)[..], None));
         Ok(try!(json::decode::<Exit>(&raw)))
     }
 
     /// Delete the container instance
-    pub fn delete(self) -> Result<()> {
+    pub fn delete(&self) -> Result<()> {
         self.docker.delete(&format!("/containers/{}", self.id)[..]).map(|_| ())
     }
 
