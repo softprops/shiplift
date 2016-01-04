@@ -42,8 +42,8 @@ extern crate shiplift;
 
 use shiplift::Docker;
 
-let mut docker = Docker.new();
-let mut images = docker.images();
+let docker = Docker.new();
+let images = docker.images();
 ```
 
 #### list host-local images
@@ -69,7 +69,7 @@ todo
 #### accessing image info
 
 ```rust
-let mut img = images.get("imagename");
+let img = images.get("imagename");
 ```
 
 ##### inspecting image info
@@ -101,8 +101,8 @@ extern crate shiplift;
 
 use shiplift::Docker;
 
-let mut docker = Docker.new();
-let mut containers = docker.containers();
+let docker = Docker.new();
+let containers = docker.containers();
 ```
 
 #### listing host local containers
@@ -116,7 +116,7 @@ for c in contains.list().unwrap() {
 #### get a container reference
 
 ```rust
-let mut container = containers.get("containerid");
+let container = containers.get("containerid");
 ```
 
 #### inspect container details
