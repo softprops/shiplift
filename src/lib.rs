@@ -13,6 +13,8 @@
 //! }
 //! ```
 
+#[macro_use]
+extern crate log;
 extern crate hyper;
 extern crate hyperlocal;
 extern crate jed;

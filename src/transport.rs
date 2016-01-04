@@ -47,6 +47,7 @@ impl Transport {
         };
         let mut body = String::new();
         try!(res.read_to_string(&mut body));
+        debug!("{} raw response: {}", endpoint, body);
         Ok(body)
     }
 
