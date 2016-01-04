@@ -188,3 +188,69 @@ impl EventsOptionsBuilder {
         }
     }
 }
+
+
+#[derive(Default)]
+pub struct LogsOptions {
+    params: HashMap<&'static str, String>
+}
+
+impl LogsOptions {
+    /// return a new instance of a builder for options
+    pub fn builder() -> LogsOptionsBuilder {
+        LogsOptionsBuilder::new()
+    }
+
+    /// serialize options as a string. returns None if no options are defined
+    pub fn serialize(&self) -> Option<String> {
+        if self.params.is_empty() { None }
+        else {
+            Some(form_urlencoded::serialize(&self.params))
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct LogsOptionsBuilder {
+    params: HashMap<&'static str, String>
+}
+
+impl LogsOptionsBuilder {
+    pub fn new() -> LogsOptionsBuilder {
+        LogsOptionsBuilder {
+            ..Default::default()
+        }
+    }
+
+    pub fn follow(&mut self, f: bool) -> &mut LogsOptionsBuilder {
+        self.params.insert("follow", f.to_string());
+        self
+    }
+
+    pub fn stdout(&mut self, s: bool) -> &mut LogsOptionsBuilder {
+        self.params.insert("stdout", s.to_string());
+        self
+    }
+
+    pub fn stderr(&mut self, s: bool) -> &mut LogsOptionsBuilder {
+        self.params.insert("stderr", s.to_string());
+        self
+    }
+
+    pub fn timestamps(&mut self, t: bool) -> &mut LogsOptionsBuilder {
+        self.params.insert("timestamps", t.to_string());
+        self
+    }
+
+    /// how_many can either by "all" or a to_string() of the number
+    pub fn tail(&mut self, how_many: &str) -> &mut LogsOptionsBuilder {
+        self.params.insert("tail", how_many.to_owned());
+        self
+    }
+
+    pub fn build(&self) -> LogsOptions {
+        LogsOptions {
+            params: self.params.clone()
+        }
+    }
+}

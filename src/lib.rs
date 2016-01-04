@@ -26,7 +26,7 @@ pub mod transport;
 pub mod errors;
 
 pub use errors::Error;
-pub use builder::{ContainerListOptions, ContainerFilter, EventsOptions};
+pub use builder::{ContainerListOptions, ContainerFilter, EventsOptions, LogsOptions};
 
 use builder::ContainerBuilder;
 use hyper::{Client, Url};
@@ -179,21 +179,27 @@ impl<'a, 'b> Container<'a, 'b> {
     }
 
     /// Returns a `top` view of information about the container process
-    pub fn top(self) -> Result<Top> {
-        let raw = try!(self.docker.get(&format!("/containers/{}/top", self.id)[..]));
+    pub fn top(self, psargs: Option<&str>) -> Result<Top> {
+        let mut path = vec![format!("/containers/{}/top", self.id)];
+        if let Some(ref args) = psargs {
+            let encoded = form_urlencoded::serialize(
+                vec![
+                    ("ps_args", args)
+                ]);
+            path.push(encoded)
+        }
+        let raw = try!(self.docker.get(&path.join("?")));
+
         Ok(try!(json::decode::<Top>(&raw)))
     }
 
     /// Returns a stream of logs emitted but the container instance
-    pub fn logs(self) -> Result<Box<Read>> {
-        let query = form_urlencoded::serialize(vec![
-            ("follow", true.to_string()),
-            ("stdout", true.to_string()),
-            ("stderr", true.to_string()),
-            ("timestamps", true.to_string()),
-            ("tail", "all".to_owned())
-            ]);
-        self.docker.stream_get(&format!("/containers/{}/logs?{}", self.id, query)[..])
+    pub fn logs(self, opts: &LogsOptions) -> Result<Box<Read>> {
+        let mut path = vec![format!("/containers/{}/logs", self.id)];
+        if let Some(query) = opts.serialize() {
+            path.push(query)
+        }
+        self.docker.stream_get(&path.join("?"))
     }
 
     /// Returns a set of changes made to the container instance
