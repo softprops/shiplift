@@ -1,6 +1,6 @@
 extern crate shiplift;
 
-use shiplift::{Docker, LogsOptions};
+use shiplift::Docker;
 use std::env;
 
 fn main() {
