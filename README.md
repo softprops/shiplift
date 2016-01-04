@@ -49,7 +49,7 @@ let images = docker.images();
 #### list host-local images
 
 ```rust
-for i in images.list().unwrap() {
+for i in images.list(&Default::default()).unwrap() {
   println!("-> {:?}", i);
 }
 ```
@@ -108,7 +108,7 @@ let containers = docker.containers();
 #### listing host local containers
 
 ```rust
-for c in contains.list().unwrap() {
+for c in containers.list(&Default::default()).unwrap() {
   println!("- {:?}", c);
 }
 ```
