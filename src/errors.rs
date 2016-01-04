@@ -1,7 +1,7 @@
 use std::io::Error as IoError;
 use hyper::Error as HttpError;
 use hyper::status::StatusCode;
-use rustc_serialize::json::{DecoderError,EncoderError,ParserError};
+use rustc_serialize::json::{DecoderError, EncoderError, ParserError};
 
 #[derive(Debug)]
 pub enum Error {
@@ -10,7 +10,10 @@ pub enum Error {
     Parse(ParserError),
     Http(HttpError),
     IO(IoError),
-    Fault { code: StatusCode, message: String }
+    Fault {
+        code: StatusCode,
+        message: String,
+    },
 }
 
 impl From<ParserError> for Error {

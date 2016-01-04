@@ -52,7 +52,7 @@ pub struct Container {
     pub Ports: Vec<Port>,
     pub Status: String,
     pub SizeRw: Option<u64>,
-    pub SizeRootFs: Option<u64>
+    pub SizeRootFs: Option<u64>,
 }
 
 #[derive(Debug, RustcEncodable, RustcDecodable)]
@@ -327,7 +327,7 @@ pub struct Event {
     pub id: String,
     pub from: Option<String>,
     pub time: u64,
-    pub timeNano: u64
+    pub timeNano: u64,
 }
 
 #[derive(Debug)]

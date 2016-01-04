@@ -26,7 +26,8 @@ pub mod transport;
 pub mod errors;
 
 pub use errors::Error;
-pub use builder::{ContainerListOptions, ContainerFilter, EventsOptions, ImageFilter, ImageListOptions, LogsOptions};
+pub use builder::{ContainerListOptions, ContainerFilter, EventsOptions, ImageFilter,
+                  ImageListOptions, LogsOptions};
 
 // fixme: remove this here
 use builder::ContainerBuilder;
@@ -37,8 +38,8 @@ use hyperlocal::UnixSocketConnector;
 use openssl::x509::X509FileType;
 use openssl::ssl::{SslContext, SslMethod};
 use rep::Image as ImageRep;
-use rep::{Change, ContainerDetails, Container as ContainerRep, Event, Exit, History, ImageDetails, Info, SearchResult, Stats,
-          Status, Top, Version};
+use rep::{Change, ContainerDetails, Container as ContainerRep, Event, Exit, History, ImageDetails,
+          Info, SearchResult, Stats, Status, Top, Version};
 use rustc_serialize::json::{self, Json};
 use std::env::{self, VarError};
 use std::io::Read;
@@ -91,9 +92,17 @@ impl<'a, 'b> Image<'a, 'b> {
                    xs.iter().map(|j| {
                        let obj = j.as_object().expect("expected json object");
                        obj.get("Untagged")
-                          .map(|sha| Status::Untagged(sha.as_string().expect("expected Untagged to be a string").to_owned()))
+                          .map(|sha| {
+                              Status::Untagged(sha.as_string()
+                                                  .expect("expected Untagged to be a string")
+                                                  .to_owned())
+                          })
                           .or(obj.get("Deleted")
-                                 .map(|sha| Status::Deleted(sha.as_string().expect("expected Deleted to be a string").to_owned())))
+                                 .map(|sha| {
+                                     Status::Deleted(sha.as_string()
+                                                        .expect("expected Deleted to be a string")
+                                                        .to_owned())
+                                 }))
                           .expect("expected Untagged or Deleted")
                    })
                }
@@ -151,8 +160,8 @@ impl<'a> Images<'a> {
     /// either by name, name:tag, or image id, into a tarball
     pub fn export(&self, names: Vec<&str>) -> Result<Box<Read>> {
         let params = names.iter()
-            .map(|n| ("names", *n))
-            .collect::<Vec<(&str, &str)>>();
+                          .map(|n| ("names", *n))
+                          .collect::<Vec<(&str, &str)>>();
         let query = form_urlencoded::serialize(params);
         self.docker.stream_get(&format!("/images/get?{}", query)[..])
     }
@@ -187,10 +196,7 @@ impl<'a, 'b> Container<'a, 'b> {
     pub fn top(&self, psargs: Option<&str>) -> Result<Top> {
         let mut path = vec![format!("/containers/{}/top", self.id)];
         if let Some(ref args) = psargs {
-            let encoded = form_urlencoded::serialize(
-                vec![
-                    ("ps_args", args)
-                ]);
+            let encoded = form_urlencoded::serialize(vec![("ps_args", args)]);
             path.push(encoded)
         }
         let raw = try!(self.docker.get(&path.join("?")));

@@ -40,11 +40,7 @@ impl fmt::Debug for Transport {
 }
 
 impl Transport {
-    pub fn request(&self,
-                   method: Method,
-                   endpoint: &str,
-                   body: Option<Body>)
-                   -> Result<String> {
+    pub fn request(&self, method: Method, endpoint: &str, body: Option<Body>) -> Result<String> {
         let mut res = match self.stream(method, endpoint, body) {
             Ok(r) => r,
             Err(e) => panic!("failed request {:?}", e),
@@ -54,11 +50,7 @@ impl Transport {
         Ok(body)
     }
 
-    pub fn stream(&self,
-                  method: Method,
-                  endpoint: &str,
-                  body: Option<Body>)
-                  -> Result<Box<Read>> {
+    pub fn stream(&self, method: Method, endpoint: &str, body: Option<Body>) -> Result<Box<Read>> {
         let req = match *self {
             Transport::Tcp { ref client, ref host } => {
                 client.request(method, &format!("{}{}", host, endpoint)[..])
@@ -82,12 +74,37 @@ impl Transport {
             }
             StatusCode::NoContent => Ok(Box::new(BufReader::new("".as_bytes()))),
             // todo: constantize these
-            StatusCode::BadRequest => Err(Error::Fault { code: res.status, message: "bad parameter".to_owned() }),
-            StatusCode::NotFound => Err(Error::Fault { code: res.status, message: "not found".to_owned() }),
-            StatusCode::NotAcceptable => Err(Error::Fault { code: res.status, message: "not acceptable".to_owned() }),
-            StatusCode::Conflict => Err(Error::Fault { code: res.status, message: "conflict found".to_owned() }),
-            StatusCode::InternalServerError => Err(Error::Fault{ code: res.status, message: "internal server error".to_owned() }),
-            _ => unreachable!()
+            StatusCode::BadRequest => {
+                Err(Error::Fault {
+                    code: res.status,
+                    message: "bad parameter".to_owned(),
+                })
+            }
+            StatusCode::NotFound => {
+                Err(Error::Fault {
+                    code: res.status,
+                    message: "not found".to_owned(),
+                })
+            }
+            StatusCode::NotAcceptable => {
+                Err(Error::Fault {
+                    code: res.status,
+                    message: "not acceptable".to_owned(),
+                })
+            }
+            StatusCode::Conflict => {
+                Err(Error::Fault {
+                    code: res.status,
+                    message: "conflict found".to_owned(),
+                })
+            }
+            StatusCode::InternalServerError => {
+                Err(Error::Fault {
+                    code: res.status,
+                    message: "internal server error".to_owned(),
+                })
+            }
+            _ => unreachable!(),
         }
     }
 }

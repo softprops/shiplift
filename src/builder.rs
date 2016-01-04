@@ -13,7 +13,7 @@ use url::form_urlencoded;
 
 #[derive(Default)]
 pub struct ContainerListOptions {
-    params: HashMap<&'static str, String>
+    params: HashMap<&'static str, String>,
 }
 
 impl ContainerListOptions {
@@ -24,8 +24,9 @@ impl ContainerListOptions {
 
     /// serialize options as a string. returns None if no options are defined
     pub fn serialize(&self) -> Option<String> {
-        if self.params.is_empty() { None }
-        else {
+        if self.params.is_empty() {
+            None
+        } else {
             Some(form_urlencoded::serialize(&self.params))
         }
     }
@@ -36,7 +37,7 @@ pub enum ContainerFilter {
     ExitCode(u64),
     Status(String),
     LabelName(String),
-    Label(String, String)
+    Label(String, String),
 }
 
 /// Interface for building container list request
@@ -47,9 +48,7 @@ pub struct ContainerListOptionsBuilder {
 
 impl ContainerListOptionsBuilder {
     pub fn new() -> ContainerListOptionsBuilder {
-        ContainerListOptionsBuilder {
-            ..Default::default()
-        }
+        ContainerListOptionsBuilder { ..Default::default() }
     }
 
     pub fn filter(&mut self, filters: Vec<ContainerFilter>) -> &mut ContainerListOptionsBuilder {
@@ -59,7 +58,7 @@ impl ContainerListOptionsBuilder {
                 ContainerFilter::ExitCode(c) => param.insert("exit", vec![c.to_string()]),
                 ContainerFilter::Status(s) => param.insert("status", vec![s]),
                 ContainerFilter::LabelName(n) => param.insert("label", vec![n]),
-                ContainerFilter::Label(n,v) => param.insert("label", vec![format!("{}={}", n, v)])
+                ContainerFilter::Label(n, v) => param.insert("label", vec![format!("{}={}", n, v)]),
             };
 
         }
@@ -89,10 +88,9 @@ impl ContainerListOptionsBuilder {
         self
     }
 
-    pub fn build(&self) -> ContainerListOptions {//Result<Vec<ContainerRep>> {
-        ContainerListOptions {
-            params: self.params.clone()
-        }
+    pub fn build(&self) -> ContainerListOptions {
+        // Result<Vec<ContainerRep>> {
+        ContainerListOptions { params: self.params.clone() }
     }
 }
 
@@ -141,7 +139,7 @@ impl<'a, 'b> ContainerBuilder<'a, 'b> {
 
 #[derive(Default)]
 pub struct EventsOptions {
-    params: HashMap<&'static str, String>
+    params: HashMap<&'static str, String>,
 }
 
 impl EventsOptions {
@@ -150,8 +148,9 @@ impl EventsOptions {
     }
 
     pub fn serialize(&self) -> Option<String> {
-        if self.params.is_empty() { None }
-        else {
+        if self.params.is_empty() {
+            None
+        } else {
             Some(form_urlencoded::serialize(&self.params))
         }
     }
@@ -160,14 +159,12 @@ impl EventsOptions {
 /// Interface for buiding an events request
 #[derive(Default)]
 pub struct EventsOptionsBuilder {
-    params: HashMap<&'static str, String>
+    params: HashMap<&'static str, String>,
 }
 
 impl EventsOptionsBuilder {
     pub fn new() -> EventsOptionsBuilder {
-        EventsOptionsBuilder {
-            ..Default::default()
-        }
+        EventsOptionsBuilder { ..Default::default() }
     }
 
     /// Filter events since a given timestamp
@@ -183,16 +180,14 @@ impl EventsOptionsBuilder {
     }
 
     pub fn build(&self) -> EventsOptions {
-        EventsOptions {
-            params: self.params.clone()
-        }
+        EventsOptions { params: self.params.clone() }
     }
 }
 
 
 #[derive(Default)]
 pub struct LogsOptions {
-    params: HashMap<&'static str, String>
+    params: HashMap<&'static str, String>,
 }
 
 impl LogsOptions {
@@ -203,8 +198,9 @@ impl LogsOptions {
 
     /// serialize options as a string. returns None if no options are defined
     pub fn serialize(&self) -> Option<String> {
-        if self.params.is_empty() { None }
-        else {
+        if self.params.is_empty() {
+            None
+        } else {
             Some(form_urlencoded::serialize(&self.params))
         }
     }
@@ -212,14 +208,12 @@ impl LogsOptions {
 
 #[derive(Default)]
 pub struct LogsOptionsBuilder {
-    params: HashMap<&'static str, String>
+    params: HashMap<&'static str, String>,
 }
 
 impl LogsOptionsBuilder {
     pub fn new() -> LogsOptionsBuilder {
-        LogsOptionsBuilder {
-            ..Default::default()
-        }
+        LogsOptionsBuilder { ..Default::default() }
     }
 
     pub fn follow(&mut self, f: bool) -> &mut LogsOptionsBuilder {
@@ -249,9 +243,7 @@ impl LogsOptionsBuilder {
     }
 
     pub fn build(&self) -> LogsOptions {
-        LogsOptions {
-            params: self.params.clone()
-        }
+        LogsOptions { params: self.params.clone() }
     }
 }
 
@@ -260,12 +252,12 @@ impl LogsOptionsBuilder {
 pub enum ImageFilter {
     Dangling,
     LabelName(String),
-    Label(String, String)
+    Label(String, String),
 }
 
 #[derive(Default)]
 pub struct ImageListOptions {
-    params: HashMap<&'static str, String>
+    params: HashMap<&'static str, String>,
 }
 
 impl ImageListOptions {
@@ -273,8 +265,9 @@ impl ImageListOptions {
         ImageListOptionsBuilder::new()
     }
     pub fn serialize(&self) -> Option<String> {
-        if self.params.is_empty() { None }
-        else {
+        if self.params.is_empty() {
+            None
+        } else {
             Some(form_urlencoded::serialize(&self.params))
         }
     }
@@ -282,14 +275,12 @@ impl ImageListOptions {
 
 #[derive(Default)]
 pub struct ImageListOptionsBuilder {
-    params: HashMap<&'static str, String>
+    params: HashMap<&'static str, String>,
 }
 
 impl ImageListOptionsBuilder {
     pub fn new() -> ImageListOptionsBuilder {
-        ImageListOptionsBuilder {
-            ..Default::default()
-        }
+        ImageListOptionsBuilder { ..Default::default() }
     }
 
     pub fn digests(&mut self, d: bool) -> &mut ImageListOptionsBuilder {
@@ -313,7 +304,7 @@ impl ImageListOptionsBuilder {
             match f {
                 ImageFilter::Dangling => param.insert("dangling", vec![true.to_string()]),
                 ImageFilter::LabelName(n) => param.insert("label", vec![n]),
-                ImageFilter::Label(n,v) => param.insert("label", vec![format!("{}={}", n, v)])
+                ImageFilter::Label(n, v) => param.insert("label", vec![format!("{}={}", n, v)]),
             };
 
         }
@@ -324,8 +315,6 @@ impl ImageListOptionsBuilder {
     }
 
     pub fn build(&self) -> ImageListOptions {
-        ImageListOptions {
-            params: self.params.clone()
-        }
+        ImageListOptions { params: self.params.clone() }
     }
 }
