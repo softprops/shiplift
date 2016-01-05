@@ -19,12 +19,12 @@ Find them [here](https://softprops.github.io/shiplift).
 
 ## usage
 
-Some small example programs can be found [here](https://github.com/softprops/shiplift/tree/master/examples).
+Some small example programs can be found in this repository's [examples directory](https://github.com/softprops/shiplift/tree/master/examples).
 
 ### communicating with hosts
 
-To use shiplift you must first have a running docker daemon readily accessible. Typically this daemon
-is reachable via url identified by an env named `DOCKER_HOST`. If you are using osx, [docker-machine](https://docs.docker.com/machine/) typically
+To use shiplift, you must first have a active docker daemon readily accessible. Typically, this daemon processs
+is resolvable via a url defined by an env var named `DOCKER_HOST`. If you are using osx, [docker-machine](https://docs.docker.com/machine/) typically
 will have already set up every thing you need to get started when you run `docker-machine env {envid}`.
 
 ```rust
