@@ -4,6 +4,83 @@ use self::super::Result;
 use std::collections::{BTreeMap, HashMap};
 use rustc_serialize::json::{self, Json, ToJson};
 use url::form_urlencoded;
+use self::super::hyper::client::Body;
+
+#[derive(Default)]
+pub struct BuildOptions {
+    pub path: String,
+    params: HashMap<&'static str, String>,
+}
+
+impl BuildOptions {
+    pub fn builder<S>(path: S) -> BuildOptionsBuilder where S: Into<String> {
+        BuildOptionsBuilder::new(path)
+    }
+    pub fn serialize(&self) -> Option<String> {
+        if self.params.is_empty() {
+            None
+        } else {
+            Some(form_urlencoded::serialize(&self.params))
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct BuildOptionsBuilder {
+    path: String,
+    params: HashMap<&'static str, String>,
+}
+
+impl BuildOptionsBuilder {
+    pub fn new<S>(path: S) -> BuildOptionsBuilder where S: Into<String>{
+        BuildOptionsBuilder {
+            path: path.into(),
+            ..Default::default()
+        }
+    }
+
+    pub fn dockerfile<P>(&mut self, path: P) -> &mut BuildOptionsBuilder where P: Into<String> {
+        self.params.insert("dockerfile", path.into());
+        self
+    }
+
+    pub fn tag<T>(&mut self, t: T) -> &mut BuildOptionsBuilder where T: Into<String> {
+        self.params.insert("t", t.into());
+        self
+    }
+
+    pub fn remote<R>(&mut self, r: R) -> &mut BuildOptionsBuilder where R: Into<String> {
+        self.params.insert("remote", r.into());
+        self
+    }
+
+    pub fn nocache<R>(&mut self, nc: bool) -> &mut BuildOptionsBuilder {
+        self.params.insert("nocache", nc.to_string());
+        self
+    }
+
+    pub fn rm(&mut self, r: bool) -> &mut BuildOptionsBuilder {
+        self.params.insert("rm", r.to_string());
+        self
+    }
+
+    pub fn forcerm(&mut self, fr: bool) -> &mut BuildOptionsBuilder {
+        self.params.insert("forcerm", fr.to_string());
+        self
+    }
+
+    // todo: memory
+    // todo: memswap
+    // todo: cpushares
+    // todo: cpusetcpus
+    // todo: cpuperiod
+    // todo: cpuquota
+    // todo: buildargs
+
+    pub fn build(&self) -> BuildOptions {
+        BuildOptions { path: self.path.clone(), params: self.params.clone() }
+    }
+}
 
 /// Options for filtering container list results
 #[derive(Default)]

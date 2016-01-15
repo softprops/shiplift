@@ -1,3 +1,7 @@
+# 0.2.1 (unreleased)
+
+* removed `Body` type with a preference for `Into<hyper::client::Body>`
+
 # 0.2.0
 
 * many breaking changes required to make interfaces consistent, idomatic, and future friendly

@@ -5,6 +5,7 @@ extern crate mime;
 
 use hyper::Client;
 use hyper::client;
+use hyper::client::Body;
 use self::super::{Error, Result};
 use self::hyper::buffer::BufReader;
 use self::hyper::header::ContentType;
@@ -40,7 +41,7 @@ impl fmt::Debug for Transport {
 }
 
 impl Transport {
-    pub fn request(&self, method: Method, endpoint: &str, body: Option<Body>) -> Result<String> {
+    pub fn request<'a, B>(&'a self, method: Method, endpoint: &str, body: Option<B>) -> Result<String> where B: Into<Body<'a>> {
         let mut res = match self.stream(method, endpoint, body) {
             Ok(r) => r,
             Err(e) => panic!("failed request {:?}", e),
@@ -51,7 +52,9 @@ impl Transport {
         Ok(body)
     }
 
-    pub fn stream(&self, method: Method, endpoint: &str, body: Option<Body>) -> Result<Box<Read>> {
+    pub fn stream<'c, B>(
+        &'c self, method: Method, endpoint: &str, body: Option<B>
+    ) -> Result<Box<Read>> where B: Into<Body<'c>> {
         let req = match *self {
             Transport::Tcp { ref client, ref host } => {
                 client.request(method, &format!("{}{}", host, endpoint)[..])
@@ -62,9 +65,9 @@ impl Transport {
         };
 
         let embodied = match body {
-            Some(Body { read: r, size: l }) => {
-                let reader: &mut Read = *r.deref_mut();
-                req.header(ContentType::json()).body(client::Body::SizedBody(reader, l))
+            Some(b) => {//Body { read: r, size: l }) => {
+                //let reader: &mut Read = *r.deref_mut();
+                req.header(ContentType::json()).body(b)//client::Body::SizedBody(reader, l))
             }
             _ => req,
         };
@@ -106,22 +109,6 @@ impl Transport {
                 })
             }
             _ => unreachable!(),
-        }
-    }
-}
-
-#[doc(hidden)]
-pub struct Body<'a> {
-    read: &'a mut Box<&'a mut Read>,
-    size: u64,
-}
-
-impl<'a> Body<'a> {
-    /// Create a new body instance
-    pub fn new(read: &'a mut Box<&'a mut Read>, size: u64) -> Body<'a> {
-        Body {
-            read: read,
-            size: size,
         }
     }
 }
