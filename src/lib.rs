@@ -143,8 +143,11 @@ impl<'a> Images<'a> {
             path.push(query)
         }
 
-        let mut f = try!(tarball::dir(&opts.path[..]));
-        let raw = try!(self.docker.stream_post(&path.join("?"), Some((Body::ChunkedBody(&mut f), tar()))));
+        let mut bytes = vec![];
+
+        try!(tarball::dir(&mut bytes, &opts.path[..]));
+
+        let raw = try!(self.docker.stream_post(&path.join("?"), Some((Body::BufBody(&bytes[..], bytes.len()), tar()))));
         let it = jed::Iter::new(raw).into_iter().map(|j| {
             // fixme: better error handling
             debug!("{:?}", j);
@@ -190,6 +193,7 @@ impl<'a> Images<'a> {
         Ok(try!(json::decode::<Vec<SearchResult>>(&raw)))
     }
 
+    // todo: should this be named `pull` to avoid confusion with build?
     /// Create a new docker images from an existing image
     pub fn create(&self, from: &str) -> Result<Box<Iterator<Item = PullOutput>>> {
         let query = form_urlencoded::serialize(vec![("fromImage", from)]);

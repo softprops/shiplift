@@ -1,16 +1,14 @@
 
 use flate2::Compression;
 use flate2::write::GzEncoder;
-use std::fs::{self, File, OpenOptions};
+use std::fs::{self, File};
 use std::path::{Path, MAIN_SEPARATOR};
-use std::io;
+use std::io::{self, Write, Read};
 use tar::Archive;
 
-// todo: factor this into its own crate
-pub fn dir(path: &str) -> io::Result<File> {
-    let file = OpenOptions::new().read(true).write(true).create(true).open("build.tgz").unwrap();
-    let zipper = GzEncoder::new(file, Compression::Best);
-    let archive = Archive::new(zipper);
+// todo: this is pretty involved. factor this into its own crate
+pub fn dir<W>(buf: W, path: &str) -> io::Result<()> where W: Write {
+    let archive = Archive::new(GzEncoder::new(buf, Compression::Best));
     fn bundle(dir: &Path, cb: &Fn(&Path), bundle_dir: bool) -> io::Result<()> {
         if try!(fs::metadata(dir)).is_dir() {
             if bundle_dir {
@@ -47,5 +45,6 @@ pub fn dir(path: &str) -> io::Result<File> {
         try!(bundle(Path::new(path), &append, false));
         try!(archive.finish());
     }
-    File::open("build.tgz")
+
+    Ok(())
 }
