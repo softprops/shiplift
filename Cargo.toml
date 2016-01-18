@@ -11,6 +11,7 @@ keywords = ["docker", "unix", "containers", "hyper", "ship"]
 license = "MIT"
 
 [dependencies]
+flate2 = "0.2"
 hyperlocal = "0.1"
 log = "0.3"
 jed = "0.1"

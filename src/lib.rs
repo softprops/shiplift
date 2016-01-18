@@ -15,7 +15,11 @@
 
 #[macro_use]
 extern crate log;
+#[macro_use]
+extern crate mime;
+#[macro_use]
 extern crate hyper;
+extern crate flate2;
 extern crate hyperlocal;
 extern crate jed;
 extern crate openssl;
@@ -28,29 +32,29 @@ pub mod rep;
 pub mod transport;
 pub mod errors;
 
-use std::fs::{self, DirEntry, File};
-use tar::Archive;
+mod tarball;
 
 pub use errors::Error;
 pub use builder::{BuildOptions, ContainerOptions, ContainerListOptions, ContainerFilter, EventsOptions, ImageFilter,
                   ImageListOptions, LogsOptions};
 use hyper::{Client, Url};
+use hyper::header::ContentType;
 use hyper::net::{HttpsConnector, Openssl};
 use hyper::method::Method;
 use hyperlocal::UnixSocketConnector;
 use openssl::x509::X509FileType;
 use openssl::ssl::{SslContext, SslMethod};
 use rep::Image as ImageRep;
-use rep::{Change, ContainerCreateInfo, ContainerDetails, Container as ContainerRep, Event, Exit, History, ImageDetails,
+use rep::{PullOutput, PullInfo, BuildOutput, Change, ContainerCreateInfo, ContainerDetails, Container as ContainerRep, Event, Exit, History, ImageDetails,
           Info, SearchResult, Stats, Status, Top, Version};
 use rustc_serialize::json::{self, Json};
 use std::env::{self, VarError};
-use std::io::{self, Read};
+use std::io::Read;
 use std::iter::IntoIterator;
 use std::path::Path;
 use std::sync::Arc;
 use std::time::Duration;
-use transport::{Transport};
+use transport::{tar, Transport};
 use hyper::client::Body;
 use url::{form_urlencoded, Host, RelativeSchemeData, SchemeData};
 
@@ -133,39 +137,35 @@ impl<'a> Images<'a> {
         Images { docker: docker }
     }
 
-    pub fn build(&self, opts: &BuildOptions) -> Result<String> {
+    pub fn build(&self, opts: &BuildOptions) -> Result<Box<Iterator<Item = BuildOutput>>> {
         let mut path = vec!["/build".to_owned()];
         if let Some(query) = opts.serialize() {
             path.push(query)
         }
 
-
-        let file = File::create("build.tar").unwrap();
-        let mut a = Archive::new(file);
-
-        fn visit_dirs(dir: &Path, cb: &Fn(&DirEntry)) -> io::Result<()> {
-            if try!(fs::metadata(dir)).is_dir() {
-                for entry in try!(fs::read_dir(dir)) {
-                    let entry = try!(entry);
-                    if try!(fs::metadata(entry.path())).is_dir() {
-                        try!(visit_dirs(&entry.path(), cb));
-                    } else {
-                        cb(&entry);
-                    }
-                }
-            }
-            Ok(())
-        }
-
-        {
-            let append = |e: &DirEntry| {
-                a.append_path(e.path());
-            };
-            visit_dirs(Path::new(&opts.path[..]), &append);
-            a.finish();
-        }
-
-        self.docker.post(&path.join("?"), Some(Body::ChunkedBody(&mut a.into_inner())))
+        let mut f = try!(tarball::dir(&opts.path[..]));
+        let raw = try!(self.docker.stream_post(&path.join("?"), Some((Body::ChunkedBody(&mut f), tar()))));
+        let it = jed::Iter::new(raw).into_iter().map(|j| {
+            // fixme: better error handling
+            debug!("{:?}", j);
+            let obj = j.as_object().expect("expected json object");
+            obj.get("stream")
+                .map(|stream| BuildOutput::Stream(
+                    stream.as_string()
+                        .expect("expected stream to be a string")
+                        .to_owned()
+                        )
+                     )
+                .or(obj.get("error")
+                    .map(|err| BuildOutput::Err(
+                        err.as_string()
+                            .expect("expected error to be a string")
+                            .to_owned()
+                            )
+                         )
+                    ).expect("expected build output stream or error")
+        });
+        Ok(Box::new(it))
     }
 
     /// Lists the docker images on the current docker host
@@ -191,9 +191,25 @@ impl<'a> Images<'a> {
     }
 
     /// Create a new docker images from an existing image
-    pub fn create(&self, from: &str) -> Result<Box<Read>> {
+    pub fn create(&self, from: &str) -> Result<Box<Iterator<Item = PullOutput>>> {
         let query = form_urlencoded::serialize(vec![("fromImage", from)]);
-        self.docker.stream_post(&format!("/images/create?{}", query)[..])
+        let raw = try!(self.docker.stream_post(&format!("/images/create?{}", query)[..], None as Option<(&'a str, ContentType)>));
+        let it = jed::Iter::new(raw).into_iter().map(|j| {
+            // fixme: better error handling
+            debug!("{:?}",j);
+            let s = json::encode(&j).unwrap();
+            json::decode::<PullInfo>(&s)
+                .map(|info| PullOutput::Status(info)).ok()
+                .or(j.as_object().expect("expected json object").get("error")
+                    .map(|err| PullOutput::Err(
+                        err.as_string()
+                            .expect("expected error to be a string")
+                            .to_owned()
+                            )
+                         )
+                    ).expect("expected pull status or error")
+        });
+        Ok(Box::new(it))
     }
 
     /// exports a collection of named images,
@@ -269,6 +285,7 @@ impl<'a, 'b> Container<'a, 'b> {
         let raw = try!(self.docker.stream_get(&format!("/containers/{}/stats", self.id)[..]));
         let it = jed::Iter::new(raw).into_iter().map(|j| {
             // fixme: better error handling
+            debug!("{:?}", j);
             let s = json::encode(&j).unwrap();
             json::decode::<Stats>(&s).unwrap()
         });
@@ -277,7 +294,7 @@ impl<'a, 'b> Container<'a, 'b> {
 
     /// Start the container instance
     pub fn start(&'a self) -> Result<()> {
-        self.docker.post(&format!("/containers/{}/start", self.id)[..], None as Option<&'a str>).map(|_| ())
+        self.docker.post(&format!("/containers/{}/start", self.id)[..], None as Option<(&'a str, ContentType)>).map(|_| ())
     }
 
     /// Stop the container instance
@@ -287,7 +304,7 @@ impl<'a, 'b> Container<'a, 'b> {
             let encoded = form_urlencoded::serialize(vec![("t", w.as_secs().to_string())]);
             path.push(encoded)
         }
-        self.docker.post(&path.join("?"), None as Option<&'a str>).map(|_| ())
+        self.docker.post(&path.join("?"), None as Option<(&'a str, ContentType)>).map(|_| ())
     }
 
     /// Restart the container instance
@@ -297,7 +314,7 @@ impl<'a, 'b> Container<'a, 'b> {
             let encoded = form_urlencoded::serialize(vec![("t", w.as_secs().to_string())]);
             path.push(encoded)
         }
-        self.docker.post(&path.join("?"), None as Option<&'a str>).map(|_| ())
+        self.docker.post(&path.join("?"), None as Option<(&'a str, ContentType)>).map(|_| ())
     }
 
     /// Kill the container instance
@@ -307,7 +324,7 @@ impl<'a, 'b> Container<'a, 'b> {
             let encoded = form_urlencoded::serialize(vec![("signal", sig.to_owned())]);
             path.push(encoded)
         }
-        self.docker.post(&path.join("?"), None as Option<&'a str>).map(|_| ())
+        self.docker.post(&path.join("?"), None as Option<(&'a str, ContentType)>).map(|_| ())
     }
 
     /// Rename the container instance
@@ -315,26 +332,23 @@ impl<'a, 'b> Container<'a, 'b> {
         let query = form_urlencoded::serialize(vec![("name", name)]);
         self.docker
             .post(&format!("/containers/{}/rename?{}", self.id, query)[..],
-                  None as Option<&'a str>)
+                  None as Option<(&'a str, ContentType)>)
             .map(|_| ())
     }
 
     /// Pause the container instance
     pub fn pause(&self) -> Result<()> {
-        let empty: Option<&'a str> = None;
-        self.docker.post(&format!("/containers/{}/pause", self.id)[..], empty).map(|_| ())
+        self.docker.post(&format!("/containers/{}/pause", self.id)[..], None as Option<(&'a str, ContentType)>).map(|_| ())
     }
 
     /// Unpause the container instance
     pub fn unpause(&self) -> Result<()> {
-        let empty: Option<&'a str> = None;
-        self.docker.post(&format!("/containers/{}/unpause", self.id)[..], empty).map(|_| ())
+        self.docker.post(&format!("/containers/{}/unpause", self.id)[..], None as Option<(&'a str, ContentType)>).map(|_| ())
     }
 
     /// Wait until the container stops
     pub fn wait(&self) -> Result<Exit> {
-        let empty: Option<&'a str> = None;
-        let raw = try!(self.docker.post(&format!("/containers/{}/wait", self.id)[..], empty));
+        let raw = try!(self.docker.post(&format!("/containers/{}/wait", self.id)[..], None as Option<(&'a str, ContentType)>));
         Ok(try!(json::decode::<Exit>(&raw)))
     }
 
@@ -377,7 +391,7 @@ impl<'a> Containers<'a> {
         let data = try!(opts.serialize());
         let mut bytes = data.as_bytes();
         let raw = try!(self.docker.post("/containers/create",
-                                        Some(&mut bytes)));
+                                        Some((&mut bytes, ContentType::json()))));
         Ok(try!(json::decode::<ContainerCreateInfo>(&raw)))
     }
 }
@@ -487,6 +501,7 @@ impl Docker {
         }
         let raw = try!(self.stream_get(&path.join("?")[..]));
         let it = jed::Iter::new(raw).into_iter().map(|j| {
+            debug!("{:?}", j);
             // fixme: better error handling
             let s = json::encode(&j).unwrap();
             json::decode::<Event>(&s).unwrap()
@@ -495,22 +510,22 @@ impl Docker {
     }
 
     fn get<'a>(&self, endpoint: &str) -> Result<String> {
-        self.transport.request(Method::Get, endpoint, None as Option<&'a str>)
+        self.transport.request(Method::Get, endpoint, None as Option<(&'a str, ContentType)>)
     }
 
-    fn post<'a, B>(&'a self, endpoint: &str, body: Option<B>) -> Result<String> where B: Into<Body<'a>> {
+    fn post<'a, B>(&'a self, endpoint: &str, body: Option<(B, ContentType)>) -> Result<String> where B: Into<Body<'a>> {
         self.transport.request(Method::Post, endpoint, body)
     }
 
     fn delete<'a>(&self, endpoint: &str) -> Result<String> {
-        self.transport.request(Method::Delete, endpoint, None as Option<&'a str>)
+        self.transport.request(Method::Delete, endpoint, None as Option<(&'a str, ContentType)>)
     }
 
-    fn stream_post<'a>(&self, endpoint: &str) -> Result<Box<Read>> {
-        self.transport.stream(Method::Post, endpoint, None as Option<&'a str>)
+    fn stream_post<'a, B>(&'a self, endpoint: &str, body:Option<(B, ContentType)>) -> Result<Box<Read>> where B: Into<Body<'a>> {
+        self.transport.stream(Method::Post, endpoint, body)
     }
 
     fn stream_get<'a>(&self, endpoint: &str) -> Result<Box<Read>> {
-        self.transport.stream(Method::Get, endpoint, None as Option<&'a str>)
+        self.transport.stream(Method::Get, endpoint, None as Option<(&'a str, ContentType)>)
     }
 }

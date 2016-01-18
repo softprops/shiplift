@@ -4,7 +4,6 @@ extern crate hyper;
 extern crate mime;
 
 use hyper::Client;
-use hyper::client;
 use hyper::client::Body;
 use self::super::{Error, Result};
 use self::hyper::buffer::BufReader;
@@ -12,9 +11,16 @@ use self::hyper::header::ContentType;
 use self::hyper::status::StatusCode;
 use hyper::method::Method;
 use std::fmt;
-use std::ops::DerefMut;
 use std::io::{Read, Write};
 use hyperlocal::DomainUrl;
+
+pub fn tar() -> ContentType {
+    ContentType(
+        mime::Mime(
+            mime::TopLevel::Application,
+            mime::SubLevel::Ext(String::from("tar")),
+            vec![]))
+}
 
 /// Transports are types which define the means of communication
 /// with the docker daemon
@@ -41,7 +47,7 @@ impl fmt::Debug for Transport {
 }
 
 impl Transport {
-    pub fn request<'a, B>(&'a self, method: Method, endpoint: &str, body: Option<B>) -> Result<String> where B: Into<Body<'a>> {
+    pub fn request<'a, B>(&'a self, method: Method, endpoint: &str, body: Option<(B, ContentType)>) -> Result<String> where B: Into<Body<'a>> {
         let mut res = match self.stream(method, endpoint, body) {
             Ok(r) => r,
             Err(e) => panic!("failed request {:?}", e),
@@ -53,7 +59,7 @@ impl Transport {
     }
 
     pub fn stream<'c, B>(
-        &'c self, method: Method, endpoint: &str, body: Option<B>
+        &'c self, method: Method, endpoint: &str, body: Option<(B, ContentType)>
     ) -> Result<Box<Read>> where B: Into<Body<'c>> {
         let req = match *self {
             Transport::Tcp { ref client, ref host } => {
@@ -65,10 +71,7 @@ impl Transport {
         };
 
         let embodied = match body {
-            Some(b) => {//Body { read: r, size: l }) => {
-                //let reader: &mut Read = *r.deref_mut();
-                req.header(ContentType::json()).body(b)//client::Body::SizedBody(reader, l))
-            }
+            Some((b, c)) => req.header(c).body(b),
             _ => req,
         };
         let res = try!(embodied.send());

@@ -1,13 +1,13 @@
 extern crate shiplift;
 
-use shiplift::{BuildOptions, Docker};
+use shiplift::Docker;
 use std::env;
 
 fn main() {
     let docker = Docker::new();
-    if let Some(path) = env::args().nth(1) {
+    if let Some(img) = env::args().nth(1) {
         let image = docker.images()
-            .build(&BuildOptions::builder(path).tag("shiplift_test").build())
+            .create(&img[..])
             .unwrap();
         for output in image {
             println!("{:?}", output);

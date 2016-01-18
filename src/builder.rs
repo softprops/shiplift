@@ -4,7 +4,6 @@ use self::super::Result;
 use std::collections::{BTreeMap, HashMap};
 use rustc_serialize::json::{self, Json, ToJson};
 use url::form_urlencoded;
-use self::super::hyper::client::Body;
 
 #[derive(Default)]
 pub struct BuildOptions {
@@ -13,9 +12,12 @@ pub struct BuildOptions {
 }
 
 impl BuildOptions {
+    /// return a new instance of a builder for options
     pub fn builder<S>(path: S) -> BuildOptionsBuilder where S: Into<String> {
         BuildOptionsBuilder::new(path)
     }
+
+    /// serialize options as a string. returns None if no options are defined
     pub fn serialize(&self) -> Option<String> {
         if self.params.is_empty() {
             None
@@ -220,6 +222,7 @@ impl EventsOptions {
         EventsOptionsBuilder::new()
     }
 
+    /// serialize options as a string. returns None if no options are defined
     pub fn serialize(&self) -> Option<String> {
         if self.params.is_empty() {
             None
