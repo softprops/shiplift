@@ -36,7 +36,7 @@ mod tarball;
 
 pub use errors::Error;
 pub use builder::{BuildOptions, ContainerOptions, ContainerListOptions, ContainerFilter, EventsOptions, ImageFilter,
-                  ImageListOptions, LogsOptions};
+                  ImageListOptions, LogsOptions, PullOptions};
 use hyper::{Client, Url};
 use hyper::header::ContentType;
 use hyper::net::{HttpsConnector, Openssl};
@@ -193,17 +193,21 @@ impl<'a> Images<'a> {
         Ok(try!(json::decode::<Vec<SearchResult>>(&raw)))
     }
 
-    // todo: should this be named `pull` to avoid confusion with build?
-    /// Create a new docker images from an existing image
-    pub fn create(&self, from: &str) -> Result<Box<Iterator<Item = PullOutput>>> {
-        let query = form_urlencoded::serialize(vec![("fromImage", from)]);
-        let raw = try!(self.docker.stream_post(&format!("/images/create?{}", query)[..], None as Option<(&'a str, ContentType)>));
+    /// Pull and create a new docker images from an existing image
+    pub fn pull(&self, opts: &PullOptions) -> Result<Box<Iterator<Item = PullOutput>>> {
+        let mut path = vec!["/images/create".to_owned()];
+        if let Some(query) = opts.serialize() {
+            path.push(query);
+        }
+        let raw = try!(self.docker.stream_post(&path.join("?"), None as Option<(&'a str, ContentType)>));
         let it = jed::Iter::new(raw).into_iter().map(|j| {
             // fixme: better error handling
             debug!("{:?}",j);
             let s = json::encode(&j).unwrap();
             json::decode::<PullInfo>(&s)
-                .map(|info| PullOutput::Status(info)).ok()
+                .map(|info| PullOutput::Status {
+                    id: info.id, status: info.status, progress: info.progress, progress_detail: info.progressDetail
+                }).ok()
                 .or(j.as_object().expect("expected json object").get("error")
                     .map(|err| PullOutput::Err(
                         err.as_string()

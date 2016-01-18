@@ -1,6 +1,8 @@
 # 0.2.1 (unreleased)
 
 * removed `Body` type with a preference for `Into<hyper::client::Body>`
+* implemented `Image.build`
+* renamed `Image.create` to `Image.pull` to avoid confusion with `Image.build` and added `PullOptions` argument and return type of iterable `PullOutput`
 
 # 0.2.0
 

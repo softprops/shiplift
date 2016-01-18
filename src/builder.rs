@@ -6,6 +6,64 @@ use rustc_serialize::json::{self, Json, ToJson};
 use url::form_urlencoded;
 
 #[derive(Default)]
+pub struct PullOptions {
+    params: HashMap<&'static str, String>,
+}
+
+impl PullOptions {
+    /// return a new instance of a builder for options
+    pub fn builder() -> PullOptionsBuilder  {
+        PullOptionsBuilder::new()
+    }
+
+    /// serialize options as a string. returns None if no options are defined
+    pub fn serialize(&self) -> Option<String> {
+        if self.params.is_empty() {
+            None
+        } else {
+            Some(form_urlencoded::serialize(&self.params))
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct PullOptionsBuilder {
+    params: HashMap<&'static str, String>,
+}
+
+impl PullOptionsBuilder {
+    pub fn new() -> PullOptionsBuilder {
+        PullOptionsBuilder {
+            ..Default::default()
+        }
+    }
+
+    pub fn image<I>(&mut self, img: I) -> &mut PullOptionsBuilder where I: Into<String> {
+        self.params.insert("fromImage", img.into());
+        self
+    }
+
+    pub fn src<S>(&mut self, s: S) -> &mut PullOptionsBuilder where S: Into<String> {
+        self.params.insert("fromSrc", s.into());
+        self
+    }
+
+    pub fn repo<R>(&mut self, r: R) -> &mut PullOptionsBuilder where R: Into<String> {
+        self.params.insert("repo", r.into());
+        self
+    }
+
+    pub fn tag<T>(&mut self, t: T) -> &mut PullOptionsBuilder where T: Into<String>{
+        self.params.insert("tag", t.into());
+        self
+    }
+
+    pub fn build(&self) -> PullOptions {
+        PullOptions { params: self.params.clone() }
+    }
+}
+
+#[derive(Default)]
 pub struct BuildOptions {
     pub path: String,
     params: HashMap<&'static str, String>,

@@ -379,25 +379,25 @@ pub enum BuildOutput {
 }
 
 // fixme: all fields are options because PullInfo.progressDefault is sometimes an empty object instead of a null/absent value
-#[derive(Debug, RustcDecodable)]
+#[derive(Clone, Debug, RustcDecodable)]
 pub struct ProgressDetail {
     current: Option<u64>,
     total: Option<u64>,
     status: Option<String> // fixme: it looks like this field isn't deserializing properly
 }
 
-#[derive(Debug, RustcDecodable)]
+#[derive(Clone, Debug, RustcDecodable)]
 #[allow(non_snake_case)]
 pub struct PullInfo {
-    id: Option<String>,
-    status: String,
-    progress: Option<String>,
-    progressDetail: Option<ProgressDetail>
+    pub id: Option<String>,
+    pub status: String,
+    pub progress: Option<String>,
+    pub progressDetail: Option<ProgressDetail>
 }
 
 #[derive(Debug)]
 pub enum PullOutput {
-    Status(PullInfo),
+    Status { id: Option<String>, status: String, progress: Option<String>, progress_detail: Option<ProgressDetail> },
     Err(String)
 }
 
