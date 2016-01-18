@@ -71,6 +71,8 @@ pub struct BuildOptions {
 
 impl BuildOptions {
     /// return a new instance of a builder for options
+    /// path is expected to be a file path to a directory containing a Dockerfile
+    /// describing how to build a Docker image
     pub fn builder<S>(path: S) -> BuildOptionsBuilder where S: Into<String> {
         BuildOptionsBuilder::new(path)
     }
@@ -92,6 +94,8 @@ pub struct BuildOptionsBuilder {
 }
 
 impl BuildOptionsBuilder {
+    /// path is expected to be a file path to a directory containing a Dockerfile
+    /// describing how to build a Docker image
     pub fn new<S>(path: S) -> BuildOptionsBuilder where S: Into<String>{
         BuildOptionsBuilder {
             path: path.into(),
@@ -99,11 +103,13 @@ impl BuildOptionsBuilder {
         }
     }
 
+    /// set the name of the docker file. defaults to "DockerFile"
     pub fn dockerfile<P>(&mut self, path: P) -> &mut BuildOptionsBuilder where P: Into<String> {
         self.params.insert("dockerfile", path.into());
         self
     }
 
+    /// tag this image with a name after building it
     pub fn tag<T>(&mut self, t: T) -> &mut BuildOptionsBuilder where T: Into<String> {
         self.params.insert("t", t.into());
         self
@@ -114,6 +120,7 @@ impl BuildOptionsBuilder {
         self
     }
 
+    /// don't use the image cache when building image
     pub fn nocache<R>(&mut self, nc: bool) -> &mut BuildOptionsBuilder {
         self.params.insert("nocache", nc.to_string());
         self
