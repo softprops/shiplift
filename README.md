@@ -23,8 +23,8 @@ Some small example programs can be found in this repository's [examples director
 
 ### communicating with hosts
 
-To use shiplift, you must first have a active docker daemon readily accessible. Typically, this daemon processs
-is resolvable via a url defined by an env var named `DOCKER_HOST`. If you are using osx, [docker-machine](https://docs.docker.com/machine/) typically
+To use shiplift, you must first have a docker daemon readily accessible. Typically this daemon processs
+is resolvable via a url specified by an env var named `DOCKER_HOST`. If you are using osx, [docker-machine](https://docs.docker.com/machine/) typically
 will have already set up every thing you need to get started when you run `docker-machine env {envid}`.
 
 ```rust
@@ -73,9 +73,32 @@ for i in image.search("rust").unwrap() {
 }
 ```
 
-#### creating new images from existing image
+#### creating new image by pulling an existing image
 
-todo
+```rust
+use shiplift::PullOptions;
+let output = images.pull(
+  &PullOptions.builder().image("redis:2.8.18").build()
+).unwrap();
+for o in output {
+  println!("{:?}", o);
+}
+```
+
+### build an image from the contents of a directory containing a Dockerfile
+
+the following is equivalent to `docker build -t shiplift_test .`
+
+```rust
+use shiplift::BuildOptions;
+
+let output = images.build(
+     &BuildOptions::builder(".").tag("shiplift_test").build()
+).unwrap();
+for o in output {
+    println!("{:?}", o);
+}
+```
 
 #### accessing image info
 
@@ -174,4 +197,4 @@ container.restart();
 
 todoc
 
-Doug Tangren (softprops) 2015
+Doug Tangren (softprops) 2015-2016
