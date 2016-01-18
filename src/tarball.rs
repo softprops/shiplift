@@ -7,9 +7,13 @@ use std::io::{self, Write, Read};
 use tar::Archive;
 
 // todo: this is pretty involved. (re)factor this into its own crate
-pub fn dir<W>(buf: W, path: &str) -> io::Result<()> where W: Write {
+pub fn dir<W>(buf: W, path: &str) -> io::Result<()>
+    where W: Write
+{
     let archive = Archive::new(GzEncoder::new(buf, Compression::Best));
-    fn bundle<F>(dir: &Path, f: &F, bundle_dir: bool) -> io::Result<()> where F: Fn(&Path) -> io::Result<()> {
+    fn bundle<F>(dir: &Path, f: &F, bundle_dir: bool) -> io::Result<()>
+        where F: Fn(&Path) -> io::Result<()>
+    {
         if try!(fs::metadata(dir)).is_dir() {
             if bundle_dir {
                 try!(f(&dir));

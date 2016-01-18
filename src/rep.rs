@@ -78,7 +78,7 @@ pub struct ContainerDetails {
     pub ResolvConfPath: String,
     pub RestartCount: u64,
     pub State: State,
-    pub Mounts: Vec<Mount>
+    pub Mounts: Vec<Mount>,
 }
 
 #[derive(Debug, RustcEncodable, RustcDecodable)]
@@ -87,7 +87,7 @@ pub struct Mount {
     pub Source: String,
     pub Destination: String,
     pub Mode: String,
-    pub RW: bool
+    pub RW: bool,
 }
 
 #[derive(Debug, RustcEncodable, RustcDecodable)]
@@ -101,7 +101,7 @@ pub struct State {
     pub Pid: u64,
     pub Restarting: bool,
     pub Running: bool,
-    pub StartedAt: String
+    pub StartedAt: String,
 }
 
 #[derive(Debug, RustcEncodable, RustcDecodable)]
@@ -111,9 +111,8 @@ pub struct NetworkSettings {
     pub Gateway: String,
     pub IPAddress: String,
     pub IPPrefixLen: u64,
-    pub MacAddress: String,
-//    pub PortMapping: Option<???>,
- //   pub Ports: Option<???>
+    pub MacAddress: String, /*    pub PortMapping: Option<???>,
+                             *   pub Ports: Option<???> */
 }
 
 #[derive(Debug, RustcEncodable, RustcDecodable)]
@@ -150,9 +149,9 @@ pub struct Config {
     pub Hostname: String,
     pub Image: String,
     pub Labels: HashMap<String, String>,
-//    pub MacAddress: String,
+    // pub MacAddress: String,
     pub OnBuild: Option<String>,
-//    pub NetworkDisabled: bool,
+    // pub NetworkDisabled: bool,
     pub OpenStdin: bool,
     pub StdinOnce: bool,
     pub Tty: bool,
@@ -375,7 +374,7 @@ pub struct Event {
 #[derive(Debug)]
 pub enum BuildOutput {
     Stream(String),
-    Err(String)
+    Err(String),
 }
 
 // fixme: all fields are options because PullInfo.progressDefault is sometimes an empty object instead of a null/absent value
@@ -383,7 +382,7 @@ pub enum BuildOutput {
 pub struct ProgressDetail {
     current: Option<u64>,
     total: Option<u64>,
-    status: Option<String> // fixme: it looks like this field isn't deserializing properly
+    status: Option<String>, // fixme: it looks like this field isn't deserializing properly
 }
 
 #[derive(Clone, Debug, RustcDecodable)]
@@ -392,13 +391,18 @@ pub struct PullInfo {
     pub id: Option<String>,
     pub status: String,
     pub progress: Option<String>,
-    pub progressDetail: Option<ProgressDetail>
+    pub progressDetail: Option<ProgressDetail>,
 }
 
 #[derive(Debug)]
 pub enum PullOutput {
-    Status { id: Option<String>, status: String, progress: Option<String>, progress_detail: Option<ProgressDetail> },
-    Err(String)
+    Status {
+        id: Option<String>,
+        status: String,
+        progress: Option<String>,
+        progress_detail: Option<ProgressDetail>,
+    },
+    Err(String),
 }
 
 #[derive(Debug)]

@@ -35,8 +35,8 @@ pub mod errors;
 mod tarball;
 
 pub use errors::Error;
-pub use builder::{BuildOptions, ContainerOptions, ContainerListOptions, ContainerFilter, EventsOptions, ImageFilter,
-                  ImageListOptions, LogsOptions, PullOptions};
+pub use builder::{BuildOptions, ContainerOptions, ContainerListOptions, ContainerFilter,
+                  EventsOptions, ImageFilter, ImageListOptions, LogsOptions, PullOptions};
 use hyper::{Client, Url};
 use hyper::header::ContentType;
 use hyper::net::{HttpsConnector, Openssl};
@@ -45,8 +45,9 @@ use hyperlocal::UnixSocketConnector;
 use openssl::x509::X509FileType;
 use openssl::ssl::{SslContext, SslMethod};
 use rep::Image as ImageRep;
-use rep::{PullOutput, PullInfo, BuildOutput, Change, ContainerCreateInfo, ContainerDetails, Container as ContainerRep, Event, Exit, History, ImageDetails,
-          Info, SearchResult, Stats, Status, Top, Version};
+use rep::{PullOutput, PullInfo, BuildOutput, Change, ContainerCreateInfo, ContainerDetails,
+          Container as ContainerRep, Event, Exit, History, ImageDetails, Info, SearchResult,
+          Stats, Status, Top, Version};
 use rustc_serialize::json::{self, Json};
 use std::env::{self, VarError};
 use std::io::Read;
@@ -147,26 +148,26 @@ impl<'a> Images<'a> {
 
         try!(tarball::dir(&mut bytes, &opts.path[..]));
 
-        let raw = try!(self.docker.stream_post(&path.join("?"), Some((Body::BufBody(&bytes[..], bytes.len()), tar()))));
+        let raw = try!(self.docker.stream_post(&path.join("?"),
+                                               Some((Body::BufBody(&bytes[..], bytes.len()),
+                                                     tar()))));
         let it = jed::Iter::new(raw).into_iter().map(|j| {
             // fixme: better error handling
             debug!("{:?}", j);
             let obj = j.as_object().expect("expected json object");
             obj.get("stream")
-                .map(|stream| BuildOutput::Stream(
-                    stream.as_string()
-                        .expect("expected stream to be a string")
-                        .to_owned()
-                        )
-                     )
-                .or(obj.get("error")
-                    .map(|err| BuildOutput::Err(
-                        err.as_string()
-                            .expect("expected error to be a string")
-                            .to_owned()
-                            )
-                         )
-                    ).expect("expected build output stream or error")
+               .map(|stream| {
+                   BuildOutput::Stream(stream.as_string()
+                                             .expect("expected stream to be a string")
+                                             .to_owned())
+               })
+               .or(obj.get("error")
+                      .map(|err| {
+                          BuildOutput::Err(err.as_string()
+                                              .expect("expected error to be a string")
+                                              .to_owned())
+                      }))
+               .expect("expected build output stream or error")
         });
         Ok(Box::new(it))
     }
@@ -199,23 +200,31 @@ impl<'a> Images<'a> {
         if let Some(query) = opts.serialize() {
             path.push(query);
         }
-        let raw = try!(self.docker.stream_post(&path.join("?"), None as Option<(&'a str, ContentType)>));
+        let raw = try!(self.docker
+                           .stream_post(&path.join("?"), None as Option<(&'a str, ContentType)>));
         let it = jed::Iter::new(raw).into_iter().map(|j| {
             // fixme: better error handling
-            debug!("{:?}",j);
+            debug!("{:?}", j);
             let s = json::encode(&j).unwrap();
             json::decode::<PullInfo>(&s)
-                .map(|info| PullOutput::Status {
-                    id: info.id, status: info.status, progress: info.progress, progress_detail: info.progressDetail
-                }).ok()
-                .or(j.as_object().expect("expected json object").get("error")
-                    .map(|err| PullOutput::Err(
-                        err.as_string()
-                            .expect("expected error to be a string")
-                            .to_owned()
-                            )
-                         )
-                    ).expect("expected pull status or error")
+                .map(|info| {
+                    PullOutput::Status {
+                        id: info.id,
+                        status: info.status,
+                        progress: info.progress,
+                        progress_detail: info.progressDetail,
+                    }
+                })
+                .ok()
+                .or(j.as_object()
+                     .expect("expected json object")
+                     .get("error")
+                     .map(|err| {
+                         PullOutput::Err(err.as_string()
+                                            .expect("expected error to be a string")
+                                            .to_owned())
+                     }))
+                .expect("expected pull status or error")
         });
         Ok(Box::new(it))
     }
@@ -302,7 +311,10 @@ impl<'a, 'b> Container<'a, 'b> {
 
     /// Start the container instance
     pub fn start(&'a self) -> Result<()> {
-        self.docker.post(&format!("/containers/{}/start", self.id)[..], None as Option<(&'a str, ContentType)>).map(|_| ())
+        self.docker
+            .post(&format!("/containers/{}/start", self.id)[..],
+                  None as Option<(&'a str, ContentType)>)
+            .map(|_| ())
     }
 
     /// Stop the container instance
@@ -346,17 +358,24 @@ impl<'a, 'b> Container<'a, 'b> {
 
     /// Pause the container instance
     pub fn pause(&self) -> Result<()> {
-        self.docker.post(&format!("/containers/{}/pause", self.id)[..], None as Option<(&'a str, ContentType)>).map(|_| ())
+        self.docker
+            .post(&format!("/containers/{}/pause", self.id)[..],
+                  None as Option<(&'a str, ContentType)>)
+            .map(|_| ())
     }
 
     /// Unpause the container instance
     pub fn unpause(&self) -> Result<()> {
-        self.docker.post(&format!("/containers/{}/unpause", self.id)[..], None as Option<(&'a str, ContentType)>).map(|_| ())
+        self.docker
+            .post(&format!("/containers/{}/unpause", self.id)[..],
+                  None as Option<(&'a str, ContentType)>)
+            .map(|_| ())
     }
 
     /// Wait until the container stops
     pub fn wait(&self) -> Result<Exit> {
-        let raw = try!(self.docker.post(&format!("/containers/{}/wait", self.id)[..], None as Option<(&'a str, ContentType)>));
+        let raw = try!(self.docker.post(&format!("/containers/{}/wait", self.id)[..],
+                                        None as Option<(&'a str, ContentType)>));
         Ok(try!(json::decode::<Exit>(&raw)))
     }
 
@@ -518,22 +537,35 @@ impl Docker {
     }
 
     fn get<'a>(&self, endpoint: &str) -> Result<String> {
-        self.transport.request(Method::Get, endpoint, None as Option<(&'a str, ContentType)>)
+        self.transport.request(Method::Get,
+                               endpoint,
+                               None as Option<(&'a str, ContentType)>)
     }
 
-    fn post<'a, B>(&'a self, endpoint: &str, body: Option<(B, ContentType)>) -> Result<String> where B: Into<Body<'a>> {
+    fn post<'a, B>(&'a self, endpoint: &str, body: Option<(B, ContentType)>) -> Result<String>
+        where B: Into<Body<'a>>
+    {
         self.transport.request(Method::Post, endpoint, body)
     }
 
     fn delete<'a>(&self, endpoint: &str) -> Result<String> {
-        self.transport.request(Method::Delete, endpoint, None as Option<(&'a str, ContentType)>)
+        self.transport.request(Method::Delete,
+                               endpoint,
+                               None as Option<(&'a str, ContentType)>)
     }
 
-    fn stream_post<'a, B>(&'a self, endpoint: &str, body:Option<(B, ContentType)>) -> Result<Box<Read>> where B: Into<Body<'a>> {
+    fn stream_post<'a, B>(&'a self,
+                          endpoint: &str,
+                          body: Option<(B, ContentType)>)
+                          -> Result<Box<Read>>
+        where B: Into<Body<'a>>
+    {
         self.transport.stream(Method::Post, endpoint, body)
     }
 
     fn stream_get<'a>(&self, endpoint: &str) -> Result<Box<Read>> {
-        self.transport.stream(Method::Get, endpoint, None as Option<(&'a str, ContentType)>)
+        self.transport.stream(Method::Get,
+                              endpoint,
+                              None as Option<(&'a str, ContentType)>)
     }
 }

@@ -15,11 +15,9 @@ use std::io::{Read, Write};
 use hyperlocal::DomainUrl;
 
 pub fn tar() -> ContentType {
-    ContentType(
-        mime::Mime(
-            mime::TopLevel::Application,
-            mime::SubLevel::Ext(String::from("tar")),
-            vec![]))
+    ContentType(mime::Mime(mime::TopLevel::Application,
+                           mime::SubLevel::Ext(String::from("tar")),
+                           vec![]))
 }
 
 /// Transports are types which define the means of communication
@@ -47,7 +45,13 @@ impl fmt::Debug for Transport {
 }
 
 impl Transport {
-    pub fn request<'a, B>(&'a self, method: Method, endpoint: &str, body: Option<(B, ContentType)>) -> Result<String> where B: Into<Body<'a>> {
+    pub fn request<'a, B>(&'a self,
+                          method: Method,
+                          endpoint: &str,
+                          body: Option<(B, ContentType)>)
+                          -> Result<String>
+        where B: Into<Body<'a>>
+    {
         let mut res = match self.stream(method, endpoint, body) {
             Ok(r) => r,
             Err(e) => panic!("failed request {:?}", e),
@@ -58,9 +62,13 @@ impl Transport {
         Ok(body)
     }
 
-    pub fn stream<'c, B>(
-        &'c self, method: Method, endpoint: &str, body: Option<(B, ContentType)>
-    ) -> Result<Box<Read>> where B: Into<Body<'c>> {
+    pub fn stream<'c, B>(&'c self,
+                         method: Method,
+                         endpoint: &str,
+                         body: Option<(B, ContentType)>)
+                         -> Result<Box<Read>>
+        where B: Into<Body<'c>>
+    {
         let req = match *self {
             Transport::Tcp { ref client, ref host } => {
                 client.request(method, &format!("{}{}", host, endpoint)[..])

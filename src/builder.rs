@@ -12,7 +12,7 @@ pub struct PullOptions {
 
 impl PullOptions {
     /// return a new instance of a builder for options
-    pub fn builder() -> PullOptionsBuilder  {
+    pub fn builder() -> PullOptionsBuilder {
         PullOptionsBuilder::new()
     }
 
@@ -33,27 +33,33 @@ pub struct PullOptionsBuilder {
 
 impl PullOptionsBuilder {
     pub fn new() -> PullOptionsBuilder {
-        PullOptionsBuilder {
-            ..Default::default()
-        }
+        PullOptionsBuilder { ..Default::default() }
     }
 
-    pub fn image<I>(&mut self, img: I) -> &mut PullOptionsBuilder where I: Into<String> {
+    pub fn image<I>(&mut self, img: I) -> &mut PullOptionsBuilder
+        where I: Into<String>
+    {
         self.params.insert("fromImage", img.into());
         self
     }
 
-    pub fn src<S>(&mut self, s: S) -> &mut PullOptionsBuilder where S: Into<String> {
+    pub fn src<S>(&mut self, s: S) -> &mut PullOptionsBuilder
+        where S: Into<String>
+    {
         self.params.insert("fromSrc", s.into());
         self
     }
 
-    pub fn repo<R>(&mut self, r: R) -> &mut PullOptionsBuilder where R: Into<String> {
+    pub fn repo<R>(&mut self, r: R) -> &mut PullOptionsBuilder
+        where R: Into<String>
+    {
         self.params.insert("repo", r.into());
         self
     }
 
-    pub fn tag<T>(&mut self, t: T) -> &mut PullOptionsBuilder where T: Into<String>{
+    pub fn tag<T>(&mut self, t: T) -> &mut PullOptionsBuilder
+        where T: Into<String>
+    {
         self.params.insert("tag", t.into());
         self
     }
@@ -73,7 +79,9 @@ impl BuildOptions {
     /// return a new instance of a builder for options
     /// path is expected to be a file path to a directory containing a Dockerfile
     /// describing how to build a Docker image
-    pub fn builder<S>(path: S) -> BuildOptionsBuilder where S: Into<String> {
+    pub fn builder<S>(path: S) -> BuildOptionsBuilder
+        where S: Into<String>
+    {
         BuildOptionsBuilder::new(path)
     }
 
@@ -96,26 +104,31 @@ pub struct BuildOptionsBuilder {
 impl BuildOptionsBuilder {
     /// path is expected to be a file path to a directory containing a Dockerfile
     /// describing how to build a Docker image
-    pub fn new<S>(path: S) -> BuildOptionsBuilder where S: Into<String>{
-        BuildOptionsBuilder {
-            path: path.into(),
-            ..Default::default()
-        }
+    pub fn new<S>(path: S) -> BuildOptionsBuilder
+        where S: Into<String>
+    {
+        BuildOptionsBuilder { path: path.into(), ..Default::default() }
     }
 
     /// set the name of the docker file. defaults to "DockerFile"
-    pub fn dockerfile<P>(&mut self, path: P) -> &mut BuildOptionsBuilder where P: Into<String> {
+    pub fn dockerfile<P>(&mut self, path: P) -> &mut BuildOptionsBuilder
+        where P: Into<String>
+    {
         self.params.insert("dockerfile", path.into());
         self
     }
 
     /// tag this image with a name after building it
-    pub fn tag<T>(&mut self, t: T) -> &mut BuildOptionsBuilder where T: Into<String> {
+    pub fn tag<T>(&mut self, t: T) -> &mut BuildOptionsBuilder
+        where T: Into<String>
+    {
         self.params.insert("t", t.into());
         self
     }
 
-    pub fn remote<R>(&mut self, r: R) -> &mut BuildOptionsBuilder where R: Into<String> {
+    pub fn remote<R>(&mut self, r: R) -> &mut BuildOptionsBuilder
+        where R: Into<String>
+    {
         self.params.insert("remote", r.into());
         self
     }
@@ -145,7 +158,10 @@ impl BuildOptionsBuilder {
     // todo: buildargs
 
     pub fn build(&self) -> BuildOptions {
-        BuildOptions { path: self.path.clone(), params: self.params.clone() }
+        BuildOptions {
+            path: self.path.clone(),
+            params: self.params.clone(),
+        }
     }
 }
 
@@ -234,7 +250,7 @@ impl ContainerListOptionsBuilder {
 
 /// Interface for building a new docker container from an existing image
 pub struct ContainerOptions {
-    params: HashMap<&'static str, String>
+    params: HashMap<&'static str, String>,
 }
 
 impl ContainerOptions {
@@ -256,22 +272,18 @@ impl ContainerOptions {
 
 #[derive(Default)]
 pub struct ContainerOptionsBuilder {
-    params: HashMap<&'static str, String>
+    params: HashMap<&'static str, String>,
 }
 
 impl ContainerOptionsBuilder {
     pub fn new(name: &str) -> ContainerOptionsBuilder {
         let mut params = HashMap::new();
         params.insert("Image", name.to_owned());
-        ContainerOptionsBuilder {
-            params: params
-        }
+        ContainerOptionsBuilder { params: params }
     }
 
     pub fn build(&self) -> ContainerOptions {
-        ContainerOptions {
-            params: self.params.clone()
-        }
+        ContainerOptions { params: self.params.clone() }
     }
 }
 
