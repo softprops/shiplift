@@ -1,4 +1,4 @@
-# 0.2.1 (unreleased)
+# 0.2.1
 
 * removed `Body` type with a preference for `Into<hyper::client::Body>`
 * implemented `Image.build`
