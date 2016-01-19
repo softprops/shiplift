@@ -138,6 +138,7 @@ impl<'a> Images<'a> {
         Images { docker: docker }
     }
 
+    /// Builds a new image build by reading a Dockerfile in a target directory
     pub fn build(&self, opts: &BuildOptions) -> Result<Box<Iterator<Item = BuildOutput>>> {
         let mut path = vec!["/build".to_owned()];
         if let Some(query) = opts.serialize() {
