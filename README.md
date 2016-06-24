@@ -78,7 +78,7 @@ for i in image.search("rust").unwrap() {
 ```rust
 use shiplift::PullOptions;
 let output = images.pull(
-  &PullOptions.builder().image("redis:2.8.18").build()
+  &PullOptions::builder().image("redis:2.8.18").build()
 ).unwrap();
 for o in output {
   println!("{:?}", o);
