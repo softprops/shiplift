@@ -63,7 +63,6 @@ pub struct ContainerDetails {
     pub Config: Config,
     pub Created: String,
     pub Driver: String,
-    pub ExecDriver: String,
     // pub ExecIDs: ??
     pub HostConfig: HostConfig,
     pub HostnamePath: String,
