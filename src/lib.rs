@@ -36,7 +36,9 @@ mod tarball;
 
 pub use errors::Error;
 pub use builder::{BuildOptions, ContainerOptions, ContainerListOptions, ContainerFilter,
-                  EventsOptions, ImageFilter, ImageListOptions, LogsOptions, PullOptions};
+                  EventsOptions, ImageFilter, ImageListOptions, LogsOptions,
+                  PullOptions, RmContainerOptions
+                  };
 use hyper::{Client, Url};
 use hyper::header::ContentType;
 use hyper::net::{HttpsConnector, Openssl};
@@ -380,9 +382,20 @@ impl<'a, 'b> Container<'a, 'b> {
         Ok(try!(json::decode::<Exit>(&raw)))
     }
 
-    /// Delete the container instance (todo: force/v)
+    /// Delete the container instance
+    /// use remove instead to use the force/v options
     pub fn delete(&self) -> Result<()> {
         self.docker.delete(&format!("/containers/{}", self.id)[..]).map(|_| ())
+    }
+
+    /// Delete the container instance (todo: force/v)
+    pub fn remove(&self, opts: RmContainerOptions) -> Result<()> {
+        let mut path = vec![format!("/containers/{}", self.id)];
+        if let Some(query) = opts.serialize() {
+            path.push(query)
+        }
+        try!(self.docker.delete(&path.join("?")));
+        Ok(())
     }
 
     // todo attach, attach/ws, copy, archive
