@@ -475,3 +475,52 @@ impl ImageListOptionsBuilder {
         ImageListOptions { params: self.params.clone() }
     }
 }
+
+
+/// Options for controlling log request results
+#[derive(Default)]
+pub struct RmContainerOptions {
+    params: HashMap<&'static str, String>,
+}
+
+impl RmContainerOptions {
+    /// return a new instance of a builder for options
+    pub fn builder() -> RmContainerOptionsBuilder {
+        RmContainerOptionsBuilder::new()
+    }
+
+    /// serialize options as a string. returns None if no options are defined
+    pub fn serialize(&self) -> Option<String> {
+        if self.params.is_empty() {
+            None
+        } else {
+            Some(form_urlencoded::serialize(&self.params))
+        }
+    }
+}
+
+/// Builder interface for `LogsOptions`
+#[derive(Default)]
+pub struct RmContainerOptionsBuilder {
+    params: HashMap<&'static str, String>,
+}
+
+impl RmContainerOptionsBuilder {
+    pub fn new() -> RmContainerOptionsBuilder {
+        RmContainerOptionsBuilder { ..Default::default() }
+    }
+
+    pub fn force(&mut self, f: bool) -> &mut RmContainerOptionsBuilder {
+        self.params.insert("force", f.to_string());
+        self
+    }
+
+    pub fn volumes(&mut self, s: bool) -> &mut RmContainerOptionsBuilder {
+        self.params.insert("f", s.to_string());
+        self
+    }
+
+    pub fn build(&self) -> RmContainerOptions {
+        RmContainerOptions { params: self.params.clone() }
+    }
+}
