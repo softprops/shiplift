@@ -52,10 +52,7 @@ impl Transport {
                           -> Result<String>
         where B: Into<Body<'a>>
     {
-        let mut res = match self.stream(method, endpoint, body) {
-            Ok(r) => r,
-            Err(e) => panic!("failed request {:?}", e),
-        };
+        let mut res = try!(self.stream(method, endpoint, body));
         let mut body = String::new();
         try!(res.read_to_string(&mut body));
         debug!("{} raw response: {}", endpoint, body);
