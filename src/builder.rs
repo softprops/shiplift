@@ -309,6 +309,18 @@ impl EventsOptions {
     }
 }
 
+/// Filter options for image listings
+pub enum EventFilter {
+    Container(String),
+    Event(String),
+    Image(String),
+    Label(String),
+    Type(String),
+    Volume(String),
+    Network(String),
+    Daemon(String),
+}
+
 /// Builder interface for `EventOptions`
 #[derive(Default)]
 pub struct EventsOptionsBuilder {
@@ -329,6 +341,25 @@ impl EventsOptionsBuilder {
     /// Filter events until a given timestamp
     pub fn until(&mut self, ts: &u64) -> &mut EventsOptionsBuilder {
         self.params.insert("until", ts.to_string());
+        self
+    }
+
+    pub fn filter(&mut self, filters: Vec<EventFilter>) -> &mut EventsOptionsBuilder {
+        let mut param = HashMap::new();
+        for f in filters {
+            match f {
+                EventFilter::Container(n) => param.insert("container", vec![n]),
+                EventFilter::Event(n)     => param.insert("event", vec![n]),
+                EventFilter::Image(n)     => param.insert("image", vec![n]),
+                EventFilter::Label(n)     => param.insert("label", vec![n]),
+                EventFilter::Type(n)      => param.insert("type", vec![n]),
+                EventFilter::Volume(n)    => param.insert("volume", vec![n]),
+                EventFilter::Network(n)   => param.insert("network", vec![n]),
+                EventFilter::Daemon(n)    => param.insert("daemon", vec![n]),
+            };
+
+        }
+        self.params.insert("filters", json::encode(&param).unwrap());
         self
     }
 
