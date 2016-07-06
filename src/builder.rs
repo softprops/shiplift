@@ -309,13 +309,32 @@ impl EventsOptions {
     }
 }
 
+
+pub enum EventFilterType {
+  Container,
+  Image,
+  Volume,
+  Network,
+  Daemon,
+}
+
+fn event_filter_type_to_string(filter: EventFilterType) -> &'static str {
+  match filter {
+    EventFilterType::Container => "container",
+    EventFilterType::Image => "image",
+    EventFilterType::Volume => "volume",
+    EventFilterType::Network => "network",
+    EventFilterType::Daemon => "daemon",
+  }
+}
+
 /// Filter options for image listings
 pub enum EventFilter {
     Container(String),
     Event(String),
     Image(String),
     Label(String),
-    Type(String),
+    Type(EventFilterType),
     Volume(String),
     Network(String),
     Daemon(String),
@@ -352,10 +371,11 @@ impl EventsOptionsBuilder {
                 EventFilter::Event(n)     => param.insert("event", vec![n]),
                 EventFilter::Image(n)     => param.insert("image", vec![n]),
                 EventFilter::Label(n)     => param.insert("label", vec![n]),
-                EventFilter::Type(n)      => param.insert("type", vec![n]),
                 EventFilter::Volume(n)    => param.insert("volume", vec![n]),
                 EventFilter::Network(n)   => param.insert("network", vec![n]),
                 EventFilter::Daemon(n)    => param.insert("daemon", vec![n]),
+                EventFilter::Type(n)      => param.insert("type",
+                  vec![event_filter_type_to_string(n).to_string()]),
             };
 
         }
