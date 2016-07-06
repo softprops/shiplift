@@ -262,6 +262,9 @@ impl<'a, 'b> Container<'a, 'b> {
         }
     }
 
+    /// a getter for the container id
+    pub fn id(&self) -> &str { &self.id }
+
     /// Inspects the current docker container instance's details
     pub fn inspect(&self) -> Result<ContainerDetails> {
         let raw = try!(self.docker.get(&format!("/containers/{}/json", self.id)[..]));
