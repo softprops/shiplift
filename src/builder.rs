@@ -251,6 +251,7 @@ impl ContainerListOptionsBuilder {
 /// Interface for building a new docker container from an existing image
 pub struct ContainerOptions {
     params: HashMap<&'static str, String>,
+    params_list: HashMap<&'static str, Vec<String>>,
 }
 
 impl ContainerOptions {
@@ -262,9 +263,27 @@ impl ContainerOptions {
     /// serialize options as a string. returns None if no options are defined
     pub fn serialize(&self) -> Result<String> {
         let mut body = BTreeMap::new();
-        if let Some(image) = self.params.get("Image") {
-            body.insert("Image".to_owned(), image.to_json());
+        let mut host_config = BTreeMap::new();
+
+        for (k, v) in &self.params {
+            if k.starts_with("HostConfig.") {
+                let (_, s) = k.split_at(11);
+                host_config.insert(s.to_owned(), v.to_json());
+            } else {
+                body.insert(k.to_string(), v.to_json());
+            }
         }
+
+        for (k, v) in &self.params_list {
+            if k.starts_with("HostConfig.") {
+                let (_, s) = k.split_at(11);
+                host_config.insert(s.to_owned(), v.to_json());
+            } else {
+                body.insert(k.to_string(), v.to_json());
+            }
+        }
+
+        body.insert("HostConfig".to_owned(), host_config.to_json());
         let json_obj: Json = body.to_json();
         Ok(try!(json::encode(&json_obj)))
     }
@@ -273,17 +292,88 @@ impl ContainerOptions {
 #[derive(Default)]
 pub struct ContainerOptionsBuilder {
     params: HashMap<&'static str, String>,
+    params_list: HashMap<&'static str, Vec<String>>,
 }
 
 impl ContainerOptionsBuilder {
-    pub fn new(name: &str) -> ContainerOptionsBuilder {
+    pub fn new(image: &str) -> ContainerOptionsBuilder {
         let mut params = HashMap::new();
-        params.insert("Image", name.to_owned());
-        ContainerOptionsBuilder { params: params }
+        let params_list = HashMap::new();
+        params.insert("Image", image.to_owned());
+        ContainerOptionsBuilder {
+            params: params,
+            params_list: params_list,
+        }
+    }
+
+    pub fn volumes(&mut self, volumes: Vec<&str>) -> &mut ContainerOptionsBuilder {
+        for v in volumes {
+            self.params_list.entry("HostConfig.Binds").or_insert(Vec::new()).push(v.to_owned());
+        }
+        self
+    }
+
+    pub fn links(&mut self, links: Vec<&str>) -> &mut ContainerOptionsBuilder {
+        for link in links {
+            self.params_list.entry("HostConfig.Links").or_insert(Vec::new()).push(link.to_owned());
+        }
+        self
+    }
+
+    pub fn extra_hosts(&mut self, hosts: Vec<&str>) -> &mut ContainerOptionsBuilder {
+        for host in hosts {
+            self.params_list
+                .entry("HostConfig.ExtraHosts")
+                .or_insert(Vec::new())
+                .push(host.to_owned());
+        }
+
+        self
+    }
+
+    pub fn volumes_from(&mut self, volumes: Vec<&str>) -> &mut ContainerOptionsBuilder {
+        for volume in volumes {
+            self.params_list
+                .entry("HostConfig.VolumesFrom")
+                .or_insert(Vec::new())
+                .push(volume.to_owned());
+        }
+        self
+    }
+
+    pub fn network_mode(&mut self, network: &str) -> &mut ContainerOptionsBuilder {
+        if !network.is_empty() {
+            self.params.insert("HostConfig.NetworkMode", network.to_owned());
+        }
+        self
+    }
+
+    pub fn env(&mut self, envs: Vec<&str>) -> &mut ContainerOptionsBuilder {
+        for env in envs {
+            self.params_list.entry("Env").or_insert(Vec::new()).push(env.to_owned());
+        }
+        self
+    }
+
+    pub fn cmd(&mut self, cmds: Vec<&str>) -> &mut ContainerOptionsBuilder {
+        for cmd in cmds {
+            self.params_list.entry("Cmd").or_insert(Vec::new()).push(cmd.to_owned());
+        }
+        self
+    }
+
+    pub fn entrypoint(&mut self, entrypoint: &str) -> &mut ContainerOptionsBuilder {
+        if !entrypoint.is_empty() {
+            self.params.insert("Entrypoint", entrypoint.to_owned());
+        }
+        self
     }
 
     pub fn build(&self) -> ContainerOptions {
-        ContainerOptions { params: self.params.clone() }
+        ContainerOptions {
+            params: self.params.clone(),
+            params_list: self.params_list.clone(),
+        }
     }
 }
 
@@ -311,21 +401,21 @@ impl EventsOptions {
 
 
 pub enum EventFilterType {
-  Container,
-  Image,
-  Volume,
-  Network,
-  Daemon,
+    Container,
+    Image,
+    Volume,
+    Network,
+    Daemon,
 }
 
 fn event_filter_type_to_string(filter: EventFilterType) -> &'static str {
-  match filter {
-    EventFilterType::Container => "container",
-    EventFilterType::Image => "image",
-    EventFilterType::Volume => "volume",
-    EventFilterType::Network => "network",
-    EventFilterType::Daemon => "daemon",
-  }
+    match filter {
+        EventFilterType::Container => "container",
+        EventFilterType::Image => "image",
+        EventFilterType::Volume => "volume",
+        EventFilterType::Network => "network",
+        EventFilterType::Daemon => "daemon",
+    }
 }
 
 /// Filter options for image listings
@@ -368,14 +458,15 @@ impl EventsOptionsBuilder {
         for f in filters {
             match f {
                 EventFilter::Container(n) => param.insert("container", vec![n]),
-                EventFilter::Event(n)     => param.insert("event", vec![n]),
-                EventFilter::Image(n)     => param.insert("image", vec![n]),
-                EventFilter::Label(n)     => param.insert("label", vec![n]),
-                EventFilter::Volume(n)    => param.insert("volume", vec![n]),
-                EventFilter::Network(n)   => param.insert("network", vec![n]),
-                EventFilter::Daemon(n)    => param.insert("daemon", vec![n]),
-                EventFilter::Type(n)      => param.insert("type",
-                  vec![event_filter_type_to_string(n).to_string()]),
+                EventFilter::Event(n) => param.insert("event", vec![n]),
+                EventFilter::Image(n) => param.insert("image", vec![n]),
+                EventFilter::Label(n) => param.insert("label", vec![n]),
+                EventFilter::Volume(n) => param.insert("volume", vec![n]),
+                EventFilter::Network(n) => param.insert("network", vec![n]),
+                EventFilter::Daemon(n) => param.insert("daemon", vec![n]),
+                EventFilter::Type(n) => {
+                    param.insert("type", vec![event_filter_type_to_string(n).to_string()])
+                }
             };
 
         }
