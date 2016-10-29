@@ -425,6 +425,51 @@ impl ContainerOptionsBuilder {
     }
 }
 
+pub struct ExecContainerOptions {
+    params: HashMap<&'static str, Vec<String>>,
+}
+
+impl ExecContainerOptions {
+    /// return a new instance of a builder for options
+    pub fn builder() -> ExecContainerOptionsBuilder {
+        ExecContainerOptionsBuilder::new()
+    }
+
+    /// serialize options as a string. returns None if no options are defined
+    pub fn serialize(&self) -> Result<String> {
+        let mut body = BTreeMap::new();
+
+        for (k, v) in &self.params {
+            body.insert(k.to_string(), v.to_json());
+        }
+
+        let json_obj: Json = body.to_json();
+        Ok(try!(json::encode(&json_obj)))
+    }
+}
+
+#[derive(Default)]
+pub struct ExecContainerOptionsBuilder {
+    params: HashMap<&'static str, Vec<String>>,
+}
+
+impl ExecContainerOptionsBuilder {
+    pub fn new() -> ExecContainerOptionsBuilder {
+        ExecContainerOptionsBuilder { params: HashMap::new() }
+    }
+
+    pub fn cmd(&mut self, cmds: Vec<&str>) -> &mut ExecContainerOptionsBuilder {
+        for cmd in cmds {
+            self.params.entry("Cmd").or_insert(Vec::new()).push(cmd.to_owned());
+        }
+        self
+    }
+
+    pub fn build(&self) -> ExecContainerOptions {
+        ExecContainerOptions { params: self.params.clone() }
+    }
+}
+
 /// Options for filtering streams of Docker events
 #[derive(Default)]
 pub struct EventsOptions {

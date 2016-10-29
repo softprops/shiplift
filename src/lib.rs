@@ -37,7 +37,7 @@ mod tarball;
 pub use errors::Error;
 pub use builder::{BuildOptions, ContainerOptions, ContainerListOptions, ContainerFilter,
                   EventsOptions, ImageFilter, ImageListOptions, LogsOptions,
-                  PullOptions, RmContainerOptions
+                  PullOptions, RmContainerOptions, ExecContainerOptions
                   };
 use hyper::{Client, Url};
 use hyper::header::ContentType;
@@ -416,6 +416,31 @@ impl<'a, 'b> Container<'a, 'b> {
         }
         try!(self.docker.delete(&path.join("?")));
         Ok(())
+    }
+
+    // Exec the specified command in the container
+    pub fn exec(&self, opts: &ExecContainerOptions) -> Result<()> {
+        let data = try!(opts.serialize());
+        let mut bytes = data.as_bytes();
+        match self.docker
+            .post(&format!("/containers/{}/exec", self.id)[..],
+                  Some((&mut bytes, ContentType::json()))) {
+            Err(e) => Err(e),
+            Ok(res) => {
+                let data = "{}";
+                let mut bytes = data.as_bytes();
+                self.docker
+                    .post(&format!("/exec/{}/start",
+                                   Json::from_str(res.as_str())
+                                       .unwrap()
+                                       .search("Id")
+                                       .unwrap()
+                                       .as_string()
+                                       .unwrap())[..],
+                          Some((&mut bytes, ContentType::json())))
+                    .map(|_| ())
+            }
+        }
     }
 
     // todo attach, attach/ws, copy, archive
