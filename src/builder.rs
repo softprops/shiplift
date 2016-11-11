@@ -658,7 +658,7 @@ impl RmContainerOptionsBuilder {
     }
 
     pub fn volumes(&mut self, s: bool) -> &mut RmContainerOptionsBuilder {
-        self.params.insert("f", s.to_string());
+        self.params.insert("v", s.to_string());
         self
     }
 
