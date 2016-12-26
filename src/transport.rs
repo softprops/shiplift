@@ -5,6 +5,7 @@ extern crate mime;
 
 use hyper::Client;
 use hyper::client::Body;
+use hyper::header;
 use self::super::{Error, Result};
 use self::hyper::buffer::BufReader;
 use self::hyper::header::ContentType;
@@ -66,6 +67,11 @@ impl Transport {
                          -> Result<Box<Read>>
         where B: Into<Body<'c>>
     {
+        let headers = {
+            let mut headers = header::Headers::new();
+            headers.set(header::Host{ hostname: "".to_owned(), port: None });
+            headers
+        };
         let req = match *self {
             Transport::Tcp { ref client, ref host } => {
                 client.request(method, &format!("{}{}", host, endpoint)[..])
@@ -73,7 +79,7 @@ impl Transport {
             Transport::Unix {  ref client, ref path } => {
                 client.request(method, DomainUrl::new(&path, endpoint))
             }
-        };
+        }.headers(headers);
 
         let embodied = match body {
             Some((b, c)) => req.header(c).body(b),
