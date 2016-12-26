@@ -363,8 +363,8 @@ pub struct Exit {
 #[derive(Debug, RustcEncodable, RustcDecodable)]
 #[allow(non_snake_case)]
 pub struct Event {
-    pub status: String,
-    pub id: String,
+    pub status: Option<String>,
+    pub id: Option<String>,
     pub from: Option<String>,
     pub time: u64,
     pub timeNano: u64,
