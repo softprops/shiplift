@@ -16,7 +16,6 @@
 #[macro_use]
 extern crate log;
 #[macro_use]
-extern crate mime;
 #[macro_use]
 extern crate hyper;
 extern crate flate2;
@@ -59,7 +58,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use transport::{tar, Transport};
 use hyper::client::Body;
-use url::{form_urlencoded, Host, RelativeSchemeData, SchemeData};
+use url::{form_urlencoded};
 
 /// Represents the result of all docker operations
 pub type Result<T> = std::result::Result<T, Error>;
@@ -461,22 +460,12 @@ impl Docker {
 
     /// constructs a new Docker instance for docker host listening at the given host url
     pub fn host(host: Url) -> Docker {
-        let domain = match host.scheme_data {
-            SchemeData::NonRelative(s) => s,
-            SchemeData::Relative(RelativeSchemeData { host, .. }) => {
-                match host {
-                    Host::Domain(s) => s,
-                    Host::Ipv6(a) => a.to_string(),
-                    Host::Ipv4(a) => a.to_string(),
-                }
-            }
-        };
-        match &host.scheme[..] {
+        match host.scheme() {
             "unix" => {
                 Docker {
                     transport: Transport::Unix {
                         client: Client::with_connector(UnixSocketConnector),
-                        path: domain,
+                        path: host.path().to_owned(),
                     },
                 }
             }
@@ -503,7 +492,7 @@ impl Docker {
                 Docker {
                     transport: Transport::Tcp {
                         client: client,
-                        host: format!("https:{}", domain.to_owned()),
+                        host: format!("https://{}", host.host_str().unwrap().to_owned()),
                     },
                 }
             }

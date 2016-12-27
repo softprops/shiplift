@@ -12,10 +12,9 @@ license = "MIT"
 
 [dependencies]
 flate2 = "0.2"
-hyperlocal = "0.1"
+hyperlocal = "0.2"
 log = "0.3"
 jed = "0.1"
-mime = "0.1"
 openssl = "0.7"
 rustc-serialize = "0.3"
 tar = "0.3"
@@ -25,5 +24,5 @@ url = "0.5"
 env_logger = "0.3"
 
 [dependencies.hyper]
-version = "0.7"
+version = "0.9"
 features = ["openssl"]
