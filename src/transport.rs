@@ -1,11 +1,11 @@
 //! Transports for communicating with the docker daemon
 
 extern crate hyper;
-extern crate mime;
 
 use hyper::Client;
 use hyper::client::Body;
 use hyper::header;
+use hyper::mime;
 use self::super::{Error, Result};
 use self::hyper::buffer::BufReader;
 use self::hyper::header::ContentType;
