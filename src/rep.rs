@@ -208,7 +208,7 @@ pub struct Network {
 pub struct MemoryStats {
     pub max_usage: u64,
     pub usage: u64,
-    pub failcnt: u64,
+    pub failcnt: Option<u64>,
     pub limit: u64,
     pub stats: MemoryStat,
 }
