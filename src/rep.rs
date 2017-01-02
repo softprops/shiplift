@@ -323,7 +323,6 @@ pub struct Info {
     pub Driver: String,
     pub DockerRootDir: String,
     pub DriverStatus: Vec<Vec<String>>,
-    pub ExecutionDriver: String,
     pub ID: String,
     pub KernelVersion: String,
     // pub Labels: Option<???>,
