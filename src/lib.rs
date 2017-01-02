@@ -492,7 +492,7 @@ impl Docker {
                 Docker {
                     transport: Transport::Tcp {
                         client: client,
-                        host: format!("https://{}", host.host_str().unwrap().to_owned()),
+                        host: format!("https://{}:{}", host.host_str().unwrap().to_owned(), host.port_or_known_default().unwrap()),
                     },
                 }
             }
