@@ -8,12 +8,13 @@
 * expose `container.id()` to Container service interface [#17](https://github.com/softprops/shiplift/pull/17/files)
 * add events filter to EventsOptionsBuilder [#18](https://github.com/softprops/shiplift/pull/18)
 * remove ExecDriver field of container details which no longer exists in remote api [#20](https://github.com/softprops/shiplift/pull/20)
+* remote ExecutionDriver from info which no longer exists in remote api
 * add more options to ContainerOptions creation interface [#23](https://github.com/softprops/shiplift/pull/23)
 * fix volume parameter [#24](https://github.com/softprops/shiplift/pull/24)
 * make id and event optional for event reps to accommodate new network type events [#26](https://github.com/softprops/shiplift/pull/26)
 * set a host header for unix domain socket interface due to a golang impl detail in newer versions of the docker daemon [#27](https://github.com/softprops/shiplift/pull/27)
 * implement std error trait for shiplift's error type to make it play nicely with other error handling tools  [#28](https://github.com/softprops/shiplift/pull/28)
-
+* changed `failcnt` field on `stats.memory_stats` to `Option<u64>` as it is not always returned in newer versions of the docker remote api.
 
 # 0.2.1
 
