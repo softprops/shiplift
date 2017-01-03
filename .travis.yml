@@ -12,6 +12,7 @@ script:
 - cargo test
 
 cache:
+  cargo: true
   apt: true
   directories:
   - target/debug/deps
