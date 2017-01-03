@@ -1,4 +1,4 @@
-# 0.3.0 (unreleased)
+# 0.3.0
 
 * upgraded [hyper](https://github.com/hyperium/hyper/) from 0.7 to 0.9 [#13](https://github.com/softprops/shiplift/pull/29)
 * upgraded [hyperlocal](https://github.com/softprops/hyperlocal) dependency from 0.1 to 0.2
