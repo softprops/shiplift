@@ -197,4 +197,9 @@ container.restart();
 
 todoc
 
+## roadmap
+
+There are plans on switching from rustc-serialize to serde for serialization in 0.4.0 this should not have
+major impact on current interfaces.
+
 Doug Tangren (softprops) 2015-2016
