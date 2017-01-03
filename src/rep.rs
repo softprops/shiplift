@@ -20,7 +20,6 @@ pub struct Image {
     pub Labels: Option<HashMap<String, String>>,
     pub RepoTags: Vec<String>,
     pub RepoDigests: Option<Vec<String>>,
-    pub Size: u64,
     pub VirtualSize: u64,
 }
 
