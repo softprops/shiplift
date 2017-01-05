@@ -369,6 +369,13 @@ impl ContainerOptionsBuilder {
         self
     }
 
+    pub fn capabilities(&mut self, capabilities: Vec<&str>) -> &mut ContainerOptionsBuilder {
+        for c in capabilities {
+            self.params_list.entry("HostConfig.CapAdd").or_insert(Vec::new()).push(c.to_owned());
+        }
+        self
+    }
+
     pub fn build(&self) -> ContainerOptions {
         ContainerOptions {
             params: self.params.clone(),
