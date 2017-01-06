@@ -148,7 +148,7 @@ pub struct Config {
     pub Image: String,
     pub Labels: HashMap<String, String>,
     // pub MacAddress: String,
-    pub OnBuild: Option<String>,
+    pub OnBuild: Option<Vec<String>>,
     // pub NetworkDisabled: bool,
     pub OpenStdin: bool,
     pub StdinOnce: bool,
