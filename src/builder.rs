@@ -398,6 +398,15 @@ impl ContainerOptionsBuilder {
         self
     }
 
+    pub fn devices(&mut self,
+                   devices: Vec<HashMap<String, String>>)
+                   -> &mut ContainerOptionsBuilder {
+        for d in devices {
+            self.params_hash.entry("HostConfig.Devices".to_string()).or_insert(Vec::new()).push(d);
+        }
+        self
+    }
+
     pub fn build(&self) -> ContainerOptions {
         ContainerOptions {
             params: self.params.clone(),
