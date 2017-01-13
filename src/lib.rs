@@ -433,7 +433,13 @@ impl<'a> Containers<'a> {
     pub fn create(&'a self, opts: &ContainerOptions) -> Result<ContainerCreateInfo> {
         let data = try!(opts.serialize());
         let mut bytes = data.as_bytes();
-        let raw = try!(self.docker.post("/containers/create",
+        let mut path = vec!["/containers/create".to_owned()];
+
+        if let Some(ref name) = opts.name {
+            path.push(form_urlencoded::serialize(vec![("name", name)]));
+        }
+
+        let raw = try!(self.docker.post(&path.join("?"),
                                         Some((&mut bytes, ContentType::json()))));
         Ok(try!(json::decode::<ContainerCreateInfo>(&raw)))
     }
