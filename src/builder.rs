@@ -253,6 +253,7 @@ impl ContainerListOptionsBuilder {
 
 /// Interface for building a new docker container from an existing image
 pub struct ContainerOptions {
+    pub name: Option<String>,
     params: HashMap<&'static str, String>,
     params_list: HashMap<&'static str, Vec<String>>,
     params_hash: HashMap<String, Vec<HashMap<String, String>>>,
@@ -309,6 +310,7 @@ impl ContainerOptions {
 
 #[derive(Default)]
 pub struct ContainerOptionsBuilder {
+    name: Option<String>,
     params: HashMap<&'static str, String>,
     params_list: HashMap<&'static str, Vec<String>>,
     params_hash: HashMap<String, Vec<HashMap<String, String>>>,
@@ -322,10 +324,16 @@ impl ContainerOptionsBuilder {
 
         params.insert("Image", image.to_owned());
         ContainerOptionsBuilder {
+            name: None,
             params: params,
             params_list: params_list,
             params_hash: params_hash,
         }
+    }
+
+    pub fn name(&mut self, name: &str) -> &mut ContainerOptionsBuilder {
+        self.name = Some(name.to_owned());
+        self
     }
 
     pub fn volumes(&mut self, volumes: Vec<&str>) -> &mut ContainerOptionsBuilder {
@@ -409,6 +417,7 @@ impl ContainerOptionsBuilder {
 
     pub fn build(&self) -> ContainerOptions {
         ContainerOptions {
+            name: self.name.clone(),
             params: self.params.clone(),
             params_list: self.params_list.clone(),
             params_hash: self.params_hash.clone(),
