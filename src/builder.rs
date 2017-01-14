@@ -1,8 +1,11 @@
 //! Interfaces for building various structures
 
-use self::super::Result;
-use std::collections::{BTreeMap, HashMap};
 use rustc_serialize::json::{self, Json, ToJson};
+use self::super::Result;
+use std::cmp::Eq;
+use std::collections::{BTreeMap, HashMap};
+use std::hash::Hash;
+use std::iter::IntoIterator;
 use url::form_urlencoded;
 
 #[derive(Default)]
@@ -252,6 +255,22 @@ impl ContainerListOptionsBuilder {
 pub struct ContainerOptions {
     params: HashMap<&'static str, String>,
     params_list: HashMap<&'static str, Vec<String>>,
+    params_hash: HashMap<String, Vec<HashMap<String, String>>>,
+}
+
+impl ToJson for ContainerOptions {
+    fn to_json(&self) -> Json {
+        let mut body: BTreeMap<String, Json> = BTreeMap::new();
+        let mut host_config: BTreeMap<String, Json> = BTreeMap::new();
+
+        self.parse_from(&self.params, &mut host_config, &mut body);
+        self.parse_from(&self.params_list, &mut host_config, &mut body);
+        self.parse_from(&self.params_hash, &mut host_config, &mut body);
+
+        body.insert("HostConfig".to_string(), host_config.to_json());
+
+        body.to_json()
+    }
 }
 
 impl ContainerOptions {
@@ -262,30 +281,29 @@ impl ContainerOptions {
 
     /// serialize options as a string. returns None if no options are defined
     pub fn serialize(&self) -> Result<String> {
-        let mut body = BTreeMap::new();
-        let mut host_config = BTreeMap::new();
+        Ok(try!(json::encode(&self.to_json())))
+    }
 
-        for (k, v) in &self.params {
-            if k.starts_with("HostConfig.") {
-                let (_, s) = k.split_at(11);
-                host_config.insert(s.to_owned(), v.to_json());
+    pub fn parse_from<'a, K, V>(&self,
+                                params: &'a HashMap<K, V>,
+                                host_config: &mut BTreeMap<String, Json>,
+                                body: &mut BTreeMap<String, Json>)
+        where &'a HashMap<K, V>: IntoIterator,
+              K: ToString + Eq + Hash,
+              V: ToJson
+    {
+        for (k, v) in params.iter() {
+            let key = k.to_string();
+            let value = v.to_json();
+
+            if key.starts_with("HostConfig.") {
+                let (_, s) = key.split_at(11);
+
+                host_config.insert(s.to_string(), value);
             } else {
-                body.insert(k.to_string(), v.to_json());
+                body.insert(key, value);
             }
         }
-
-        for (k, v) in &self.params_list {
-            if k.starts_with("HostConfig.") {
-                let (_, s) = k.split_at(11);
-                host_config.insert(s.to_owned(), v.to_json());
-            } else {
-                body.insert(k.to_string(), v.to_json());
-            }
-        }
-
-        body.insert("HostConfig".to_owned(), host_config.to_json());
-        let json_obj: Json = body.to_json();
-        Ok(try!(json::encode(&json_obj)))
     }
 }
 
@@ -293,16 +311,20 @@ impl ContainerOptions {
 pub struct ContainerOptionsBuilder {
     params: HashMap<&'static str, String>,
     params_list: HashMap<&'static str, Vec<String>>,
+    params_hash: HashMap<String, Vec<HashMap<String, String>>>,
 }
 
 impl ContainerOptionsBuilder {
     pub fn new(image: &str) -> ContainerOptionsBuilder {
         let mut params = HashMap::new();
         let params_list = HashMap::new();
+        let params_hash = HashMap::new();
+
         params.insert("Image", image.to_owned());
         ContainerOptionsBuilder {
             params: params,
             params_list: params_list,
+            params_hash: params_hash,
         }
     }
 
@@ -376,14 +398,23 @@ impl ContainerOptionsBuilder {
         self
     }
 
+    pub fn devices(&mut self,
+                   devices: Vec<HashMap<String, String>>)
+                   -> &mut ContainerOptionsBuilder {
+        for d in devices {
+            self.params_hash.entry("HostConfig.Devices".to_string()).or_insert(Vec::new()).push(d);
+        }
+        self
+    }
+
     pub fn build(&self) -> ContainerOptions {
         ContainerOptions {
             params: self.params.clone(),
             params_list: self.params_list.clone(),
+            params_hash: self.params_hash.clone(),
         }
     }
 }
-
 
 /// Options for filtering streams of Docker events
 #[derive(Default)]
