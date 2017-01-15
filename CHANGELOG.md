@@ -1,3 +1,10 @@
+# 0.3.1
+
+* added support for `CapAdd` on `ContainerOptions` [#32](https://github.com/softprops/shiplift/pull/32)
+* changed representation of `OnBuild` from a `String` to `Vec<String>` [#33](https://github.com/softprops/shiplift/pull/33)
+* added support for `Devices` on `ContainerOptions` [#36](https://github.com/softprops/shiplift/pull/36)
+* added support for naming containers on creation [#37](https://github.com/softprops/shiplift/pull/37)
+
 # 0.3.0
 
 * upgraded [hyper](https://github.com/hyperium/hyper/) from 0.7 to 0.9 [#13](https://github.com/softprops/shiplift/pull/29)
