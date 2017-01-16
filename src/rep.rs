@@ -368,12 +368,6 @@ pub struct Event {
     pub timeNano: u64,
 }
 
-#[derive(Debug)]
-pub enum BuildOutput {
-    Stream(String),
-    Err(String),
-}
-
 // fixme: all fields are options because PullInfo.progressDefault is sometimes an empty object instead of a null/absent value
 #[derive(Clone, Debug, RustcDecodable)]
 pub struct ProgressDetail {
@@ -392,13 +386,14 @@ pub struct PullInfo {
 }
 
 #[derive(Debug)]
-pub enum PullOutput {
+pub enum Output {
     Status {
         id: Option<String>,
         status: String,
         progress: Option<String>,
         progress_detail: Option<ProgressDetail>,
     },
+    Stream(String),
     Err(String),
 }
 
