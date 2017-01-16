@@ -18,8 +18,9 @@ extern crate log;
 #[macro_use]
 #[macro_use]
 extern crate hyper;
-extern crate flate2;
+extern crate hyper_openssl;
 extern crate hyperlocal;
+extern crate flate2;
 extern crate jed;
 extern crate openssl;
 extern crate rustc_serialize;
@@ -40,11 +41,12 @@ pub use builder::{BuildOptions, ContainerOptions, ContainerListOptions, Containe
                   };
 use hyper::{Client, Url};
 use hyper::header::ContentType;
-use hyper::net::{HttpsConnector, Openssl};
+use hyper::net::{HttpsConnector};
 use hyper::method::Method;
+use hyper_openssl::OpensslClient;
 use hyperlocal::UnixSocketConnector;
-use openssl::x509::X509FileType;
-use openssl::ssl::{SslContext, SslMethod};
+use openssl::x509::X509_FILETYPE_PEM;
+use openssl::ssl::{SslMethod, SslConnectorBuilder};
 use rep::Image as ImageRep;
 use rep::{Output, PullInfo, Change, ContainerCreateInfo, ContainerDetails,
           Container as ContainerRep, Event, Exit, History, ImageDetails, Info, SearchResult,
@@ -55,7 +57,6 @@ use std::env::{self, VarError};
 use std::io::Read;
 use std::iter::IntoIterator;
 use std::path::Path;
-use std::sync::Arc;
 use std::time::Duration;
 use transport::{tar, Transport};
 use hyper::client::Body;
@@ -496,19 +497,18 @@ impl Docker {
                 let client = if let Some(ref certs) = env::var("DOCKER_CERT_PATH").ok() {
                     // fixme: don't unwrap before you know what's in the box
                     // https://github.com/hyperium/hyper/blob/master/src/net.rs#L427-L428
-                    let mut ssl_ctx = SslContext::new(SslMethod::Sslv23).unwrap();
-                    ssl_ctx.set_cipher_list("DEFAULT").unwrap();
+                    let mut connector = SslConnectorBuilder::new(SslMethod::tls()).unwrap();
+                    connector.builder_mut().set_cipher_list("DEFAULT").unwrap();
                     let cert = &format!("{}/cert.pem", certs);
                     let key = &format!("{}/key.pem", certs);
-                    let _ = ssl_ctx.set_certificate_file(&Path::new(cert), X509FileType::PEM);
-                    let _ = ssl_ctx.set_private_key_file(&Path::new(key), X509FileType::PEM);
+                    connector.builder_mut().set_certificate_file(&Path::new(cert), X509_FILETYPE_PEM).unwrap();
+                    connector.builder_mut().set_private_key_file(&Path::new(key), X509_FILETYPE_PEM).unwrap();
                     if let Some(_) = env::var("DOCKER_TLS_VERIFY").ok() {
                         let ca = &format!("{}/ca.pem", certs);
-                        let _ = ssl_ctx.set_CA_file(&Path::new(ca));
-                    };
-                    Client::with_connector(HttpsConnector::new(Openssl {
-                        context: Arc::new(ssl_ctx),
-                    }))
+                        connector.builder_mut().set_ca_file(&Path::new(ca)).unwrap();
+                    }
+                    let ssl = OpensslClient::from(connector.build());
+                    Client::with_connector(HttpsConnector::new(ssl))
                 } else {
                     Client::new()
                 };
