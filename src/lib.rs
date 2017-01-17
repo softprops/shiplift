@@ -46,7 +46,7 @@ use hyperlocal::UnixSocketConnector;
 use openssl::x509::X509FileType;
 use openssl::ssl::{SslContext, SslMethod};
 use rep::Image as ImageRep;
-use rep::{PullOutput, PullInfo, BuildOutput, Change, ContainerCreateInfo, ContainerDetails,
+use rep::{Output, PullInfo, Change, ContainerCreateInfo, ContainerDetails,
           Container as ContainerRep, Event, Exit, History, ImageDetails, Info, SearchResult,
           Stats, Status, Top, Version};
 use rustc_serialize::json::{self, Json};
@@ -140,7 +140,7 @@ impl<'a> Images<'a> {
     }
 
     /// Builds a new image build by reading a Dockerfile in a target directory
-    pub fn build(&self, opts: &BuildOptions) -> Result<Box<Iterator<Item = BuildOutput>>> {
+    pub fn build(&self, opts: &BuildOptions) -> Result<Box<Iterator<Item = Output>>> {
         let mut path = vec!["/build".to_owned()];
         if let Some(query) = opts.serialize() {
             path.push(query)
@@ -157,19 +157,31 @@ impl<'a> Images<'a> {
             // fixme: better error handling
             debug!("{:?}", j);
             let obj = j.as_object().expect("expected json object");
-            obj.get("stream")
-               .map(|stream| {
-                   BuildOutput::Stream(stream.as_string()
-                                             .expect("expected stream to be a string")
-                                             .to_owned())
-               })
-               .or(obj.get("error")
-                      .map(|err| {
-                          BuildOutput::Err(err.as_string()
-                                              .expect("expected error to be a string")
-                                              .to_owned())
-                      }))
-               .expect("expected build output stream or error")
+
+            if let Some(stream) = obj.get("stream") {
+                Output::Stream(stream.as_string()
+                                          .expect("expected json object")
+                                          .into())
+            }
+            else if obj.contains_key("status") {
+                let s = json::encode(&j).unwrap();
+                json::decode::<PullInfo>(&s)
+                    .map(|info| {
+                        Output::Status {
+                            id: info.id,
+                            status: info.status,
+                            progress: info.progress,
+                            progress_detail: info.progressDetail,
+                        }
+                    }).expect("expected status object")
+            }
+            else if let Some(error) = obj.get("error") {
+                Output::Err(error.as_string()
+                                      .expect("expected error to be a string")
+                                      .to_owned())
+            } else {
+               panic!("expected build output stream or error");
+           }
         });
         Ok(Box::new(it))
     }
@@ -197,7 +209,7 @@ impl<'a> Images<'a> {
     }
 
     /// Pull and create a new docker images from an existing image
-    pub fn pull(&self, opts: &PullOptions) -> Result<Box<Iterator<Item = PullOutput>>> {
+    pub fn pull(&self, opts: &PullOptions) -> Result<Box<Iterator<Item = Output>>> {
         let mut path = vec!["/images/create".to_owned()];
         if let Some(query) = opts.serialize() {
             path.push(query);
@@ -210,7 +222,7 @@ impl<'a> Images<'a> {
             let s = json::encode(&j).unwrap();
             json::decode::<PullInfo>(&s)
                 .map(|info| {
-                    PullOutput::Status {
+                    Output::Status {
                         id: info.id,
                         status: info.status,
                         progress: info.progress,
@@ -222,7 +234,7 @@ impl<'a> Images<'a> {
                      .expect("expected json object")
                      .get("error")
                      .map(|err| {
-                         PullOutput::Err(err.as_string()
+                         Output::Err(err.as_string()
                                             .expect("expected error to be a string")
                                             .to_owned())
                      }))
