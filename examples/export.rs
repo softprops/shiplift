@@ -2,7 +2,6 @@ extern crate shiplift;
 
 use shiplift::Docker;
 use std::env;
-use std::io::prelude::*;
 use std::io::copy;
 use std::fs::OpenOptions;
 

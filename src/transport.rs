@@ -12,7 +12,7 @@ use self::hyper::header::ContentType;
 use self::hyper::status::StatusCode;
 use hyper::method::Method;
 use std::fmt;
-use std::io::{Read, Write};
+use std::io::Read;
 use hyperlocal::DomainUrl;
 
 pub fn tar() -> ContentType {
