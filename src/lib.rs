@@ -50,6 +50,7 @@ use rep::{Output, PullInfo, Change, ContainerCreateInfo, ContainerDetails,
           Container as ContainerRep, Event, Exit, History, ImageDetails, Info, SearchResult,
           Stats, Status, Top, Version};
 use rustc_serialize::json::{self, Json};
+use std::borrow::Cow;
 use std::env::{self, VarError};
 use std::io::Read;
 use std::iter::IntoIterator;
@@ -71,15 +72,17 @@ pub struct Docker {
 /// Interface for accessing and manipulating a named docker image
 pub struct Image<'a, 'b> {
     docker: &'a Docker,
-    name: &'b str,
+    name: Cow<'b, str>,
 }
 
 impl<'a, 'b> Image<'a, 'b> {
     /// Exports an interface for operations that may be performed against a named image
-    pub fn new(docker: &'a Docker, name: &'b str) -> Image<'a, 'b> {
+    pub fn new<S>(docker: &'a Docker, name: S) -> Image<'a, 'b>
+        where S: Into<Cow<'b, str>>
+    {
         Image {
             docker: docker,
-            name: name,
+            name: name.into(),
         }
     }
 
@@ -261,15 +264,17 @@ impl<'a> Images<'a> {
 /// Interface for accessing and manipulating a docker container
 pub struct Container<'a, 'b> {
     docker: &'a Docker,
-    id: &'b str,
+    id: Cow<'b, str>,
 }
 
 impl<'a, 'b> Container<'a, 'b> {
     /// Exports an interface exposing operations against a container instance
-    pub fn new(docker: &'a Docker, id: &'b str) -> Container<'a, 'b> {
+    pub fn new<S>(docker: &'a Docker, id: S) -> Container<'a, 'b>
+        where S: Into<Cow<'b, str>>
+    {
         Container {
             docker: docker,
-            id: id,
+            id: id.into(),
         }
     }
 
