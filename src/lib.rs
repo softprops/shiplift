@@ -515,7 +515,7 @@ impl Docker {
                 Docker {
                     transport: Transport::Tcp {
                         client: client,
-                        host: format!("https://{}:{}", host.host_str().unwrap().to_owned(), host.port_or_known_default().unwrap()),
+                        host: format!("{}://{}:{}", host.scheme(), host.host_str().unwrap().to_owned(), host.port_or_known_default().unwrap()),
                     },
                 }
             }
