@@ -5,12 +5,16 @@ use std::env;
 
 fn main() {
     let docker = Docker::new();
-    let options = ExecContainerOptions::builder().cmd(vec!["ls"]).build();
+    let options = ExecContainerOptions::builder()
+        .cmd(vec!["ls"])
+        .env(vec!["VAR=value"])
+        .build();
     if let Some(id) = env::args().nth(1) {
-        let container = docker.containers()
+        match docker.containers()
             .get(&id)
-            .exec(&options)
-            .unwrap();
-        println!("{:?}", container);
+            .exec(&options) {
+            Ok(res) => println!("Success: {:?}", res),
+            Err(err) => println!("An error occured: {:?}", err),
+        }
     }
 }

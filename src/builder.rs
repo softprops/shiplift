@@ -458,9 +458,18 @@ impl ExecContainerOptionsBuilder {
         ExecContainerOptionsBuilder { params: HashMap::new() }
     }
 
+    /// Command to run, as an array of strings
     pub fn cmd(&mut self, cmds: Vec<&str>) -> &mut ExecContainerOptionsBuilder {
         for cmd in cmds {
             self.params.entry("Cmd").or_insert(Vec::new()).push(cmd.to_owned());
+        }
+        self
+    }
+
+    /// A list of environment variables in the form "VAR=value"
+    pub fn env(&mut self, envs: Vec<&str>) -> &mut ExecContainerOptionsBuilder {
+        for env in envs {
+            self.params.entry("Env").or_insert(Vec::new()).push(env.to_owned());
         }
         self
     }
