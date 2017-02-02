@@ -15,8 +15,6 @@
 
 #[macro_use]
 extern crate log;
-#[macro_use]
-#[macro_use]
 extern crate hyper;
 extern crate hyper_openssl;
 extern crate hyperlocal;
