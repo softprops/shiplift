@@ -418,7 +418,7 @@ impl<'a, 'b> Container<'a, 'b> {
         Ok(())
     }
 
-    // Exec the specified command in the container
+    /// Exec the specified command in the container
     pub fn exec(&self, opts: &ExecContainerOptions) -> Result<()> {
         let data = try!(opts.serialize());
         let mut bytes = data.as_bytes();
