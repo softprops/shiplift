@@ -38,7 +38,7 @@ pub use errors::Error;
 pub use builder::{BuildOptions, ContainerOptions, ContainerListOptions, ContainerFilter,
                   EventsOptions, ImageFilter, ImageListOptions, LogsOptions,
                   PullOptions, RmContainerOptions, ExecContainerOptions,
-                  NetworkListOptions, NetworkCreateOptions};
+                  NetworkListOptions, NetworkCreateOptions, ContainerConnectionOptions};
 use hyper::{Client, Url};
 use hyper::header::ContentType;
 use hyper::net::{HttpsConnector};
@@ -556,6 +556,16 @@ impl<'a, 'b> Network<'a, 'b> {
     /// Delete the network instance
     pub fn delete(&self) -> Result<()> {
         self.docker.delete(&format!("/networks/{}", self.id)[..]).map(|_| ())
+    }
+
+    pub fn connect(&self, opts: &ContainerConnectionOptions) -> Result<()> {
+        let data = try!(opts.serialize());
+        let mut bytes = data.as_bytes();
+
+        self.docker
+            .post(&format!("/networks/{}/connect", self.id)[..],
+                  Some((&mut bytes, ContentType::json())))
+            .map(|_| ())
     }
 
 }

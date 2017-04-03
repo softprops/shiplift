@@ -874,3 +874,57 @@ impl NetworkCreateOptionsBuilder {
         }
     }
 }
+
+/// Interface for connect container to network
+pub struct ContainerConnectionOptions {
+    pub Container: Option<String>,
+    params: HashMap<&'static str, String>
+}
+
+impl ToJson for ContainerConnectionOptions {
+    fn to_json(&self) -> Json {
+        let mut body: BTreeMap<String, Json> = BTreeMap::new();
+        self.parse_from(&self.params, &mut body);
+        body.to_json()
+    }
+}
+
+
+impl ContainerConnectionOptions {
+    /// serialize options as a string. returns None if no options are defined
+    pub fn serialize(&self) -> Result<String> {
+        Ok(try!(json::encode(&self.to_json())))
+    }
+
+    pub fn parse_from<'a, K, V>(&self,
+                                params: &'a HashMap<K, V>,
+                                body: &mut BTreeMap<String, Json>)
+        where &'a HashMap<K, V>: IntoIterator,
+              K: ToString + Eq + Hash,
+              V: ToJson
+    {
+        for (k, v) in params.iter() {
+            let key = k.to_string();
+            let value = v.to_json();
+
+            body.insert(key, value);
+        }
+    }
+
+    pub fn new(container_id: &str) -> ContainerConnectionOptions {
+        let mut params = HashMap::new();
+        params.insert("Container", container_id.to_owned());
+        ContainerConnectionOptions {
+            Container: None,
+            params: params.clone(),
+        }
+    }
+
+    pub fn force(&mut self) -> ContainerConnectionOptions {
+        self.params.insert("Force", "true".to_owned());
+        ContainerConnectionOptions {
+            Container: None,
+            params: self.params.clone()
+        }
+    }
+}
