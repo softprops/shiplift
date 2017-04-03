@@ -212,7 +212,18 @@ pub struct NetworkDetails {
     pub Driver: String,
     pub EnableIPv6: bool,
     pub Internal: bool,
-    pub Attachable: bool
+    pub Attachable: bool,
+    pub Containers: HashMap<String, NetworkContainerDetails>,
+    pub Options: HashMap<String, String>,
+}
+
+#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[allow(non_snake_case)]
+pub struct NetworkContainerDetails {
+    pub EndpointID: String,
+    pub MacAddress: String,
+    pub IPv4Address: String,
+    pub IPv6Address: String,
 }
 
 #[derive(Debug, RustcEncodable, RustcDecodable)]

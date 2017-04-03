@@ -490,6 +490,7 @@ impl<'a> Containers<'a> {
     }
 }
 
+/// Interface for docker network
 pub struct Networks<'a> {
     docker: &'a Docker,
 }
@@ -500,6 +501,7 @@ impl<'a> Networks<'a> {
         Networks { docker: docker }
     }
 
+    /// List the docker networks on the current docker host
     pub fn list(&self, opts: &NetworkListOptions) -> Result<Vec<NetworkRep>> {
         let mut path = vec!["/networks".to_owned()];
         if let Some(query) = opts.serialize() {
@@ -509,6 +511,38 @@ impl<'a> Networks<'a> {
         Ok(try!(json::decode::<Vec<NetworkRep>>(&raw)))
     }
 
+    /// Returns a reference to a set of operations available to a specific network instance
+    pub fn get(&'a self, id: &'a str) -> Network {
+        Network::new(self.docker, id)
+    }
+
+}
+
+/// Interface for accessing and manipulating a docker network
+pub struct Network<'a, 'b> {
+    docker: &'a Docker,
+    id: Cow<'b, str>,
+}
+
+impl<'a, 'b> Network<'a, 'b> {
+    /// Exports an interface exposing operations against a network instance
+    pub fn new<S>(docker: &'a Docker, id: S) -> Network<'a, 'b>
+        where S: Into<Cow<'b, str>>
+    {
+        Network {
+            docker: docker,
+            id: id.into(),
+        }
+    }
+
+    /// a getter for the Network id
+    pub fn id(&self) -> &str { &self.id }
+
+    /// Inspects the current docker network instance's details
+    pub fn inspect(&self) -> Result<NetworkRep> {
+        let raw = try!(self.docker.get(&format!("/networks/{}", self.id)[..]));
+        Ok(try!(json::decode::<NetworkRep>(&raw)))
+    }
 }
 
 // https://docs.docker.com/reference/api/docker_remote_api_v1.17/
