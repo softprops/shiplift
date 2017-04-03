@@ -37,8 +37,8 @@ mod tarball;
 pub use errors::Error;
 pub use builder::{BuildOptions, ContainerOptions, ContainerListOptions, ContainerFilter,
                   EventsOptions, ImageFilter, ImageListOptions, LogsOptions,
-                  PullOptions, RmContainerOptions, ExecContainerOptions
-                  };
+                  PullOptions, RmContainerOptions, ExecContainerOptions,
+                  NetworkListOptions, NetworkCreateOptions, ContainerConnectionOptions};
 use hyper::{Client, Url};
 use hyper::header::ContentType;
 use hyper::net::{HttpsConnector};
@@ -48,6 +48,7 @@ use hyperlocal::UnixSocketConnector;
 use openssl::x509::X509_FILETYPE_PEM;
 use openssl::ssl::{SslMethod, SslConnectorBuilder};
 use rep::Image as ImageRep;
+use rep::{NetworkDetails as NetworkInfo, NetworkCreateInfo};
 use rep::{Output, PullInfo, Change, ContainerCreateInfo, ContainerDetails,
           Container as ContainerRep, Event, Exit, History, ImageDetails, Info, SearchResult,
           Stats, Status, Top, Version};
@@ -488,6 +489,97 @@ impl<'a> Containers<'a> {
     }
 }
 
+/// Interface for docker network
+pub struct Networks<'a> {
+    docker: &'a Docker,
+}
+
+impl<'a> Networks<'a> {
+    /// Exports an interface for interacting with docker Networks
+    pub fn new(docker: &'a Docker) -> Networks<'a> {
+        Networks { docker: docker }
+    }
+
+    /// List the docker networks on the current docker host
+    pub fn list(&self, opts: &NetworkListOptions) -> Result<Vec<NetworkInfo>> {
+        let mut path = vec!["/networks".to_owned()];
+        if let Some(query) = opts.serialize() {
+            path.push(query);
+        }
+        let raw = try!(self.docker.get(&path.join("?")));
+        Ok(try!(json::decode::<Vec<NetworkInfo>>(&raw)))
+    }
+
+    /// Returns a reference to a set of operations available to a specific network instance
+    pub fn get(&'a self, id: &'a str) -> Network {
+        Network::new(self.docker, id)
+    }
+
+    pub fn create(&'a self, opts: &NetworkCreateOptions) -> Result<NetworkCreateInfo> {
+        let data = try!(opts.serialize());
+        let mut bytes = data.as_bytes();
+        let path = vec!["/networks/create".to_owned()];
+
+        let raw = try!(self.docker.post(&path.join("?"),
+                                        Some((&mut bytes, ContentType::json()))));
+        Ok(try!(json::decode::<NetworkCreateInfo>(&raw)))
+    }
+
+}
+
+/// Interface for accessing and manipulating a docker network
+pub struct Network<'a, 'b> {
+    docker: &'a Docker,
+    id: Cow<'b, str>,
+}
+
+impl<'a, 'b> Network<'a, 'b> {
+    /// Exports an interface exposing operations against a network instance
+    pub fn new<S>(docker: &'a Docker, id: S) -> Network<'a, 'b>
+        where S: Into<Cow<'b, str>>
+    {
+        Network {
+            docker: docker,
+            id: id.into(),
+        }
+    }
+
+    /// a getter for the Network id
+    pub fn id(&self) -> &str { &self.id }
+
+    /// Inspects the current docker network instance's details
+    pub fn inspect(&self) -> Result<NetworkInfo> {
+        let raw = try!(self.docker.get(&format!("/networks/{}", self.id)[..]));
+        Ok(try!(json::decode::<NetworkInfo>(&raw)))
+    }
+
+    /// Delete the network instance
+    pub fn delete(&self) -> Result<()> {
+        self.docker.delete(&format!("/networks/{}", self.id)[..]).map(|_| ())
+    }
+
+    /// Connect container to network
+    pub fn connect(&self, opts: &ContainerConnectionOptions) -> Result<()> {
+        self.do_connection("connect", opts)
+    }
+
+    /// Disconnect container to network
+    pub fn disconnect(&self, opts: &ContainerConnectionOptions) -> Result<()> {
+        self.do_connection("disconnect", opts)
+    }
+
+    fn do_connection(&self, segment: &str, opts: &ContainerConnectionOptions) -> Result<()> {
+        let data = try!(opts.serialize());
+        let mut bytes = data.as_bytes();
+
+        self.docker
+            .post(&format!("/networks/{}/{}", self.id, segment)[..],
+                  Some((&mut bytes, ContentType::json())))
+            .map(|_| ())
+    }
+
+}
+
 // https://docs.docker.com/reference/api/docker_remote_api_v1.17/
 impl Docker {
     /// constructs a new Docker instance for a docker host listening at a url specified by an env var `DOCKER_HOST`,
@@ -555,6 +647,10 @@ impl Docker {
     /// Exports an interface for interacting with docker containers
     pub fn containers<'a>(&'a self) -> Containers {
         Containers::new(self)
+    }
+
+    pub fn networks<'a>(&'a self) -> Networks {
+        Networks::new(self)
     }
 
     /// Returns version information associated with the docker daemon

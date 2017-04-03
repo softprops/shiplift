@@ -767,3 +767,164 @@ impl RmContainerOptionsBuilder {
         RmContainerOptions { params: self.params.clone() }
     }
 }
+
+/// Options for filtering networks list results
+#[derive(Default)]
+pub struct NetworkListOptions {
+    params: HashMap<&'static str, String>,
+}
+
+impl NetworkListOptions {
+
+    /// serialize options as a string. returns None if no options are defined
+    pub fn serialize(&self) -> Option<String> {
+        if self.params.is_empty() {
+            None
+        } else {
+            Some(form_urlencoded::serialize(&self.params))
+        }
+    }
+}
+
+/// Interface for creating new docker network
+pub struct NetworkCreateOptions {
+    pub name: Option<String>,
+    params: HashMap<&'static str, String>,
+    params_hash: HashMap<String, Vec<HashMap<String, String>>>
+}
+
+impl ToJson for NetworkCreateOptions {
+    fn to_json(&self) -> Json {
+        let mut body: BTreeMap<String, Json> = BTreeMap::new();
+
+        self.parse_from(&self.params, &mut body);
+        self.parse_from(&self.params_hash, &mut body);
+
+        body.to_json()
+    }
+}
+
+impl NetworkCreateOptions {
+    /// return a new instance of a builder for options
+    pub fn builder(name: &str) -> NetworkCreateOptionsBuilder {
+        NetworkCreateOptionsBuilder::new(name)
+    }
+
+    /// serialize options as a string. returns None if no options are defined
+    pub fn serialize(&self) -> Result<String> {
+        Ok(try!(json::encode(&self.to_json())))
+    }
+
+    pub fn parse_from<'a, K, V>(&self,
+                                params: &'a HashMap<K, V>,
+                                body: &mut BTreeMap<String, Json>)
+        where &'a HashMap<K, V>: IntoIterator,
+              K: ToString + Eq + Hash,
+              V: ToJson
+    {
+        for (k, v) in params.iter() {
+            let key = k.to_string();
+            let value = v.to_json();
+
+            body.insert(key, value);
+        }
+    }
+
+}
+
+#[derive(Default)]
+pub struct NetworkCreateOptionsBuilder {
+    name: Option<String>,
+    params: HashMap<&'static str, String>,
+    params_hash: HashMap<String, Vec<HashMap<String, String>>>
+}
+
+impl NetworkCreateOptionsBuilder {
+    pub fn new(name: &str) -> NetworkCreateOptionsBuilder {
+        let mut params = HashMap::new();
+        let params_hash = HashMap::new();
+
+        params.insert("Name", name.to_owned());
+        NetworkCreateOptionsBuilder {
+            name: None,
+            params: params,
+            params_hash: params_hash,
+        }
+    }
+
+    pub fn driver(&mut self, name: &str) -> &mut NetworkCreateOptionsBuilder {
+        if !name.is_empty() {
+            self.params.insert("Driver", name.to_owned());
+        }
+        self
+    }
+
+    pub fn label(&mut self, labels: Vec<HashMap<String, String>>) -> &mut NetworkCreateOptionsBuilder {
+        for l in labels {
+            self.params_hash.entry("Labels".to_string()).or_insert(Vec::new()).push(l)
+        }
+        self
+    }
+
+    pub fn build(&self) -> NetworkCreateOptions {
+        NetworkCreateOptions {
+            name: self.name.clone(),
+            params: self.params.clone(),
+            params_hash: self.params_hash.clone(),
+        }
+    }
+}
+
+/// Interface for connect container to network
+pub struct ContainerConnectionOptions {
+    pub Container: Option<String>,
+    params: HashMap<&'static str, String>
+}
+
+impl ToJson for ContainerConnectionOptions {
+    fn to_json(&self) -> Json {
+        let mut body: BTreeMap<String, Json> = BTreeMap::new();
+        self.parse_from(&self.params, &mut body);
+        body.to_json()
+    }
+}
+
+
+impl ContainerConnectionOptions {
+    /// serialize options as a string. returns None if no options are defined
+    pub fn serialize(&self) -> Result<String> {
+        Ok(try!(json::encode(&self.to_json())))
+    }
+
+    pub fn parse_from<'a, K, V>(&self,
+                                params: &'a HashMap<K, V>,
+                                body: &mut BTreeMap<String, Json>)
+        where &'a HashMap<K, V>: IntoIterator,
+              K: ToString + Eq + Hash,
+              V: ToJson
+    {
+        for (k, v) in params.iter() {
+            let key = k.to_string();
+            let value = v.to_json();
+
+            body.insert(key, value);
+        }
+    }
+
+    pub fn new(container_id: &str) -> ContainerConnectionOptions {
+        let mut params = HashMap::new();
+        params.insert("Container", container_id.to_owned());
+        ContainerConnectionOptions {
+            Container: None,
+            params: params.clone(),
+        }
+    }
+
+    pub fn force(&mut self) -> ContainerConnectionOptions {
+        self.params.insert("Force", "true".to_owned());
+        ContainerConnectionOptions {
+            Container: None,
+            params: self.params.clone()
+        }
+    }
+}
