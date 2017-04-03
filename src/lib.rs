@@ -558,12 +558,22 @@ impl<'a, 'b> Network<'a, 'b> {
         self.docker.delete(&format!("/networks/{}", self.id)[..]).map(|_| ())
     }
 
+    /// Connect container to network
     pub fn connect(&self, opts: &ContainerConnectionOptions) -> Result<()> {
+        self.do_connection("connect", opts)
+    }
+
+    /// Disconnect container to network
+    pub fn disconnect(&self, opts: &ContainerConnectionOptions) -> Result<()> {
+        self.do_connection("disconnect", opts)
+    }
+
+    fn do_connection(&self, segment: &str, opts: &ContainerConnectionOptions) -> Result<()> {
         let data = try!(opts.serialize());
         let mut bytes = data.as_bytes();
 
         self.docker
-            .post(&format!("/networks/{}/connect", self.id)[..],
+            .post(&format!("/networks/{}/{}", self.id, segment)[..],
                   Some((&mut bytes, ContentType::json())))
             .map(|_| ())
     }
