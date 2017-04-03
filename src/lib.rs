@@ -543,6 +543,12 @@ impl<'a, 'b> Network<'a, 'b> {
         let raw = try!(self.docker.get(&format!("/networks/{}", self.id)[..]));
         Ok(try!(json::decode::<NetworkRep>(&raw)))
     }
+
+    /// Delete the network instance
+    pub fn delete(&self) -> Result<()> {
+        self.docker.delete(&format!("/networks/{}", self.id)[..]).map(|_| ())
+    }
+
 }
 
 // https://docs.docker.com/reference/api/docker_remote_api_v1.17/
