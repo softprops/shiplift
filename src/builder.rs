@@ -767,3 +767,19 @@ impl RmContainerOptionsBuilder {
         RmContainerOptions { params: self.params.clone() }
     }
 }
+
+// Options for filtering networks list results
+#[derive(Default)]
+pub struct NetworkListOptions {
+    params: HashMap<&'static str, String>,
+}
+
+impl NetworkListOptions {
+    pub fn serialize(&self) -> Option<String> {
+        if self.params.is_empty() {
+            None
+        } else {
+            Some(form_urlencoded::serialize(&self.params))
+        }
+    }
+}

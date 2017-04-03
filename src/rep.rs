@@ -204,6 +204,18 @@ pub struct Network {
 }
 
 #[derive(Debug, RustcEncodable, RustcDecodable)]
+#[allow(non_snake_case)]
+pub struct NetworkDetails {
+    pub Name: String,
+    pub Id: String,
+    pub Scope: String,
+    pub Driver: String,
+    pub EnableIPv6: bool,
+    pub Internal: bool,
+    pub Attachable: bool
+}
+
+#[derive(Debug, RustcEncodable, RustcDecodable)]
 pub struct MemoryStats {
     pub max_usage: u64,
     pub usage: u64,
