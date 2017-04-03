@@ -38,8 +38,7 @@ pub use errors::Error;
 pub use builder::{BuildOptions, ContainerOptions, ContainerListOptions, ContainerFilter,
                   EventsOptions, ImageFilter, ImageListOptions, LogsOptions,
                   PullOptions, RmContainerOptions, ExecContainerOptions,
-                  NetworkListOptions
-                  };
+                  NetworkListOptions, NetworkCreateOptions};
 use hyper::{Client, Url};
 use hyper::header::ContentType;
 use hyper::net::{HttpsConnector};
@@ -49,7 +48,7 @@ use hyperlocal::UnixSocketConnector;
 use openssl::x509::X509_FILETYPE_PEM;
 use openssl::ssl::{SslMethod, SslConnectorBuilder};
 use rep::Image as ImageRep;
-use rep::NetworkDetails as NetworkRep;
+use rep::{NetworkDetails as NetworkInfo, NetworkCreateInfo};
 use rep::{Output, PullInfo, Change, ContainerCreateInfo, ContainerDetails,
           Container as ContainerRep, Event, Exit, History, ImageDetails, Info, SearchResult,
           Stats, Status, Top, Version};
@@ -502,18 +501,28 @@ impl<'a> Networks<'a> {
     }
 
     /// List the docker networks on the current docker host
-    pub fn list(&self, opts: &NetworkListOptions) -> Result<Vec<NetworkRep>> {
+    pub fn list(&self, opts: &NetworkListOptions) -> Result<Vec<NetworkInfo>> {
         let mut path = vec!["/networks".to_owned()];
         if let Some(query) = opts.serialize() {
             path.push(query);
         }
         let raw = try!(self.docker.get(&path.join("?")));
-        Ok(try!(json::decode::<Vec<NetworkRep>>(&raw)))
+        Ok(try!(json::decode::<Vec<NetworkInfo>>(&raw)))
     }
 
     /// Returns a reference to a set of operations available to a specific network instance
     pub fn get(&'a self, id: &'a str) -> Network {
         Network::new(self.docker, id)
+    }
+
+    pub fn create(&'a self, opts: &NetworkCreateOptions) -> Result<NetworkCreateInfo> {
+        let data = try!(opts.serialize());
+        let mut bytes = data.as_bytes();
+        let path = vec!["/networks/create".to_owned()];
+
+        let raw = try!(self.docker.post(&path.join("?"),
+                                        Some((&mut bytes, ContentType::json()))));
+        Ok(try!(json::decode::<NetworkCreateInfo>(&raw)))
     }
 
 }
@@ -539,9 +548,9 @@ impl<'a, 'b> Network<'a, 'b> {
     pub fn id(&self) -> &str { &self.id }
 
     /// Inspects the current docker network instance's details
-    pub fn inspect(&self) -> Result<NetworkRep> {
+    pub fn inspect(&self) -> Result<NetworkInfo> {
         let raw = try!(self.docker.get(&format!("/networks/{}", self.id)[..]));
-        Ok(try!(json::decode::<NetworkRep>(&raw)))
+        Ok(try!(json::decode::<NetworkInfo>(&raw)))
     }
 
     /// Delete the network instance
