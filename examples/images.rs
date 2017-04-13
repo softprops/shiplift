@@ -1,13 +1,10 @@
 extern crate shiplift;
-extern crate env_logger;
-
-use shiplift::Docker;
 
 fn main() {
-    env_logger::init().unwrap();
-    let docker = Docker::new();
-    for i in docker.images().
-        list(&Default::default()).unwrap() {
-        println!("image -> {:?}", i)
+    let docker = shiplift::Docker::new();
+    let images = docker.images().list(&Default::default()).unwrap();
+    println!("docker images in stock");
+    for i in images {
+        println!("{:?}", i.RepoTags);
     }
 }
