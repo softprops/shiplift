@@ -402,7 +402,8 @@ impl<'a, 'b> Container<'a, 'b> {
     }
 
     /// Delete the container instance
-    /// use remove instead to use the force/v options
+    ///
+    /// Use remove instead to use the force/v options.
     pub fn delete(&self) -> Result<()> {
         self.docker.delete(&format!("/containers/{}", self.id)[..]).map(|_| ())
     }
