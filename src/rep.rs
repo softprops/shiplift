@@ -204,6 +204,46 @@ pub struct Network {
 }
 
 #[derive(Debug, RustcEncodable, RustcDecodable)]
+#[allow(non_snake_case)]
+pub struct IPAM {
+    pub Driver: String,
+    pub Config: Vec<HashMap<String, String>>,
+    pub Options: Option<HashMap<String, String>>,
+}
+
+#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[allow(non_snake_case)]
+pub struct NetworkDetails {
+    pub Name: String,
+    pub Id: String,
+    pub Scope: String,
+    pub Driver: String,
+    pub EnableIPv6: bool,
+    pub IPAM: IPAM,
+    pub Internal: bool,
+    pub Attachable: bool,
+    pub Containers: HashMap<String, NetworkContainerDetails>,
+    pub Options: Option<HashMap<String, String>>,
+    pub Labels: Option<HashMap<String, String>>,
+}
+
+#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[allow(non_snake_case)]
+pub struct NetworkContainerDetails {
+    pub EndpointID: String,
+    pub MacAddress: String,
+    pub IPv4Address: String,
+    pub IPv6Address: String,
+}
+
+#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[allow(non_snake_case)]
+pub struct NetworkCreateInfo {
+    pub Id: String,
+    pub Warning: String,
+}
+
+#[derive(Debug, RustcEncodable, RustcDecodable)]
 pub struct MemoryStats {
     pub max_usage: u64,
     pub usage: u64,
