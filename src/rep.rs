@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
 pub struct SearchResult {
     pub description: String,
     pub is_official: bool,
@@ -11,7 +11,7 @@ pub struct SearchResult {
     pub star_count: u64,
 }
 
-#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
 #[allow(non_snake_case)]
 pub struct Image {
     pub Created: u64,
@@ -23,7 +23,7 @@ pub struct Image {
     pub VirtualSize: u64,
 }
 
-#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
 #[allow(non_snake_case)]
 pub struct ImageDetails {
     pub Architecture: String,
@@ -39,7 +39,7 @@ pub struct ImageDetails {
     pub VirtualSize: u64,
 }
 
-#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
 #[allow(non_snake_case)]
 pub struct Container {
     pub Created: u64,
@@ -54,7 +54,7 @@ pub struct Container {
     pub SizeRootFs: Option<u64>,
 }
 
-#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
 #[allow(non_snake_case)]
 pub struct ContainerDetails {
     pub AppArmorProfile: String,
@@ -79,7 +79,7 @@ pub struct ContainerDetails {
     pub Mounts: Vec<Mount>,
 }
 
-#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
 #[allow(non_snake_case)]
 pub struct Mount {
     pub Source: String,
@@ -88,7 +88,7 @@ pub struct Mount {
     pub RW: bool,
 }
 
-#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
 #[allow(non_snake_case)]
 pub struct State {
     pub Error: String,
@@ -102,7 +102,7 @@ pub struct State {
     pub StartedAt: String,
 }
 
-#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
 #[allow(non_snake_case)]
 pub struct NetworkSettings {
     pub Bridge: String,
@@ -113,7 +113,7 @@ pub struct NetworkSettings {
                              *   pub Ports: Option<???> */
 }
 
-#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
 #[allow(non_snake_case)]
 pub struct HostConfig {
     pub CgroupParent: Option<String>,
@@ -133,7 +133,7 @@ pub struct HostConfig {
                                        * pub VolumesFrom: Option<??/> */
 }
 
-#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
 #[allow(non_snake_case)]
 pub struct Config {
     pub AttachStderr: bool,
@@ -173,7 +173,7 @@ impl Config {
     }
 }
 
-#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
 #[allow(non_snake_case)]
 pub struct Port {
     pub IP: Option<String>,
@@ -182,7 +182,7 @@ pub struct Port {
     pub Type: String,
 }
 
-#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
 pub struct Stats {
     pub read: String,
     pub networks: HashMap<String, Network>,
@@ -191,7 +191,7 @@ pub struct Stats {
     pub cpu_stats: CpuStats,
 }
 
-#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
 pub struct Network {
     pub rx_dropped: u64,
     pub rx_bytes: u64,
@@ -203,7 +203,7 @@ pub struct Network {
     pub tx_bytes: u64,
 }
 
-#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
 #[allow(non_snake_case)]
 pub struct IPAM {
     pub Driver: String,
@@ -211,7 +211,7 @@ pub struct IPAM {
     pub Options: Option<HashMap<String, String>>,
 }
 
-#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
 #[allow(non_snake_case)]
 pub struct NetworkDetails {
     pub Name: String,
@@ -227,7 +227,7 @@ pub struct NetworkDetails {
     pub Labels: Option<HashMap<String, String>>,
 }
 
-#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
 #[allow(non_snake_case)]
 pub struct NetworkContainerDetails {
     pub EndpointID: String,
@@ -236,14 +236,14 @@ pub struct NetworkContainerDetails {
     pub IPv6Address: String,
 }
 
-#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
 #[allow(non_snake_case)]
 pub struct NetworkCreateInfo {
     pub Id: String,
     pub Warning: String,
 }
 
-#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
 pub struct MemoryStats {
     pub max_usage: u64,
     pub usage: u64,
@@ -252,7 +252,7 @@ pub struct MemoryStats {
     pub stats: MemoryStat,
 }
 
-#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
 pub struct MemoryStat {
     pub total_pgmajfault: u64,
     pub cache: u64,
@@ -288,14 +288,14 @@ pub struct MemoryStat {
     pub total_swap: u64,
 }
 
-#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
 pub struct CpuStats {
     pub cpu_usage: CpuUsage,
     pub system_cpu_usage: u64,
     pub throttling_data: ThrottlingData,
 }
 
-#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
 pub struct CpuUsage {
     pub percpu_usage: Vec<u64>,
     pub usage_in_usermode: u64,
@@ -303,14 +303,14 @@ pub struct CpuUsage {
     pub usage_in_kernelmode: u64,
 }
 
-#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
 pub struct ThrottlingData {
     pub periods: u64,
     pub throttled_periods: u64,
     pub throttled_time: u64,
 }
 
-#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
 pub struct BlkioStats {
     pub io_service_bytes_recursive: Vec<BlkioStat>,
     pub io_serviced_recursive: Vec<BlkioStat>,
@@ -322,7 +322,7 @@ pub struct BlkioStats {
     pub sectors_recursive: Vec<BlkioStat>,
 }
 
-#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
 pub struct BlkioStat {
     pub major: u64,
     pub minor: u64,
@@ -330,7 +330,7 @@ pub struct BlkioStat {
     pub value: u64,
 }
 
-#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
 #[allow(non_snake_case)]
 pub struct Change {
     pub Kind: u64,
@@ -338,14 +338,14 @@ pub struct Change {
 }
 
 
-#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
 #[allow(non_snake_case)]
 pub struct Top {
     pub Titles: Vec<String>,
     pub Processes: Vec<Vec<String>>,
 }
 
-#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
 #[allow(non_snake_case)]
 pub struct Version {
     pub ApiVersion: String,
@@ -354,7 +354,7 @@ pub struct Version {
     pub GoVersion: String,
 }
 
-#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
 #[allow(non_snake_case)]
 pub struct Info {
     pub Containers: u64,
@@ -377,14 +377,14 @@ pub struct Info {
     pub SystemTime: Option<String>,
 }
 
-#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
 #[allow(non_snake_case)]
 pub struct ContainerCreateInfo {
     pub Id: String,
     pub Warnings: Option<Vec<String>>,
 }
 
-#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
 #[allow(non_snake_case)]
 pub struct History {
     pub Id: String,
@@ -392,13 +392,13 @@ pub struct History {
     pub CreatedBy: String,
 }
 
-#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
 #[allow(non_snake_case)]
 pub struct Exit {
     pub StatusCode: u64,
 }
 
-#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
 #[allow(non_snake_case)]
 pub struct Event {
     pub status: Option<String>,
@@ -425,7 +425,7 @@ pub struct PullInfo {
     pub progressDetail: Option<ProgressDetail>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum Output {
     Status {
         id: Option<String>,
@@ -437,7 +437,7 @@ pub enum Output {
     Err(String),
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum Status {
     Untagged(String),
     Deleted(String),
