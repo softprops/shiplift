@@ -4,6 +4,7 @@ use rustc_serialize::json::{self, Json, ToJson};
 use self::super::Result;
 use std::cmp::Eq;
 use std::collections::{BTreeMap, HashMap};
+use std::iter::Peekable;
 use std::hash::Hash;
 use std::iter::IntoIterator;
 use url::form_urlencoded;
@@ -261,16 +262,42 @@ pub struct ContainerOptions {
 
 impl ToJson for ContainerOptions {
     fn to_json(&self) -> Json {
-        let mut body: BTreeMap<String, Json> = BTreeMap::new();
-        let mut host_config: BTreeMap<String, Json> = BTreeMap::new();
+        let mut body_members = BTreeMap::new();
 
-        self.parse_from(&self.params, &mut host_config, &mut body);
-        self.parse_from(&self.params_list, &mut host_config, &mut body);
-        self.parse_from(&self.params_hash, &mut host_config, &mut body);
+        // The HostConfig element gets initialized to an empty object,
+        // for backward compatibility.
+        body_members.insert("HostConfig".to_string(), Json::Object(BTreeMap::new()));
 
-        body.insert("HostConfig".to_string(), host_config.to_json());
+        let mut body = Json::Object(body_members);
 
-        body.to_json()
+        self.parse_from(&self.params, &mut body);
+        self.parse_from(&self.params_list, &mut body);
+        self.parse_from(&self.params_hash, &mut body);
+
+        body
+    }
+}
+
+/// Function to insert a JSON value into a tree where the desired
+/// location of the value is given as a path of JSON keys.
+fn insert<'a, I, V>(key_path: &mut Peekable<I>,
+                    value: &V,
+                    parent_node: &mut Json)
+    where V: ToJson,
+          I: Iterator<Item=&'a str>
+{
+    let local_key = key_path.next().unwrap();
+
+    if key_path.peek().is_some() {
+        let node = parent_node
+            .as_object_mut().unwrap()
+            .entry(local_key.to_string()).or_insert(Json::Object(BTreeMap::new()));
+
+        insert(key_path, value, node);
+    }
+    else {
+        parent_node.as_object_mut().unwrap()
+            .insert(local_key.to_string(), value.to_json());
     }
 }
 
@@ -287,23 +314,16 @@ impl ContainerOptions {
 
     pub fn parse_from<'a, K, V>(&self,
                                 params: &'a HashMap<K, V>,
-                                host_config: &mut BTreeMap<String, Json>,
-                                body: &mut BTreeMap<String, Json>)
+                                body: &mut Json)
         where &'a HashMap<K, V>: IntoIterator,
               K: ToString + Eq + Hash,
               V: ToJson
     {
         for (k, v) in params.iter() {
-            let key = k.to_string();
-            let value = v.to_json();
-
-            if key.starts_with("HostConfig.") {
-                let (_, s) = key.split_at(11);
-
-                host_config.insert(s.to_string(), value);
-            } else {
-                body.insert(key, value);
-            }
+            let key_string = k.to_string();
+            insert(&mut key_string.split(".").peekable(),
+                   v,
+                   body)
         }
     }
 }
@@ -411,6 +431,13 @@ impl ContainerOptionsBuilder {
                    -> &mut ContainerOptionsBuilder {
         for d in devices {
             self.params_hash.entry("HostConfig.Devices".to_string()).or_insert(Vec::new()).push(d);
+        }
+        self
+    }
+
+    pub fn log_driver(&mut self, log_driver: &str) -> &mut ContainerOptionsBuilder {
+        if !log_driver.is_empty() {
+            self.params.insert("HostConfig.LogConfig.Type", log_driver.to_owned());
         }
         self
     }
@@ -926,5 +953,53 @@ impl ContainerConnectionOptions {
             Container: None,
             params: self.params.clone()
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::ContainerOptionsBuilder;
+
+    #[test]
+    fn container_options_simple() {
+        let builder = ContainerOptionsBuilder::new("test_image");
+        let options = builder.build();
+
+        assert_eq!("{\"HostConfig\":{},\"Image\":\"test_image\"}",
+                   options.serialize().unwrap());
+    }
+
+    #[test]
+    fn container_options_env() {
+        let options =
+            ContainerOptionsBuilder::new("test_image")
+            .env(vec!["foo", "bar"])
+            .build();
+
+        assert_eq!("{\"Env\":[\"foo\",\"bar\"],\"HostConfig\":{},\"Image\":\"test_image\"}",
+                   options.serialize().unwrap());
+    }
+
+    #[test]
+    fn container_options_host_config() {
+        let options =
+            ContainerOptionsBuilder::new("test_image")
+            .network_mode("host")
+            .build();
+
+        assert_eq!("{\"HostConfig\":{\"NetworkMode\":\"host\"},\"Image\":\"test_image\"}",
+                   options.serialize().unwrap());
+    }
+
+    /// Test container options that are nested 3 levels deep.
+    #[test]
+    fn container_options_nested() {
+        let options =
+            ContainerOptionsBuilder::new("test_image")
+            .log_driver("fluentd")
+            .build();
+
+        assert_eq!("{\"HostConfig\":{\"LogConfig\":{\"Type\":\"fluentd\"}},\"Image\":\"test_image\"}",
+                   options.serialize().unwrap());
     }
 }
