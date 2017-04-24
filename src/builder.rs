@@ -255,7 +255,7 @@ impl ContainerListOptionsBuilder {
 /// Interface for building a new docker container from an existing image
 pub struct ContainerOptions {
     pub name: Option<String>,
-    params: HashMap<&'static str, String>,
+    params: HashMap<&'static str, Json>,
     params_list: HashMap<&'static str, Vec<String>>,
     params_hash: HashMap<String, Vec<HashMap<String, String>>>,
 }
@@ -331,7 +331,7 @@ impl ContainerOptions {
 #[derive(Default)]
 pub struct ContainerOptionsBuilder {
     name: Option<String>,
-    params: HashMap<&'static str, String>,
+    params: HashMap<&'static str, Json>,
     params_list: HashMap<&'static str, Vec<String>>,
     params_hash: HashMap<String, Vec<HashMap<String, String>>>,
 }
@@ -342,7 +342,7 @@ impl ContainerOptionsBuilder {
         let params_list = HashMap::new();
         let params_hash = HashMap::new();
 
-        params.insert("Image", image.to_owned());
+        params.insert("Image", Json::String(image.to_owned()));
         ContainerOptionsBuilder {
             name: None,
             params: params,
@@ -393,7 +393,7 @@ impl ContainerOptionsBuilder {
 
     pub fn network_mode(&mut self, network: &str) -> &mut ContainerOptionsBuilder {
         if !network.is_empty() {
-            self.params.insert("HostConfig.NetworkMode", network.to_owned());
+            self.params.insert("HostConfig.NetworkMode", Json::String(network.to_owned()));
         }
         self
     }
@@ -414,7 +414,7 @@ impl ContainerOptionsBuilder {
 
     pub fn entrypoint(&mut self, entrypoint: &str) -> &mut ContainerOptionsBuilder {
         if !entrypoint.is_empty() {
-            self.params.insert("Entrypoint", entrypoint.to_owned());
+            self.params.insert("Entrypoint", Json::String(entrypoint.to_owned()));
         }
         self
     }
@@ -437,7 +437,21 @@ impl ContainerOptionsBuilder {
 
     pub fn log_driver(&mut self, log_driver: &str) -> &mut ContainerOptionsBuilder {
         if !log_driver.is_empty() {
-            self.params.insert("HostConfig.LogConfig.Type", log_driver.to_owned());
+            self.params.insert("HostConfig.LogConfig.Type", Json::String(log_driver.to_owned()));
+        }
+        self
+    }
+
+    pub fn restart_policy(&mut self,
+                          name: &str,
+                          maximum_retry_count: u64)
+                          -> &mut ContainerOptionsBuilder {
+        if !name.is_empty() {
+            self.params.insert("HostConfig.RestartPolicy.Name", Json::String(name.to_owned()));
+        }
+        if name == "on-failure" {
+            self.params.insert("HostConfig.RestartPolicy.MaximumRetryCount",
+                               Json::U64(maximum_retry_count));
         }
         self
     }
@@ -1001,5 +1015,26 @@ mod tests {
 
         assert_eq!(r#"{"HostConfig":{"LogConfig":{"Type":"fluentd"}},"Image":"test_image"}"#,
                    options.serialize().unwrap());
+    }
+
+    /// Test the restart policy settings
+    #[test]
+    fn container_options_restart_policy() {
+        let mut options =
+            ContainerOptionsBuilder::new("test_image")
+            .restart_policy("on-failure", 10)
+            .build();
+
+        assert_eq!(r#"{"HostConfig":{"RestartPolicy":{"MaximumRetryCount":10,"Name":"on-failure"}},"Image":"test_image"}"#,
+                   options.serialize().unwrap());
+
+        options =
+            ContainerOptionsBuilder::new("test_image")
+            .restart_policy("always", 0)
+            .build();
+
+        assert_eq!(r#"{"HostConfig":{"RestartPolicy":{"Name":"always"}},"Image":"test_image"}"#,
+                   options.serialize().unwrap());
+
     }
 }
