@@ -965,7 +965,7 @@ mod tests {
         let builder = ContainerOptionsBuilder::new("test_image");
         let options = builder.build();
 
-        assert_eq!("{\"HostConfig\":{},\"Image\":\"test_image\"}",
+        assert_eq!(r#"{"HostConfig":{},"Image":"test_image"}"#,
                    options.serialize().unwrap());
     }
 
@@ -976,7 +976,7 @@ mod tests {
             .env(vec!["foo", "bar"])
             .build();
 
-        assert_eq!("{\"Env\":[\"foo\",\"bar\"],\"HostConfig\":{},\"Image\":\"test_image\"}",
+        assert_eq!(r#"{"Env":["foo","bar"],"HostConfig":{},"Image":"test_image"}"#,
                    options.serialize().unwrap());
     }
 
@@ -987,7 +987,7 @@ mod tests {
             .network_mode("host")
             .build();
 
-        assert_eq!("{\"HostConfig\":{\"NetworkMode\":\"host\"},\"Image\":\"test_image\"}",
+        assert_eq!(r#"{"HostConfig":{"NetworkMode":"host"},"Image":"test_image"}"#,
                    options.serialize().unwrap());
     }
 
@@ -999,7 +999,7 @@ mod tests {
             .log_driver("fluentd")
             .build();
 
-        assert_eq!("{\"HostConfig\":{\"LogConfig\":{\"Type\":\"fluentd\"}},\"Image\":\"test_image\"}",
+        assert_eq!(r#"{"HostConfig":{"LogConfig":{"Type":"fluentd"}},"Image":"test_image"}"#,
                    options.serialize().unwrap());
     }
 }
