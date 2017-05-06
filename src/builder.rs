@@ -454,6 +454,7 @@ impl ContainerOptionsBuilder {
 
 pub struct ExecContainerOptions {
     params: HashMap<&'static str, Vec<String>>,
+    params_bool: HashMap<&'static str, bool>,
 }
 
 impl ExecContainerOptions {
@@ -469,6 +470,9 @@ impl ExecContainerOptions {
         for (k, v) in &self.params {
             body.insert(k.to_string(), v.to_json());
         }
+        for (k, v) in &self.params_bool {
+            body.insert(k.to_string(), v.to_json());
+        }
 
         let json_obj: Json = body.to_json();
         Ok(try!(json::encode(&json_obj)))
@@ -478,11 +482,13 @@ impl ExecContainerOptions {
 #[derive(Default)]
 pub struct ExecContainerOptionsBuilder {
     params: HashMap<&'static str, Vec<String>>,
+    params_bool: HashMap<&'static str, bool>,
 }
 
 impl ExecContainerOptionsBuilder {
     pub fn new() -> ExecContainerOptionsBuilder {
-        ExecContainerOptionsBuilder { params: HashMap::new() }
+        ExecContainerOptionsBuilder { params: HashMap::new(),
+            params_bool: HashMap::new() }
     }
 
     /// Command to run, as an array of strings
@@ -501,8 +507,21 @@ impl ExecContainerOptionsBuilder {
         self
     }
 
+/// Attach to stdout of the exec command
+    pub fn attach_stdout(&mut self, stdout: bool) -> &mut ExecContainerOptionsBuilder {
+        self.params_bool.insert("AttachStdout", stdout);
+        self
+    }
+
+/// Attach to stderr of the exec command
+    pub fn attach_stderr(&mut self, stderr: bool) -> &mut ExecContainerOptionsBuilder {
+        self.params_bool.insert("AttachStderr", stderr);
+        self
+    }
+
     pub fn build(&self) -> ExecContainerOptions {
-        ExecContainerOptions { params: self.params.clone() }
+        ExecContainerOptions { params: self.params.clone(),
+            params_bool: self.params_bool.clone() }
     }
 }
 
