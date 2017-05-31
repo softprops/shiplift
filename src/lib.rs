@@ -24,6 +24,7 @@ extern crate openssl;
 extern crate rustc_serialize;
 extern crate url;
 extern crate tar;
+extern crate byteorder;
 
 pub mod builder;
 pub mod rep;
