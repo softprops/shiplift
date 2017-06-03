@@ -24,11 +24,13 @@ extern crate openssl;
 extern crate rustc_serialize;
 extern crate url;
 extern crate tar;
+extern crate byteorder;
 
 pub mod builder;
 pub mod rep;
 pub mod transport;
 pub mod errors;
+pub mod tty;
 
 mod tarball;
 
@@ -50,6 +52,7 @@ use rep::{NetworkDetails as NetworkInfo, NetworkCreateInfo};
 use rep::{Output, PullInfo, Change, ContainerCreateInfo, ContainerDetails,
           Container as ContainerRep, Event, Exit, History, ImageDetails, Info, SearchResult,
           Stats, Status, Top, Version};
+use tty::Tty;
 use rustc_serialize::json::{self, Json};
 use std::borrow::Cow;
 use std::env::{self, VarError};
@@ -419,26 +422,27 @@ impl<'a, 'b> Container<'a, 'b> {
     }
 
     /// Exec the specified command in the container
-    pub fn exec(&self, opts: &ExecContainerOptions) -> Result<()> {
+    pub fn exec(&self, opts: &ExecContainerOptions) -> Result<Tty> {
         let data = try!(opts.serialize());
         let mut bytes = data.as_bytes();
         match self.docker
-            .post(&format!("/containers/{}/exec", self.id)[..],
-                  Some((&mut bytes, ContentType::json()))) {
+                  .post(&format!("/containers/{}/exec", self.id)[..],
+                        Some((&mut bytes, ContentType::json()))) {
             Err(e) => Err(e),
             Ok(res) => {
                 let data = "{}";
                 let mut bytes = data.as_bytes();
                 self.docker
-                    .post(&format!("/exec/{}/start",
-                                   Json::from_str(res.as_str())
-                                       .unwrap()
-                                       .search("Id")
-                                       .unwrap()
-                                       .as_string()
-                                       .unwrap())[..],
-                          Some((&mut bytes, ContentType::json())))
-                    .map(|_| ())
+                    .stream_post(&format!("/exec/{}/start",
+                                          Json::from_str(res.as_str())
+                                              .unwrap()
+                                              .search("Id")
+                                              .unwrap()
+                                              .as_string()
+                                              .unwrap())
+                                      [..],
+                                 Some((&mut bytes, ContentType::json())))
+                    .map(|stream| Tty::new(stream))
             }
         }
     }

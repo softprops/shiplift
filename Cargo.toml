@@ -11,13 +11,14 @@ keywords = ["docker", "unix", "containers", "hyper", "ship"]
 license = "MIT"
 
 [dependencies]
+byteorder = "1.0.0"
 flate2 = "0.2"
-hyperlocal = "0.3"
-log = "0.3"
-jed = "0.1"
-openssl = "0.9"
 hyper = "0.10"
 hyper-openssl = "0.2"
+hyperlocal = "0.3"
+jed = "0.1"
+log = "0.3"
+openssl = "0.9"
 rustc-serialize = "0.3"
 tar = "0.3"
 url = "0.5"
