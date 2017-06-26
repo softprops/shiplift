@@ -6,7 +6,11 @@ use std::env;
 fn main() {
     let docker = Docker::new();
     let options = ExecContainerOptions::builder()
-        .cmd(vec!["bash", "-c", "echo -n \"echo VAR=$VAR on stdout\"; echo -n \"echo VAR=$VAR on stderr\" >&2"])
+        .cmd(vec![
+            "bash",
+            "-c",
+            "echo -n \"echo VAR=$VAR on stdout\"; echo -n \"echo VAR=$VAR on stderr\" >&2",
+        ])
         .env(vec!["VAR=value"])
         .attach_stdout(true)
         .attach_stderr(true)

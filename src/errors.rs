@@ -14,10 +14,7 @@ pub enum Error {
     Parse(ParserError),
     Http(HttpError),
     IO(IoError),
-    Fault {
-        code: StatusCode,
-        message: String,
-    },
+    Fault { code: StatusCode, message: String },
 }
 
 impl From<ParserError> for Error {
@@ -76,7 +73,7 @@ impl ErrorTrait for Error {
             &Error::Parse(ref err) => Some(err),
             &Error::Http(ref err) => Some(err),
             &Error::IO(ref err) => Some(err),
-            _ => None
+            _ => None,
         }
     }
 }

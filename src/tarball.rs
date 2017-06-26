@@ -8,11 +8,13 @@ use tar::Archive;
 
 // todo: this is pretty involved. (re)factor this into its own crate
 pub fn dir<W>(buf: W, path: &str) -> io::Result<()>
-    where W: Write
+where
+    W: Write,
 {
     let archive = Archive::new(GzEncoder::new(buf, Compression::Best));
     fn bundle<F>(dir: &Path, f: &F, bundle_dir: bool) -> io::Result<()>
-        where F: Fn(&Path) -> io::Result<()>
+    where
+        F: Fn(&Path) -> io::Result<()>,
     {
         if fs::metadata(dir)?.is_dir() {
             if bundle_dir {
@@ -43,11 +45,16 @@ pub fn dir<W>(buf: W, path: &str) -> io::Result<()>
         let append = |path: &Path| {
             let canonical = path.canonicalize()?;
             // todo: don't unwrap
-            let relativized = canonical.to_str().unwrap().trim_left_matches(&base_path_str[..]);
+            let relativized = canonical.to_str().unwrap().trim_left_matches(
+                &base_path_str[..],
+            );
             if path.is_dir() {
                 archive.append_dir(Path::new(relativized), &canonical)?
             } else {
-                archive.append_file(Path::new(relativized), &mut File::open(&canonical)?)?
+                archive.append_file(
+                    Path::new(relativized),
+                    &mut File::open(&canonical)?,
+                )?
             }
             Ok(())
         };

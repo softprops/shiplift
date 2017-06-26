@@ -6,10 +6,7 @@ use std::env;
 fn main() {
     let docker = Docker::new();
     if let Some(img) = env::args().nth(1) {
-        let image = docker.images()
-            .get(&img[..])
-            .delete()
-            .unwrap();
+        let image = docker.images().get(&img[..]).delete().unwrap();
         for status in image {
             println!("{:?}", status);
         }

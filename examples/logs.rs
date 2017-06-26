@@ -6,7 +6,8 @@ use std::env;
 fn main() {
     let docker = Docker::new();
     if let Some(id) = env::args().nth(1) {
-        let mut logs = docker.containers()
+        let mut logs = docker
+            .containers()
             .get(&id)
             .logs(&Default::default())
             .unwrap();

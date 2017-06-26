@@ -6,10 +6,7 @@ use std::env;
 fn main() {
     let docker = Docker::new();
     if let Some(id) = env::args().nth(1) {
-        let network = docker.networks()
-            .get(&id)
-            .inspect()
-            .unwrap();
+        let network = docker.networks().get(&id).inspect().unwrap();
         println!("{:?}", network);
     }
 }

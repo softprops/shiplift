@@ -6,7 +6,8 @@ use std::env;
 fn main() {
     let docker = Docker::new();
     if let Some(path) = env::args().nth(1) {
-        let image = docker.images()
+        let image = docker
+            .images()
             .build(&BuildOptions::builder(path).tag("shiplift_test").build())
             .unwrap();
         for output in image {
