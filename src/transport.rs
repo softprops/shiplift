@@ -55,9 +55,9 @@ impl Transport {
                           -> Result<String>
         where B: Into<Body<'a>>
     {
-        let mut res = try!(self.stream(method, endpoint, body));
+        let mut res = self.stream(method, endpoint, body)?;
         let mut body = String::new();
-        try!(res.read_to_string(&mut body));
+        res.read_to_string(&mut body)?;
         debug!("{} raw response: {}", endpoint, body);
         Ok(body)
     }
@@ -87,7 +87,7 @@ impl Transport {
             Some((b, c)) => req.header(c).body(b),
             _ => req,
         };
-        let mut res = try!(embodied.send());
+        let mut res = embodied.send()?;
         match res.status {
             StatusCode::Ok | StatusCode::Created | StatusCode::SwitchingProtocols => {
                 Ok(Box::new(res))

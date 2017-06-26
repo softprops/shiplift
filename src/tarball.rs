@@ -14,16 +14,16 @@ pub fn dir<W>(buf: W, path: &str) -> io::Result<()>
     fn bundle<F>(dir: &Path, f: &F, bundle_dir: bool) -> io::Result<()>
         where F: Fn(&Path) -> io::Result<()>
     {
-        if try!(fs::metadata(dir)).is_dir() {
+        if fs::metadata(dir)?.is_dir() {
             if bundle_dir {
-                try!(f(&dir));
+                f(&dir)?;
             }
-            for entry in try!(fs::read_dir(dir)) {
-                let entry = try!(entry);
-                if try!(fs::metadata(entry.path())).is_dir() {
-                    try!(bundle(&entry.path(), f, true));
+            for entry in fs::read_dir(dir)? {
+                let entry = entry?;
+                if fs::metadata(entry.path())?.is_dir() {
+                    bundle(&entry.path(), f, true)?;
                 } else {
-                    try!(f(&entry.path().as_path()));
+                    f(&entry.path().as_path())?;
                 }
             }
         }
@@ -31,7 +31,7 @@ pub fn dir<W>(buf: W, path: &str) -> io::Result<()>
     }
 
     {
-        let base_path = try!(Path::new(path).canonicalize());
+        let base_path = Path::new(path).canonicalize()?;
         // todo: don't unwrap
         let mut base_path_str = base_path.to_str().unwrap().to_owned();
         if let Some(last) = base_path_str.chars().last() {
@@ -41,18 +41,18 @@ pub fn dir<W>(buf: W, path: &str) -> io::Result<()>
         }
 
         let append = |path: &Path| {
-            let canonical = try!(path.canonicalize());
+            let canonical = path.canonicalize()?;
             // todo: don't unwrap
             let relativized = canonical.to_str().unwrap().trim_left_matches(&base_path_str[..]);
             if path.is_dir() {
-                try!(archive.append_dir(Path::new(relativized), &canonical))
+                archive.append_dir(Path::new(relativized), &canonical)?
             } else {
-                try!(archive.append_file(Path::new(relativized), &mut try!(File::open(&canonical))))
+                archive.append_file(Path::new(relativized), &mut File::open(&canonical)?)?
             }
             Ok(())
         };
-        try!(bundle(Path::new(path), &append, false));
-        try!(archive.finish());
+        bundle(Path::new(path), &append, false)?;
+        archive.finish()?;
     }
 
     Ok(())

@@ -52,7 +52,7 @@ impl From<IoError> for Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        try!(write!(f, "Docker Error: "));
+        write!(f, "Docker Error: ")?;
         match self {
             &Error::Decoding(ref err) => return err.fmt(f),
             &Error::Encoding(ref err) => return err.fmt(f),

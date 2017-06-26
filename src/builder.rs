@@ -309,7 +309,7 @@ impl ContainerOptions {
 
     /// serialize options as a string. returns None if no options are defined
     pub fn serialize(&self) -> Result<String> {
-        Ok(try!(json::encode(&self.to_json())))
+        Ok(json::encode(&self.to_json())?)
     }
 
     pub fn parse_from<'a, K, V>(&self,
@@ -489,7 +489,7 @@ impl ExecContainerOptions {
         }
 
         let json_obj: Json = body.to_json();
-        Ok(try!(json::encode(&json_obj)))
+        Ok(json::encode(&json_obj)?)
     }
 }
 
@@ -872,7 +872,7 @@ impl NetworkCreateOptions {
 
     /// serialize options as a string. returns None if no options are defined
     pub fn serialize(&self) -> Result<String> {
-        Ok(try!(json::encode(&self.to_json())))
+        Ok(json::encode(&self.to_json())?)
     }
 
     pub fn parse_from<'a, K, V>(&self,
@@ -953,7 +953,7 @@ impl ToJson for ContainerConnectionOptions {
 impl ContainerConnectionOptions {
     /// serialize options as a string. returns None if no options are defined
     pub fn serialize(&self) -> Result<String> {
-        Ok(try!(json::encode(&self.to_json())))
+        Ok(json::encode(&self.to_json())?)
     }
 
     pub fn parse_from<'a, K, V>(&self,

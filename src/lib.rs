@@ -91,20 +91,20 @@ impl<'a, 'b> Image<'a, 'b> {
 
     /// Inspects a named image's details
     pub fn inspect(&self) -> Result<ImageDetails> {
-        let raw = try!(self.docker.get(&format!("/images/{}/json", self.name)[..]));
-        Ok(try!(json::decode::<ImageDetails>(&raw)))
+        let raw = self.docker.get(&format!("/images/{}/json", self.name)[..])?;
+        Ok(json::decode::<ImageDetails>(&raw)?)
     }
 
     /// Lists the history of the images set of changes
     pub fn history(&self) -> Result<Vec<History>> {
-        let raw = try!(self.docker.get(&format!("/images/{}/history", self.name)[..]));
-        Ok(try!(json::decode::<Vec<History>>(&raw)))
+        let raw = self.docker.get(&format!("/images/{}/history", self.name)[..])?;
+        Ok(json::decode::<Vec<History>>(&raw)?)
     }
 
     /// Delete's an image
     pub fn delete(&self) -> Result<Vec<Status>> {
-        let raw = try!(self.docker.delete(&format!("/images/{}", self.name)[..]));
-        Ok(match try!(Json::from_str(&raw)) {
+        let raw = self.docker.delete(&format!("/images/{}", self.name)[..])?;
+        Ok(match Json::from_str(&raw)? {
                Json::Array(ref xs) => {
                    xs.iter().map(|j| {
                        let obj = j.as_object().expect("expected json object");
@@ -154,11 +154,11 @@ impl<'a> Images<'a> {
 
         let mut bytes = vec![];
 
-        try!(tarball::dir(&mut bytes, &opts.path[..]));
+        tarball::dir(&mut bytes, &opts.path[..])?;
 
-        let raw = try!(self.docker.stream_post(&path.join("?"),
+        let raw = self.docker.stream_post(&path.join("?"),
                                                Some((Body::BufBody(&bytes[..], bytes.len()),
-                                                     tar()))));
+                                                     tar())))?;
         let it = jed::Iter::new(raw).into_iter().map(|j| {
             // fixme: better error handling
             debug!("{:?}", j);
@@ -198,8 +198,8 @@ impl<'a> Images<'a> {
         if let Some(query) = opts.serialize() {
             path.push(query);
         }
-        let raw = try!(self.docker.get(&path.join("?")));
-        Ok(try!(json::decode::<Vec<ImageRep>>(&raw)))
+        let raw = self.docker.get(&path.join("?"))?;
+        Ok(json::decode::<Vec<ImageRep>>(&raw)?)
     }
 
     /// Returns a reference to a set of operations available for a named image
@@ -210,8 +210,8 @@ impl<'a> Images<'a> {
     /// Search for docker images by term
     pub fn search(&self, term: &str) -> Result<Vec<SearchResult>> {
         let query = form_urlencoded::serialize(vec![("term", term)]);
-        let raw = try!(self.docker.get(&format!("/images/search?{}", query)[..]));
-        Ok(try!(json::decode::<Vec<SearchResult>>(&raw)))
+        let raw = self.docker.get(&format!("/images/search?{}", query)[..])?;
+        Ok(json::decode::<Vec<SearchResult>>(&raw)?)
     }
 
     /// Pull and create a new docker images from an existing image
@@ -220,8 +220,8 @@ impl<'a> Images<'a> {
         if let Some(query) = opts.serialize() {
             path.push(query);
         }
-        let raw = try!(self.docker
-                           .stream_post(&path.join("?"), None as Option<(&'a str, ContentType)>));
+        let raw = self.docker
+                           .stream_post(&path.join("?"), None as Option<(&'a str, ContentType)>)?;
         let it = jed::Iter::new(raw).into_iter().map(|j| {
             // fixme: better error handling
             debug!("{:?}", j);
@@ -286,8 +286,8 @@ impl<'a, 'b> Container<'a, 'b> {
 
     /// Inspects the current docker container instance's details
     pub fn inspect(&self) -> Result<ContainerDetails> {
-        let raw = try!(self.docker.get(&format!("/containers/{}/json", self.id)[..]));
-        Ok(try!(json::decode::<ContainerDetails>(&raw)))
+        let raw = self.docker.get(&format!("/containers/{}/json", self.id)[..])?;
+        Ok(json::decode::<ContainerDetails>(&raw)?)
     }
 
     /// Returns a `top` view of information about the container process
@@ -297,9 +297,9 @@ impl<'a, 'b> Container<'a, 'b> {
             let encoded = form_urlencoded::serialize(vec![("ps_args", args)]);
             path.push(encoded)
         }
-        let raw = try!(self.docker.get(&path.join("?")));
+        let raw = self.docker.get(&path.join("?"))?;
 
-        Ok(try!(json::decode::<Top>(&raw)))
+        Ok(json::decode::<Top>(&raw)?)
     }
 
     /// Returns a stream of logs emitted but the container instance
@@ -313,8 +313,8 @@ impl<'a, 'b> Container<'a, 'b> {
 
     /// Returns a set of changes made to the container instance
     pub fn changes(&self) -> Result<Vec<Change>> {
-        let raw = try!(self.docker.get(&format!("/containers/{}/changes", self.id)[..]));
-        Ok(try!(json::decode::<Vec<Change>>(&raw)))
+        let raw = self.docker.get(&format!("/containers/{}/changes", self.id)[..])?;
+        Ok(json::decode::<Vec<Change>>(&raw)?)
     }
 
     /// Exports the current docker container into a tarball
@@ -324,7 +324,7 @@ impl<'a, 'b> Container<'a, 'b> {
 
     /// Returns a stream of stats specific to this container instance
     pub fn stats(&self) -> Result<Box<Iterator<Item = Stats>>> {
-        let raw = try!(self.docker.stream_get(&format!("/containers/{}/stats", self.id)[..]));
+        let raw = self.docker.stream_get(&format!("/containers/{}/stats", self.id)[..])?;
         let it = jed::Iter::new(raw).into_iter().map(|j| {
             // fixme: better error handling
             debug!("{:?}", j);
@@ -399,9 +399,9 @@ impl<'a, 'b> Container<'a, 'b> {
 
     /// Wait until the container stops
     pub fn wait(&self) -> Result<Exit> {
-        let raw = try!(self.docker.post(&format!("/containers/{}/wait", self.id)[..],
-                                        None as Option<(&'a str, ContentType)>));
-        Ok(try!(json::decode::<Exit>(&raw)))
+        let raw = self.docker.post(&format!("/containers/{}/wait", self.id)[..],
+                                        None as Option<(&'a str, ContentType)>)?;
+        Ok(json::decode::<Exit>(&raw)?)
     }
 
     /// Delete the container instance
@@ -417,13 +417,13 @@ impl<'a, 'b> Container<'a, 'b> {
         if let Some(query) = opts.serialize() {
             path.push(query)
         }
-        try!(self.docker.delete(&path.join("?")));
+        self.docker.delete(&path.join("?"))?;
         Ok(())
     }
 
     /// Exec the specified command in the container
     pub fn exec(&self, opts: &ExecContainerOptions) -> Result<Tty> {
-        let data = try!(opts.serialize());
+        let data = opts.serialize()?;
         let mut bytes = data.as_bytes();
         match self.docker
                   .post(&format!("/containers/{}/exec", self.id)[..],
@@ -467,8 +467,8 @@ impl<'a> Containers<'a> {
         if let Some(query) = opts.serialize() {
             path.push(query)
         }
-        let raw = try!(self.docker.get(&path.join("?")));
-        Ok(try!(json::decode::<Vec<ContainerRep>>(&raw)))
+        let raw = self.docker.get(&path.join("?"))?;
+        Ok(json::decode::<Vec<ContainerRep>>(&raw)?)
     }
 
     /// Returns a reference to a set of operations available to a specific container instance
@@ -478,7 +478,7 @@ impl<'a> Containers<'a> {
 
     /// Returns a builder interface for creating a new container instance
     pub fn create(&'a self, opts: &ContainerOptions) -> Result<ContainerCreateInfo> {
-        let data = try!(opts.serialize());
+        let data = opts.serialize()?;
         let mut bytes = data.as_bytes();
         let mut path = vec!["/containers/create".to_owned()];
 
@@ -486,9 +486,9 @@ impl<'a> Containers<'a> {
             path.push(form_urlencoded::serialize(vec![("name", name)]));
         }
 
-        let raw = try!(self.docker.post(&path.join("?"),
-                                        Some((&mut bytes, ContentType::json()))));
-        Ok(try!(json::decode::<ContainerCreateInfo>(&raw)))
+        let raw = self.docker.post(&path.join("?"),
+                                        Some((&mut bytes, ContentType::json())))?;
+        Ok(json::decode::<ContainerCreateInfo>(&raw)?)
     }
 }
 
@@ -509,8 +509,8 @@ impl<'a> Networks<'a> {
         if let Some(query) = opts.serialize() {
             path.push(query);
         }
-        let raw = try!(self.docker.get(&path.join("?")));
-        Ok(try!(json::decode::<Vec<NetworkInfo>>(&raw)))
+        let raw = self.docker.get(&path.join("?"))?;
+        Ok(json::decode::<Vec<NetworkInfo>>(&raw)?)
     }
 
     /// Returns a reference to a set of operations available to a specific network instance
@@ -519,13 +519,13 @@ impl<'a> Networks<'a> {
     }
 
     pub fn create(&'a self, opts: &NetworkCreateOptions) -> Result<NetworkCreateInfo> {
-        let data = try!(opts.serialize());
+        let data = opts.serialize()?;
         let mut bytes = data.as_bytes();
         let path = vec!["/networks/create".to_owned()];
 
-        let raw = try!(self.docker.post(&path.join("?"),
-                                        Some((&mut bytes, ContentType::json()))));
-        Ok(try!(json::decode::<NetworkCreateInfo>(&raw)))
+        let raw = self.docker.post(&path.join("?"),
+                                        Some((&mut bytes, ContentType::json())))?;
+        Ok(json::decode::<NetworkCreateInfo>(&raw)?)
     }
 
 }
@@ -552,8 +552,8 @@ impl<'a, 'b> Network<'a, 'b> {
 
     /// Inspects the current docker network instance's details
     pub fn inspect(&self) -> Result<NetworkInfo> {
-        let raw = try!(self.docker.get(&format!("/networks/{}", self.id)[..]));
-        Ok(try!(json::decode::<NetworkInfo>(&raw)))
+        let raw = self.docker.get(&format!("/networks/{}", self.id)[..])?;
+        Ok(json::decode::<NetworkInfo>(&raw)?)
     }
 
     /// Delete the network instance
@@ -572,7 +572,7 @@ impl<'a, 'b> Network<'a, 'b> {
     }
 
     fn do_connection(&self, segment: &str, opts: &ContainerConnectionOptions) -> Result<()> {
-        let data = try!(opts.serialize());
+        let data = opts.serialize()?;
         let mut bytes = data.as_bytes();
 
         self.docker
@@ -658,14 +658,14 @@ impl Docker {
 
     /// Returns version information associated with the docker daemon
     pub fn version(&self) -> Result<Version> {
-        let raw = try!(self.get("/version"));
-        Ok(try!(json::decode::<Version>(&raw)))
+        let raw = self.get("/version")?;
+        Ok(json::decode::<Version>(&raw)?)
     }
 
     /// Returns information associated with the docker daemon
     pub fn info(&self) -> Result<Info> {
-        let raw = try!(self.get("/info"));
-        Ok(try!(json::decode::<Info>(&raw)))
+        let raw = self.get("/info")?;
+        Ok(json::decode::<Info>(&raw)?)
     }
 
     /// Returns a simple ping response indicating the docker daemon is accessible
@@ -679,7 +679,7 @@ impl Docker {
         if let Some(query) = opts.serialize() {
             path.push(query);
         }
-        let raw = try!(self.stream_get(&path.join("?")[..]));
+        let raw = self.stream_get(&path.join("?")[..])?;
         let it = jed::Iter::new(raw).into_iter().map(|j| {
             debug!("{:?}", j);
             // fixme: better error handling
