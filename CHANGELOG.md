@@ -1,3 +1,9 @@
+# 0.3.2
+* upgraded to hyper 0.10
+* added interfaces for container log_driver, restart_policy
+* added container exec interface
+* added docker network interfaces
+
 # 0.3.1
 
 * added support for `CapAdd` on `ContainerOptions` [#32](https://github.com/softprops/shiplift/pull/32)
