@@ -408,35 +408,6 @@ pub struct Event {
     pub timeNano: u64,
 }
 
-// fixme: all fields are options because PullInfo.progressDefault is sometimes an empty object instead of a null/absent value
-#[derive(Clone, Debug, RustcDecodable)]
-pub struct ProgressDetail {
-    current: Option<u64>,
-    total: Option<u64>,
-    status: Option<String>, // fixme: it looks like this field isn't deserializing properly
-}
-
-#[derive(Clone, Debug, RustcDecodable)]
-#[allow(non_snake_case)]
-pub struct PullInfo {
-    pub id: Option<String>,
-    pub status: String,
-    pub progress: Option<String>,
-    pub progressDetail: Option<ProgressDetail>,
-}
-
-#[derive(Clone, Debug)]
-pub enum Output {
-    Status {
-        id: Option<String>,
-        status: String,
-        progress: Option<String>,
-        progress_detail: Option<ProgressDetail>,
-    },
-    Stream(String),
-    Err(String),
-}
-
 #[derive(Clone, Debug)]
 pub enum Status {
     Untagged(String),
