@@ -34,25 +34,26 @@ pub mod tty;
 
 mod tarball;
 
+pub use builder::{BuildOptions, ContainerConnectionOptions, ContainerFilter,
+                  ContainerListOptions, ContainerOptions, EventsOptions,
+                  ExecContainerOptions, ImageFilter, ImageListOptions,
+                  LogsOptions, NetworkCreateOptions, NetworkListOptions,
+                  PullOptions, RmContainerOptions};
 pub use errors::Error;
-pub use builder::{BuildOptions, ContainerOptions, ContainerListOptions, ContainerFilter,
-                  EventsOptions, ImageFilter, ImageListOptions, LogsOptions, PullOptions,
-                  RmContainerOptions, ExecContainerOptions, NetworkListOptions,
-                  NetworkCreateOptions, ContainerConnectionOptions};
 use hyper::{Client, Url};
+use hyper::client::Body;
 use hyper::header::ContentType;
-use hyper::net::HttpsConnector;
 use hyper::method::Method;
+use hyper::net::HttpsConnector;
 use hyper_openssl::OpensslClient;
 use hyperlocal::UnixSocketConnector;
+use openssl::ssl::{SslConnectorBuilder, SslMethod};
 use openssl::x509::X509_FILETYPE_PEM;
-use openssl::ssl::{SslMethod, SslConnectorBuilder};
+use rep::{Change, Container as ContainerRep, ContainerCreateInfo,
+          ContainerDetails, Event, Exit, History, ImageDetails, Info,
+          SearchResult, Stats, Status, Top, Version};
+use rep::{NetworkCreateInfo, NetworkDetails as NetworkInfo};
 use rep::Image as ImageRep;
-use rep::{NetworkDetails as NetworkInfo, NetworkCreateInfo};
-use rep::{Change, ContainerCreateInfo, ContainerDetails, Container as ContainerRep,
-          Event, Exit, History, ImageDetails, Info, SearchResult, Stats, Status, Top,
-          Version};
-use tty::Tty;
 use rustc_serialize::json::{self, Json};
 use std::borrow::Cow;
 use std::env::{self, VarError};
@@ -60,8 +61,8 @@ use std::io::Read;
 use std::iter::IntoIterator;
 use std::path::Path;
 use std::time::Duration;
-use transport::{tar, Transport};
-use hyper::client::Body;
+use transport::{Transport, tar};
+use tty::Tty;
 use url::form_urlencoded;
 
 /// Represents the result of all docker operations
@@ -116,14 +117,18 @@ impl<'a, 'b> Image<'a, 'b> {
                             .map(|sha| {
                                 Status::Untagged(
                                     sha.as_string()
-                                        .expect("expected Untagged to be a string")
+                                        .expect(
+                                            "expected Untagged to be a string",
+                                        )
                                         .to_owned(),
                                 )
                             })
                             .or(obj.get("Deleted").map(|sha| {
                                 Status::Deleted(
                                     sha.as_string()
-                                        .expect("expected Deleted to be a string")
+                                        .expect(
+                                            "expected Deleted to be a string",
+                                        )
                                         .to_owned(),
                                 )
                             }))
@@ -155,7 +160,10 @@ impl<'a> Images<'a> {
     }
 
     /// Builds a new image build by reading a Dockerfile in a target directory
-    pub fn build(&self, opts: &BuildOptions) -> Result<Box<Iterator<Item = Json>>> {
+    pub fn build(
+        &self,
+        opts: &BuildOptions,
+    ) -> Result<Box<Iterator<Item = Json>>> {
         let mut path = vec!["/build".to_owned()];
         if let Some(query) = opts.serialize() {
             path.push(query)
@@ -198,7 +206,10 @@ impl<'a> Images<'a> {
     }
 
     /// Pull and create a new docker images from an existing image
-    pub fn pull(&self, opts: &PullOptions) -> Result<Box<Iterator<Item = Json>>> {
+    pub fn pull(
+        &self,
+        opts: &PullOptions,
+    ) -> Result<Box<Iterator<Item = Json>>> {
         let mut path = vec!["/images/create".to_owned()];
         if let Some(query) = opts.serialize() {
             path.push(query);
@@ -324,7 +335,9 @@ impl<'a, 'b> Container<'a, 'b> {
     pub fn stop(&self, wait: Option<Duration>) -> Result<()> {
         let mut path = vec![format!("/containers/{}/stop", self.id)];
         if let Some(w) = wait {
-            let encoded = form_urlencoded::serialize(vec![("t", w.as_secs().to_string())]);
+            let encoded = form_urlencoded::serialize(
+                vec![("t", w.as_secs().to_string())],
+            );
             path.push(encoded)
         }
         self.docker
@@ -336,7 +349,9 @@ impl<'a, 'b> Container<'a, 'b> {
     pub fn restart(&self, wait: Option<Duration>) -> Result<()> {
         let mut path = vec![format!("/containers/{}/restart", self.id)];
         if let Some(w) = wait {
-            let encoded = form_urlencoded::serialize(vec![("t", w.as_secs().to_string())]);
+            let encoded = form_urlencoded::serialize(
+                vec![("t", w.as_secs().to_string())],
+            );
             path.push(encoded)
         }
         self.docker
@@ -348,7 +363,8 @@ impl<'a, 'b> Container<'a, 'b> {
     pub fn kill(&self, signal: Option<&str>) -> Result<()> {
         let mut path = vec![format!("/containers/{}/kill", self.id)];
         if let Some(sig) = signal {
-            let encoded = form_urlencoded::serialize(vec![("signal", sig.to_owned())]);
+            let encoded =
+                form_urlencoded::serialize(vec![("signal", sig.to_owned())]);
             path.push(encoded)
         }
         self.docker
@@ -461,7 +477,10 @@ impl<'a> Containers<'a> {
     }
 
     /// Lists the container instances on the docker host
-    pub fn list(&self, opts: &ContainerListOptions) -> Result<Vec<ContainerRep>> {
+    pub fn list(
+        &self,
+        opts: &ContainerListOptions,
+    ) -> Result<Vec<ContainerRep>> {
         let mut path = vec!["/containers/json".to_owned()];
         if let Some(query) = opts.serialize() {
             path.push(query)
@@ -476,7 +495,10 @@ impl<'a> Containers<'a> {
     }
 
     /// Returns a builder interface for creating a new container instance
-    pub fn create(&'a self, opts: &ContainerOptions) -> Result<ContainerCreateInfo> {
+    pub fn create(
+        &'a self,
+        opts: &ContainerOptions,
+    ) -> Result<ContainerCreateInfo> {
         let data = opts.serialize()?;
         let mut bytes = data.as_bytes();
         let mut path = vec!["/containers/create".to_owned()];
@@ -519,7 +541,10 @@ impl<'a> Networks<'a> {
         Network::new(self.docker, id)
     }
 
-    pub fn create(&'a self, opts: &NetworkCreateOptions) -> Result<NetworkCreateInfo> {
+    pub fn create(
+        &'a self,
+        opts: &NetworkCreateOptions,
+    ) -> Result<NetworkCreateInfo> {
         let data = opts.serialize()?;
         let mut bytes = data.as_bytes();
         let path = vec!["/networks/create".to_owned()];
@@ -578,7 +603,11 @@ impl<'a, 'b> Network<'a, 'b> {
         self.do_connection("disconnect", opts)
     }
 
-    fn do_connection(&self, segment: &str, opts: &ContainerConnectionOptions) -> Result<()> {
+    fn do_connection(
+        &self,
+        segment: &str,
+        opts: &ContainerConnectionOptions,
+    ) -> Result<()> {
         let data = opts.serialize()?;
         let mut bytes = data.as_bytes();
 
@@ -618,24 +647,37 @@ impl Docker {
                 }
             }
             _ => {
-                let client = if let Some(ref certs) = env::var("DOCKER_CERT_PATH").ok() {
+                let client = if let Some(ref certs) = env::var(
+                    "DOCKER_CERT_PATH",
+                ).ok()
+                {
                     // fixme: don't unwrap before you know what's in the box
                     // https://github.com/hyperium/hyper/blob/master/src/net.rs#L427-L428
-                    let mut connector = SslConnectorBuilder::new(SslMethod::tls()).unwrap();
+                    let mut connector =
+                        SslConnectorBuilder::new(SslMethod::tls()).unwrap();
                     connector.builder_mut().set_cipher_list("DEFAULT").unwrap();
                     let cert = &format!("{}/cert.pem", certs);
                     let key = &format!("{}/key.pem", certs);
                     connector
                         .builder_mut()
-                        .set_certificate_file(&Path::new(cert), X509_FILETYPE_PEM)
+                        .set_certificate_file(
+                            &Path::new(cert),
+                            X509_FILETYPE_PEM,
+                        )
                         .unwrap();
                     connector
                         .builder_mut()
-                        .set_private_key_file(&Path::new(key), X509_FILETYPE_PEM)
+                        .set_private_key_file(
+                            &Path::new(key),
+                            X509_FILETYPE_PEM,
+                        )
                         .unwrap();
                     if let Some(_) = env::var("DOCKER_TLS_VERIFY").ok() {
                         let ca = &format!("{}/ca.pem", certs);
-                        connector.builder_mut().set_ca_file(&Path::new(ca)).unwrap();
+                        connector
+                            .builder_mut()
+                            .set_ca_file(&Path::new(ca))
+                            .unwrap();
                     }
                     let ssl = OpensslClient::from(connector.build());
                     Client::with_connector(HttpsConnector::new(ssl))
@@ -689,7 +731,10 @@ impl Docker {
     }
 
     /// Returns an interator over streamed docker events
-    pub fn events(&self, opts: &EventsOptions) -> Result<Box<Iterator<Item = Event>>> {
+    pub fn events(
+        &self,
+        opts: &EventsOptions,
+    ) -> Result<Box<Iterator<Item = Event>>> {
         let mut path = vec!["/events".to_owned()];
         if let Some(query) = opts.serialize() {
             path.push(query);
@@ -712,7 +757,11 @@ impl Docker {
         )
     }
 
-    fn post<'a, B>(&'a self, endpoint: &str, body: Option<(B, ContentType)>) -> Result<String>
+    fn post<'a, B>(
+        &'a self,
+        endpoint: &str,
+        body: Option<(B, ContentType)>,
+    ) -> Result<String>
     where
         B: Into<Body<'a>>,
     {

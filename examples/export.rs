@@ -2,8 +2,8 @@ extern crate shiplift;
 
 use shiplift::Docker;
 use std::env;
-use std::io::copy;
 use std::fs::OpenOptions;
+use std::io::copy;
 
 fn main() {
     let docker = Docker::new();

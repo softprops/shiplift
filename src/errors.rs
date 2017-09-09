@@ -1,11 +1,11 @@
 //! Representations of various client errors
 
-use std::error::Error as ErrorTrait;
-use std::io::Error as IoError;
-use std::fmt;
 use hyper::Error as HttpError;
 use hyper::status::StatusCode;
 use rustc_serialize::json::{DecoderError, EncoderError, ParserError};
+use std::error::Error as ErrorTrait;
+use std::fmt;
+use std::io::Error as IoError;
 
 #[derive(Debug)]
 pub enum Error {

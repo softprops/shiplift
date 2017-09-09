@@ -2,20 +2,20 @@
 
 extern crate hyper;
 
+use self::hyper::buffer::BufReader;
+use self::hyper::header::ContentType;
+use self::hyper::status::StatusCode;
+use self::super::{Error, Result};
 use hyper::Client;
 use hyper::client::Body;
 use hyper::client::response::Response;
 use hyper::header;
-use hyper::mime;
-use self::super::{Error, Result};
-use self::hyper::buffer::BufReader;
-use self::hyper::header::ContentType;
-use self::hyper::status::StatusCode;
 use hyper::method::Method;
-use std::fmt;
-use std::io::Read;
+use hyper::mime;
 use hyperlocal::DomainUrl;
 use rustc_serialize::json;
+use std::fmt;
+use std::io::Read;
 
 pub fn tar() -> ContentType {
     ContentType(mime::Mime(
@@ -97,30 +97,43 @@ impl Transport {
             StatusCode::Ok |
             StatusCode::Created |
             StatusCode::SwitchingProtocols => Ok(Box::new(res)),
-            StatusCode::NoContent => Ok(Box::new(BufReader::new("".as_bytes()))),
+            StatusCode::NoContent => Ok(
+                Box::new(BufReader::new("".as_bytes())),
+            ),
             // todo: constantize these
             StatusCode::BadRequest => {
                 Err(Error::Fault {
                     code: res.status,
-                    message: get_error_message(&mut res).unwrap_or("bad parameter".to_owned()),
+                    message: get_error_message(&mut res).unwrap_or(
+                        "bad parameter"
+                            .to_owned(),
+                    ),
                 })
             }
             StatusCode::NotFound => {
                 Err(Error::Fault {
                     code: res.status,
-                    message: get_error_message(&mut res).unwrap_or("not found".to_owned()),
+                    message: get_error_message(&mut res).unwrap_or(
+                        "not found".to_owned(),
+                    ),
                 })
             }
             StatusCode::NotAcceptable => {
                 Err(Error::Fault {
                     code: res.status,
-                    message: get_error_message(&mut res).unwrap_or("not acceptable".to_owned()),
+                    message: get_error_message(&mut res).unwrap_or(
+                        "not acceptable"
+                            .to_owned(),
+                    ),
                 })
             }
             StatusCode::Conflict => {
                 Err(Error::Fault {
                     code: res.status,
-                    message: get_error_message(&mut res).unwrap_or("conflict found".to_owned()),
+                    message: get_error_message(&mut res).unwrap_or(
+                        "conflict found"
+                            .to_owned(),
+                    ),
                 })
             }
             StatusCode::InternalServerError => {

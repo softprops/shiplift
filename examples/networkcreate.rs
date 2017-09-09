@@ -1,6 +1,6 @@
 extern crate shiplift;
 
-use shiplift::{NetworkCreateOptions, Docker};
+use shiplift::{Docker, NetworkCreateOptions};
 use std::env;
 
 fn main() {
