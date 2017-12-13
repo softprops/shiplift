@@ -1,6 +1,6 @@
 extern crate shiplift;
 
-use shiplift::Docker;
+use shiplift::{Docker, LogsOptions};
 use std::env;
 
 fn main() {
@@ -9,7 +9,9 @@ fn main() {
         let mut logs = docker
             .containers()
             .get(&id)
-            .logs(&Default::default())
+            .logs(&LogsOptions::builder()
+                  .stdout(true)
+                  .build())
             .unwrap();
         std::io::copy(&mut logs, &mut std::io::stdout()).unwrap();
     }
