@@ -689,6 +689,14 @@ pub enum EventFilter {
 #[derive(Default)]
 pub struct EventsOptionsBuilder {
     params: HashMap<&'static str, String>,
+    events: Vec<String>,
+    containers: Vec<String>,
+    images: Vec<String>,
+    labels: Vec<String>,
+    volumes: Vec<String>,
+    networks: Vec<String>,
+    daemons: Vec<String>,
+    types: Vec<String>,
 }
 
 impl EventsOptionsBuilder {
@@ -712,26 +720,46 @@ impl EventsOptionsBuilder {
         &mut self,
         filters: Vec<EventFilter>,
     ) -> &mut EventsOptionsBuilder {
-        let mut param = HashMap::new();
+        let mut params = HashMap::new();
         for f in filters {
             match f {
-                EventFilter::Container(n) => param.insert("container", vec![n]),
-                EventFilter::Event(n) => param.insert("event", vec![n]),
-                EventFilter::Image(n) => param.insert("image", vec![n]),
-                EventFilter::Label(n) => param.insert("label", vec![n]),
-                EventFilter::Volume(n) => param.insert("volume", vec![n]),
-                EventFilter::Network(n) => param.insert("network", vec![n]),
-                EventFilter::Daemon(n) => param.insert("daemon", vec![n]),
+                EventFilter::Container(n) => {
+                    self.containers.push(n);
+                    params.insert("container", self.containers.clone())
+                },
+                EventFilter::Event(n) => {
+                    self.events.push(n);
+                    params.insert("event", self.events.clone())
+                },
+                EventFilter::Image(n) => {
+                    self.images.push(n);
+                    params.insert("image", self.images.clone())
+                },
+                EventFilter::Label(n) => {
+                    self.labels.push(n);
+                    params.insert("label", self.labels.clone())
+                },
+                EventFilter::Volume(n) => {
+                    self.volumes.push(n);
+                    params.insert("volume", self.volumes.clone())
+                },
+                EventFilter::Network(n) => {
+                    self.networks.push(n);
+                    params.insert("network", self.networks.clone())
+                },
+                EventFilter::Daemon(n) => {
+                    self.daemons.push(n);
+                    params.insert("daemon", self.daemons.clone())
+                },
                 EventFilter::Type(n) => {
-                    param.insert(
-                        "type",
-                        vec![event_filter_type_to_string(n).to_string()],
-                    )
+                    let event_type = event_filter_type_to_string(n).to_string();
+                    self.types.push(event_type);
+                    params.insert("type", self.types.clone())
                 }
             };
 
         }
-        self.params.insert("filters", json::encode(&param).unwrap());
+        self.params.insert("filters", json::encode(&params).unwrap());
         self
     }
 
