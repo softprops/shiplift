@@ -54,7 +54,7 @@ pub struct Container {
     pub SizeRootFs: Option<u64>,
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable, Serialize, Deserialize)]
 #[allow(non_snake_case)]
 pub struct ContainerDetails {
     pub AppArmorProfile: String,
@@ -79,7 +79,7 @@ pub struct ContainerDetails {
     pub Mounts: Vec<Mount>,
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable, Serialize, Deserialize)]
 #[allow(non_snake_case)]
 pub struct Mount {
     pub Source: String,
@@ -88,7 +88,7 @@ pub struct Mount {
     pub RW: bool,
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable, Serialize, Deserialize)]
 #[allow(non_snake_case)]
 pub struct State {
     pub Error: String,
@@ -102,7 +102,7 @@ pub struct State {
     pub StartedAt: String,
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable, Serialize, Deserialize)]
 #[allow(non_snake_case)]
 pub struct NetworkSettings {
     pub Bridge: String,
@@ -113,7 +113,7 @@ pub struct NetworkSettings {
                              *   pub Ports: Option<???> */
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable, Serialize, Deserialize)]
 #[allow(non_snake_case)]
 pub struct HostConfig {
     pub CgroupParent: Option<String>,
@@ -133,7 +133,7 @@ pub struct HostConfig {
                                        * pub VolumesFrom: Option<??/> */
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable, Serialize, Deserialize)]
 #[allow(non_snake_case)]
 pub struct Config {
     pub AttachStderr: bool,

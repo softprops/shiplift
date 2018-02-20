@@ -25,6 +25,9 @@ extern crate rustc_serialize;
 extern crate url;
 extern crate tar;
 extern crate byteorder;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde;
 
 pub mod builder;
 pub mod rep;
