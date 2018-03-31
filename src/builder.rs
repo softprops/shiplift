@@ -2,12 +2,15 @@
 
 use self::super::Result;
 use rustc_serialize::json::{self, Json, ToJson};
+use rustc_serialize::Encodable;
 use std::cmp::Eq;
 use std::collections::{BTreeMap, HashMap};
 use std::hash::Hash;
 use std::iter::IntoIterator;
 use std::iter::Peekable;
 use url::form_urlencoded;
+
+use errors::Error;
 
 #[derive(Default)]
 pub struct PullOptions {
@@ -110,6 +113,24 @@ pub struct BuildOptionsBuilder {
     params: HashMap<&'static str, String>,
 }
 
+macro_rules! mksetter {
+    ($fnname:ident setting $argname:expr) => {
+        pub fn $fnname<T>(&mut self, param: T) -> &mut BuildOptionsBuilder
+            where T: Into<String>
+        {
+            self.params.insert($argname, param.into());
+            self
+        }
+    };
+
+    ($fnname:ident setting $argname:expr ; concrete $concrete:ty ; using $parammapper:expr) => {
+        pub fn $fnname<T>(&mut self, param: $concrete) -> &mut BuildOptionsBuilder {
+            self.params.insert($argname, $parammapper(param));
+            self
+        }
+    };
+}
+
 impl BuildOptionsBuilder {
     /// path is expected to be a file path to a directory containing a Dockerfile
     /// describing how to build a Docker image
@@ -124,54 +145,46 @@ impl BuildOptionsBuilder {
     }
 
     /// set the name of the docker file. defaults to "DockerFile"
-    pub fn dockerfile<P>(&mut self, path: P) -> &mut BuildOptionsBuilder
-    where
-        P: Into<String>,
-    {
-        self.params.insert("dockerfile", path.into());
-        self
-    }
+    mksetter!(dockerfile setting "dockerfile");
 
     /// tag this image with a name after building it
-    pub fn tag<T>(&mut self, t: T) -> &mut BuildOptionsBuilder
-    where
-        T: Into<String>,
-    {
-        self.params.insert("t", t.into());
-        self
-    }
-
-    pub fn remote<R>(&mut self, r: R) -> &mut BuildOptionsBuilder
-    where
-        R: Into<String>,
-    {
-        self.params.insert("remote", r.into());
-        self
-    }
+    mksetter!(tag        setting "t");
+    mksetter!(remote     setting "remote");
 
     /// don't use the image cache when building image
-    pub fn nocache<R>(&mut self, nc: bool) -> &mut BuildOptionsBuilder {
-        self.params.insert("nocache", nc.to_string());
-        self
+    mksetter!(nocache    setting "nocache"  ; concrete bool ; using |b: bool| b.to_string());
+    mksetter!(rm         setting "rm"       ; concrete bool ; using |b: bool| b.to_string());
+    mksetter!(forerm     setting "forcerm"  ; concrete bool ; using |b: bool| b.to_string());
+    mksetter!(memory     setting "memory");
+    mksetter!(memswap    setting "memswap");
+    mksetter!(cpushares  setting "cpushares");
+    mksetter!(cpusetcpus setting "cpusetcpus");
+    mksetter!(cpuperiod  setting "cpuperiod");
+    mksetter!(cpuquota   setting "cpuquota");
+    mksetter!(pull       setting "pull" ; concrete bool; using |b: bool| b.to_string());
+    mksetter!(shmsize    setting "shmsize");
+
+    pub fn buildargs<T>(&mut self, param: &T) -> Result<&mut BuildOptionsBuilder>
+        where T: Encodable
+    {
+        json::encode(param)
+            .map_err(Error::from)
+            .map(|enc| {
+                self.params.insert("buildargs", enc);
+                self
+            })
     }
 
-    pub fn rm(&mut self, r: bool) -> &mut BuildOptionsBuilder {
-        self.params.insert("rm", r.to_string());
-        self
+    pub fn labels<T>(&mut self, param: &T) -> Result<&mut BuildOptionsBuilder>
+        where T: Encodable
+    {
+        json::encode(param)
+            .map_err(Error::from)
+            .map(|enc| {
+                self.params.insert("labels", enc);
+                self
+            })
     }
-
-    pub fn forcerm(&mut self, fr: bool) -> &mut BuildOptionsBuilder {
-        self.params.insert("forcerm", fr.to_string());
-        self
-    }
-
-    // todo: memory
-    // todo: memswap
-    // todo: cpushares
-    // todo: cpusetcpus
-    // todo: cpuperiod
-    // todo: cpuquota
-    // todo: buildargs
 
     pub fn build(&self) -> BuildOptions {
         BuildOptions {
