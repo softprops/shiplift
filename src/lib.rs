@@ -21,7 +21,6 @@ extern crate hyper;
 extern crate hyper_openssl;
 extern crate hyperlocal;
 extern crate flate2;
-extern crate jed;
 extern crate openssl;
 extern crate rustc_serialize;
 extern crate url;
@@ -29,6 +28,7 @@ extern crate tar;
 extern crate byteorder;
 #[macro_use]
 extern crate serde_derive;
+extern crate serde_json;
 extern crate serde;
 #[macro_use]
 extern crate error_chain;
@@ -71,6 +71,7 @@ use hyper_openssl::OpensslClient;
 use hyperlocal::UnixSocketConnector;
 use openssl::ssl::{SslConnectorBuilder, SslMethod};
 use openssl::x509::X509_FILETYPE_PEM;
+use serde_json::Value;
 
 use rep::{
     Change,
@@ -92,7 +93,6 @@ use rep::{
     Version,
 };
 
-use rustc_serialize::json::{self, Json};
 use std::borrow::Cow;
 use std::env::{self, VarError};
 use std::io::Read;
@@ -129,20 +129,20 @@ impl<'a, 'b> Image<'a, 'b> {
     /// Inspects a named image's details
     pub fn inspect(&self) -> Result<ImageDetails> {
         let raw = self.docker.get(&format!("/images/{}/json", self.name)[..])?;
-        Ok(json::decode::<ImageDetails>(&raw)?)
+        ::serde_json::from_str::<ImageDetails>(&raw).map_err(Error::from)
     }
 
     /// Lists the history of the images set of changes
     pub fn history(&self) -> Result<Vec<History>> {
         let raw = self.docker.get(&format!("/images/{}/history", self.name)[..])?;
-        Ok(json::decode::<Vec<History>>(&raw)?)
+        ::serde_json::from_str::<Vec<History>>(&raw).map_err(Error::from)
     }
 
     /// Delete's an image
     pub fn delete(&self) -> Result<Vec<Status>> {
         let raw = self.docker.delete(&format!("/images/{}", self.name)[..])?;
-        match Json::from_str(&raw)? {
-            Json::Array(ref xs) => xs
+        match ::serde_json::from_str(&raw)? {
+            Value::Array(ref xs) => xs
                 .iter()
                 .map(|j| {
                     let obj = j.as_object()
@@ -150,14 +150,14 @@ impl<'a, 'b> Image<'a, 'b> {
 
                     if let Some(sha) = obj.get("Untagged") {
                         sha
-                            .as_string()
+                            .as_str()
                             .map(|s| Status::Untagged(s.to_owned()))
                             .ok_or_else(|| EK::JsonTypeError("Untagged", "String"))
                     } else {
                         obj.get("Deleted")
                             .ok_or_else(|| EK::JsonFieldMissing("Deleted' or 'Untagged"))
                             .and_then(|sha| {
-                                sha.as_string()
+                                sha.as_str()
                                     .map(|s| Status::Deleted(s.to_owned()))
                                     .ok_or_else(|| EK::JsonTypeError("Deleted", "String"))
                             })
@@ -187,7 +187,7 @@ impl<'a> Images<'a> {
     }
 
     /// Builds a new image build by reading a Dockerfile in a target directory
-    pub fn build(&self, opts: &BuildOptions) -> Result<Box<Iterator<Item = Json>>> {
+    pub fn build(&self, opts: &BuildOptions) -> Result<Vec<Value>> {
         let mut path = vec!["/build".to_owned()];
 
         if let Some(query) = opts.serialize() {
@@ -199,10 +199,12 @@ impl<'a> Images<'a> {
         tarball::dir(&mut bytes, &opts.path[..])?;
 
         let body = Body::BufBody(&bytes[..], bytes.len());
-        let raw  = self.docker.stream_post(&path.join("?"), Some((body, tar())))?;
-        let it   = jed::Iter::new(raw).into_iter();
 
-        Ok(Box::new(it))
+        self.docker
+            .stream_post(&path.join("?"), Some((body, tar())))
+            .and_then(|r| {
+                ::serde_json::from_reader::<_, Vec<_>>(r).map_err(Error::from)
+            })
     }
 
     /// Lists the docker images on the current docker host
@@ -214,7 +216,7 @@ impl<'a> Images<'a> {
         }
 
         let raw = self.docker.get(&path.join("?"))?;
-        Ok(json::decode::<Vec<ImageRep>>(&raw)?)
+        ::serde_json::from_str::<Vec<ImageRep>>(&raw).map_err(Error::from)
     }
 
     /// Returns a reference to a set of operations available for a named image
@@ -227,21 +229,22 @@ impl<'a> Images<'a> {
         let query = form_urlencoded::serialize(vec![("term", term)]);
         let raw   = self.docker.get(&format!("/images/search?{}", query)[..])?;
 
-        Ok(json::decode::<Vec<SearchResult>>(&raw)?)
+        ::serde_json::from_str::<Vec<SearchResult>>(&raw).map_err(Error::from)
     }
 
     /// Pull and create a new docker images from an existing image
-    pub fn pull(&self, opts: &PullOptions) -> Result<Box<Iterator<Item = Json>>> {
+    pub fn pull(&self, opts: &PullOptions) -> Result<Vec<Value>> {
         let mut path = vec!["/images/create".to_owned()];
 
         if let Some(query) = opts.serialize() {
             path.push(query);
         }
 
-        let raw = self.docker.stream_post(&path.join("?"), None as Option<(&'a str, ContentType)>)?;
-        let it  = jed::Iter::new(raw).into_iter();
-
-        Ok(Box::new(it))
+        self.docker
+            .stream_post(&path.join("?"), None as Option<(&'a str, ContentType)>)
+            .and_then(|r| {
+                ::serde_json::from_reader::<_, Vec<_>>(r).map_err(Error::from)
+            })
     }
 
     /// exports a collection of named images,
@@ -287,8 +290,7 @@ impl<'a, 'b> Container<'a, 'b> {
     /// Inspects the current docker container instance's details
     pub fn inspect(&self) -> Result<ContainerDetails> {
         let raw = self.docker.get(&format!("/containers/{}/json", self.id)[..])?;
-
-        Ok(json::decode::<ContainerDetails>(&raw)?)
+        ::serde_json::from_str::<ContainerDetails>(&raw).map_err(Error::from)
     }
 
     /// Returns a `top` view of information about the container process
@@ -302,7 +304,7 @@ impl<'a, 'b> Container<'a, 'b> {
 
         let raw = self.docker.get(&path.join("?"))?;
 
-        Ok(json::decode::<Top>(&raw)?)
+        ::serde_json::from_str::<Top>(&raw).map_err(Error::from)
     }
 
     /// Returns a stream of logs emitted but the container instance
@@ -320,7 +322,7 @@ impl<'a, 'b> Container<'a, 'b> {
     pub fn changes(&self) -> Result<Vec<Change>> {
         let raw = self.docker.get(&format!("/containers/{}/changes", self.id)[..])?;
 
-        Ok(json::decode::<Vec<Change>>(&raw)?)
+        ::serde_json::from_str::<Vec<Change>>(&raw).map_err(Error::from)
     }
 
     /// Exports the current docker container into a tarball
@@ -329,19 +331,12 @@ impl<'a, 'b> Container<'a, 'b> {
     }
 
     /// Returns a stream of stats specific to this container instance
-    pub fn stats(&self) -> Result<Box<Iterator<Item = Result<Stats>>>> {
-        let raw = self.docker.stream_get(&format!("/containers/{}/stats", self.id)[..])?;
-
-        let it = jed::Iter::new(raw)
-            .into_iter()
-            .map(|j| {
-                // fixme: better error handling
-                debug!("{:?}", j);
-                let s = json::encode(&j)?;
-                json::decode::<Stats>(&s).map_err(Error::from)
-            });
-
-        Ok(Box::new(it))
+    pub fn stats(&self) -> Result<Vec<Stats>> {
+        self.docker
+            .stream_get(&format!("/containers/{}/stats", self.id)[..])
+            .and_then(|r| {
+                ::serde_json::from_reader::<_, Vec<Stats>>(r).map_err(Error::from)
+            })
     }
 
     /// Start the container instance
@@ -428,7 +423,7 @@ impl<'a, 'b> Container<'a, 'b> {
         let s   = &format!("/containers/{}/wait", self.id)[..];
         let raw = self.docker.post(s, None as Option<(&'a str, ContentType)>)?;
 
-        Ok(json::decode::<Exit>(&raw)?)
+        ::serde_json::from_str::<Exit>(&raw).map_err(Error::from)
     }
 
     /// Delete the container instance
@@ -464,20 +459,26 @@ impl<'a, 'b> Container<'a, 'b> {
             Ok(res) => {
                 let data      = "{}";
                 let mut bytes = data.as_bytes();
-                let json      = Json::from_str(res.as_str())?;
-                let id        = json
-                    .search("Id")
-                    .ok_or_else(|| EK::JsonFieldMissing("Id"))
-                    .map_err(Error::from_kind)?
-                    .as_string()
-                    .ok_or_else(|| EK::JsonTypeError("Id", "String"))
-                    .map_err(Error::from_kind)?;
+                let json      = ::serde_json::from_str::<Value>(res.as_str())?;
 
-                let post = &format!("/exec/{}/start", json);
+                if let Value::Object(ref obj) = json {
+                    let id        = json
+                        .get("Id")
+                        .ok_or_else(|| EK::JsonFieldMissing("Id"))
+                        .map_err(Error::from_kind)?
+                        .as_str()
+                        .ok_or_else(|| EK::JsonTypeError("Id", "String"))
+                        .map_err(Error::from_kind)?;
 
-                self.docker
-                    .stream_post(&post[..], Some((&mut bytes, ContentType::json())))
-                    .map(|stream| Tty::new(stream))
+                    let post = &format!("/exec/{}/start", json);
+
+                    self.docker
+                        .stream_post(&post[..], Some((&mut bytes, ContentType::json())))
+                        .map(|stream| Tty::new(stream))
+                } else {
+                    Err(Error::from_kind(EK::JsonTypeError("<anonymous>", "Object")))
+                }
+
             }
         }
     }
@@ -505,7 +506,7 @@ impl<'a> Containers<'a> {
         }
 
         let raw = self.docker.get(&path.join("?"))?;
-        Ok(json::decode::<Vec<ContainerRep>>(&raw)?)
+        ::serde_json::from_str::<Vec<ContainerRep>>(&raw).map_err(Error::from)
     }
 
     /// Returns a reference to a set of operations available to a specific container instance
@@ -525,7 +526,7 @@ impl<'a> Containers<'a> {
 
         let raw = self.docker.post(&path.join("?"), Some((&mut bytes, ContentType::json())))?;
 
-        Ok(json::decode::<ContainerCreateInfo>(&raw)?)
+        ::serde_json::from_str::<ContainerCreateInfo>(&raw).map_err(Error::from)
     }
 }
 
@@ -550,7 +551,7 @@ impl<'a> Networks<'a> {
         }
 
         let raw = self.docker.get(&path.join("?"))?;
-        Ok(json::decode::<Vec<NetworkInfo>>(&raw)?)
+        ::serde_json::from_str::<Vec<NetworkInfo>>(&raw).map_err(Error::from)
     }
 
     /// Returns a reference to a set of operations available to a specific network instance
@@ -565,7 +566,7 @@ impl<'a> Networks<'a> {
 
         let raw = self.docker.post(&path.join("?"), Some((&mut bytes, ContentType::json())))?;
 
-        Ok(json::decode::<NetworkCreateInfo>(&raw)?)
+        ::serde_json::from_str::<NetworkCreateInfo>(&raw).map_err(Error::from)
     }
 }
 
@@ -595,7 +596,7 @@ impl<'a, 'b> Network<'a, 'b> {
     /// Inspects the current docker network instance's details
     pub fn inspect(&self) -> Result<NetworkInfo> {
         let raw = self.docker.get(&format!("/networks/{}", self.id)[..])?;
-        Ok(json::decode::<NetworkInfo>(&raw)?)
+        ::serde_json::from_str::<NetworkInfo>(&raw).map_err(Error::from)
     }
 
     /// Delete the network instance
@@ -718,13 +719,13 @@ impl Docker {
     /// Returns version information associated with the docker daemon
     pub fn version(&self) -> Result<Version> {
         let raw = self.get("/version")?;
-        Ok(json::decode::<Version>(&raw)?)
+        ::serde_json::from_str::<Version>(&raw).map_err(Error::from)
     }
 
     /// Returns information associated with the docker daemon
     pub fn info(&self) -> Result<Info> {
         let raw = self.get("/info")?;
-        Ok(json::decode::<Info>(&raw)?)
+        ::serde_json::from_str::<Info>(&raw).map_err(Error::from)
     }
 
     /// Returns a simple ping response indicating the docker daemon is accessible
@@ -733,26 +734,17 @@ impl Docker {
     }
 
     /// Returns an interator over streamed docker events
-    pub fn events(&self, opts: &EventsOptions) -> Result<Box<Iterator<Item = Result<Event>>>> {
+    pub fn events(&self, opts: &EventsOptions) -> Result<Vec<Event>> {
         let mut path = vec!["/events".to_owned()];
 
         if let Some(query) = opts.serialize() {
             path.push(query);
         }
 
-        let raw = self.stream_get(&path.join("?")[..])?;
-
-        let it = jed::Iter::new(raw)
-            .into_iter()
-            .map(|j| {
-                debug!("{:?}", j);
-
-                let s = json::encode(&j)?;
-
-                json::decode::<Event>(&s).map_err(Error::from)
-            });
-
-        Ok(Box::new(it))
+        self.stream_get(&path.join("?")[..])
+            .and_then(|r| {
+                ::serde_json::from_reader::<_, Vec<Event>>(r).map_err(Error::from)
+            })
     }
 
     fn get<'a>(&self, endpoint: &str) -> Result<String> {

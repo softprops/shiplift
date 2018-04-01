@@ -1,13 +1,18 @@
 //! Interfaces for building various structures
 
-use self::super::Result;
-use rustc_serialize::json::{self, Json, ToJson};
 use std::cmp::Eq;
 use std::collections::{BTreeMap, HashMap};
 use std::hash::Hash;
 use std::iter::IntoIterator;
 use std::iter::Peekable;
 use url::form_urlencoded;
+use serde_json::Value;
+use serde_json::map::Map;
+use serde_json::Number;
+use serde::Serialize;
+
+use errors::Error;
+use errors::Result;
 
 #[derive(Default)]
 pub struct PullOptions {
@@ -235,7 +240,7 @@ impl ContainerListOptionsBuilder {
 
         // structure is a a json encoded object mapping string keys to a list
         // of string values
-        self.params.insert("filters", json::encode(&param).unwrap());
+        self.params.insert("filters", ::serde_json::to_string(&param).unwrap());
         self
     }
 
@@ -265,35 +270,18 @@ impl ContainerListOptionsBuilder {
 }
 
 /// Interface for building a new docker container from an existing image
+#[derive(Serialize)]
 pub struct ContainerOptions {
     pub name: Option<String>,
-    params: HashMap<&'static str, Json>,
+    params: HashMap<&'static str, Value>,
     params_list: HashMap<&'static str, Vec<String>>,
     params_hash: HashMap<String, Vec<HashMap<String, String>>>,
 }
 
-impl ToJson for ContainerOptions {
-    fn to_json(&self) -> Json {
-        let mut body_members = BTreeMap::new();
-
-        // The HostConfig element gets initialized to an empty object,
-        // for backward compatibility.
-        body_members.insert("HostConfig".to_string(), Json::Object(BTreeMap::new()));
-
-        let mut body = Json::Object(body_members);
-
-        self.parse_from(&self.params, &mut body);
-        self.parse_from(&self.params_list, &mut body);
-        self.parse_from(&self.params_hash, &mut body);
-
-        body
-    }
-}
-
 /// Function to insert a JSON value into a tree where the desired
 /// location of the value is given as a path of JSON keys.
-fn insert<'a, I, V>(key_path: &mut Peekable<I>, value: &V, parent_node: &mut Json)
-    where V: ToJson,
+fn insert<'a, I, V>(key_path: &mut Peekable<I>, value: &V, parent_node: &mut Value)
+    where V: Serialize,
           I: Iterator<Item = &'a str>
 {
     let local_key = key_path.next().unwrap();
@@ -303,13 +291,13 @@ fn insert<'a, I, V>(key_path: &mut Peekable<I>, value: &V, parent_node: &mut Jso
             .as_object_mut()
             .unwrap()
             .entry(local_key.to_string())
-            .or_insert(Json::Object(BTreeMap::new()));
+            .or_insert(Value::Object(Map::new()));
 
         insert(key_path, value, node);
     } else {
         parent_node.as_object_mut().unwrap().insert(
             local_key.to_string(),
-            value.to_json(),
+            ::serde_json::to_value(value).unwrap(),
         );
     }
 }
@@ -322,12 +310,12 @@ impl ContainerOptions {
 
     /// serialize options as a string. returns None if no options are defined
     pub fn serialize(&self) -> Result<String> {
-        Ok(json::encode(&self.to_json())?)
+        Ok(::serde_json::to_string(&::serde_json::to_value(self)?)?)
     }
 
-    pub fn parse_from<'a, K, V>(&self, params: &'a HashMap<K, V>, body: &mut Json)
+    pub fn parse_from<'a, K, V>(&self, params: &'a HashMap<K, V>, body: &mut Value)
         where K: ToString + Eq + Hash,
-              V: ToJson
+              V: Serialize
     {
         for (k, v) in params.iter() {
             let key_string = k.to_string();
@@ -339,7 +327,7 @@ impl ContainerOptions {
 #[derive(Default)]
 pub struct ContainerOptionsBuilder {
     name: Option<String>,
-    params: HashMap<&'static str, Json>,
+    params: HashMap<&'static str, Value>,
     params_list: HashMap<&'static str, Vec<String>>,
     params_hash: HashMap<String, Vec<HashMap<String, String>>>,
 }
@@ -351,7 +339,7 @@ impl ContainerOptionsBuilder {
         let params_list = HashMap::new();
         let params_hash = HashMap::new();
 
-        params.insert("Image", Json::String(image.to_owned()));
+        params.insert("Image", Value::String(image.to_owned()));
         ContainerOptionsBuilder {
             name: None,
             params: params,
@@ -408,7 +396,7 @@ impl ContainerOptionsBuilder {
 
     pub fn network_mode(&mut self, network: &str) -> &mut ContainerOptionsBuilder {
         if !network.is_empty() {
-            self.params.insert("HostConfig.NetworkMode", Json::String(network.to_owned()));
+            self.params.insert("HostConfig.NetworkMode", Value::String(network.to_owned()));
         }
         self
     }
@@ -429,7 +417,7 @@ impl ContainerOptionsBuilder {
 
     pub fn entrypoint(&mut self, entrypoint: &str) -> &mut ContainerOptionsBuilder {
         if !entrypoint.is_empty() {
-            self.params.insert("Entrypoint", Json::String(entrypoint.to_owned()));
+            self.params.insert("Entrypoint", Value::String(entrypoint.to_owned()));
         }
         self
     }
@@ -460,7 +448,7 @@ impl ContainerOptionsBuilder {
         if !log_driver.is_empty() {
             self.params.insert(
                 "HostConfig.LogConfig.Type",
-                Json::String(log_driver.to_owned()),
+                Value::String(log_driver.to_owned()),
             );
         }
         self
@@ -470,12 +458,12 @@ impl ContainerOptionsBuilder {
         -> &mut ContainerOptionsBuilder
     {
         if !name.is_empty() {
-            self.params.insert("HostConfig.RestartPolicy.Name", Json::String(name.to_owned()));
+            self.params.insert("HostConfig.RestartPolicy.Name", Value::String(name.to_owned()));
         }
 
         if name == "on-failure" {
             let k = "HostConfig.RestartPolicy.MaximumRetryCount";
-            self.params.insert(k, Json::U64(maximum_retry_count));
+            self.params.insert(k, Value::Number(Number::from(maximum_retry_count)));
         }
 
         self
@@ -491,6 +479,7 @@ impl ContainerOptionsBuilder {
     }
 }
 
+#[derive(Serialize)]
 pub struct ExecContainerOptions {
     params: HashMap<&'static str, Vec<String>>,
     params_bool: HashMap<&'static str, bool>,
@@ -505,18 +494,7 @@ impl ExecContainerOptions {
 
     /// serialize options as a string. returns None if no options are defined
     pub fn serialize(&self) -> Result<String> {
-        let mut body = BTreeMap::new();
-
-        for (k, v) in &self.params {
-            body.insert(k.to_string(), v.to_json());
-        }
-
-        for (k, v) in &self.params_bool {
-            body.insert(k.to_string(), v.to_json());
-        }
-
-        let json_obj: Json = body.to_json();
-        Ok(json::encode(&json_obj)?)
+        ::serde_json::to_string(&self).map_err(Error::from)
     }
 }
 
@@ -693,7 +671,7 @@ impl EventsOptionsBuilder {
             };
 
         }
-        self.params.insert("filters", json::encode(&params).unwrap());
+        self.params.insert("filters", ::serde_json::to_string(&params).unwrap());
         self
     }
 
@@ -832,7 +810,7 @@ impl ImageListOptionsBuilder {
         }
         // structure is a a json encoded object mapping string keys to a list
         // of string values
-        self.params.insert("filters", json::encode(&param).unwrap());
+        self.params.insert("filters", ::serde_json::to_string(&param).unwrap());
         self
     }
 
@@ -908,21 +886,11 @@ impl NetworkListOptions {
 }
 
 /// Interface for creating new docker network
+#[derive(Serialize)]
 pub struct NetworkCreateOptions {
     pub name: Option<String>,
     params: HashMap<&'static str, String>,
     params_hash: HashMap<String, Vec<HashMap<String, String>>>,
-}
-
-impl ToJson for NetworkCreateOptions {
-    fn to_json(&self) -> Json {
-        let mut body: BTreeMap<String, Json> = BTreeMap::new();
-
-        self.parse_from(&self.params, &mut body);
-        self.parse_from(&self.params_hash, &mut body);
-
-        body.to_json()
-    }
 }
 
 impl NetworkCreateOptions {
@@ -933,16 +901,16 @@ impl NetworkCreateOptions {
 
     /// serialize options as a string. returns None if no options are defined
     pub fn serialize(&self) -> Result<String> {
-        Ok(json::encode(&self.to_json())?)
+        ::serde_json::to_string(&self).map_err(Error::from)
     }
 
-    pub fn parse_from<'a, K, V>(&self, params: &'a HashMap<K, V>, body: &mut BTreeMap<String, Json>)
+    pub fn parse_from<'a, K, V>(&self, params: &'a HashMap<K, V>, body: &mut BTreeMap<String, Value>)
         where K: ToString + Eq + Hash,
-              V: ToJson
+              V: Serialize
     {
         for (k, v) in params.iter() {
             let key = k.to_string();
-            let value = v.to_json();
+            let value = ::serde_json::to_value(v).unwrap();
 
             body.insert(key, value);
         }
@@ -998,19 +966,11 @@ impl NetworkCreateOptionsBuilder {
 }
 
 /// Interface for connect container to network
+#[derive(Serialize)]
 pub struct ContainerConnectionOptions {
     pub Container: Option<String>,
     params: HashMap<&'static str, String>,
 }
-
-impl ToJson for ContainerConnectionOptions {
-    fn to_json(&self) -> Json {
-        let mut body: BTreeMap<String, Json> = BTreeMap::new();
-        self.parse_from(&self.params, &mut body);
-        body.to_json()
-    }
-}
-
 
 impl ContainerConnectionOptions {
 
@@ -1025,16 +985,16 @@ impl ContainerConnectionOptions {
 
     /// serialize options as a string. returns None if no options are defined
     pub fn serialize(&self) -> Result<String> {
-        Ok(json::encode(&self.to_json())?)
+        ::serde_json::to_string(&self).map_err(Error::from)
     }
 
-    pub fn parse_from<'a, K, V>(&self, params: &'a HashMap<K, V>, body: &mut BTreeMap<String, Json>)
+    pub fn parse_from<'a, K, V>(&self, params: &'a HashMap<K, V>, body: &mut BTreeMap<String, Value>)
         where K: ToString + Eq + Hash,
-              V: ToJson
+              V: Serialize
     {
         for (k, v) in params.iter() {
             let key = k.to_string();
-            let value = v.to_json();
+            let value = ::serde_json::to_value(v).unwrap();
 
             body.insert(key, value);
         }

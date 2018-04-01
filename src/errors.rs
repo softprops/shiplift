@@ -12,10 +12,8 @@ error_chain! {
         Io(::std::io::Error);
         Hyper(::hyper::Error);
         HyperParser(::hyper::error::ParseError);
-        RustcSerializeDecoder(::rustc_serialize::json::DecoderError);
-        RustcSerializeEncoder(::rustc_serialize::json::EncoderError);
-        RustcSerializeParser(::rustc_serialize::json::ParserError);
         OpenSSL(::openssl::error::ErrorStack);
+        SerdeJsonError(::serde_json::error::Error);
     }
 
     errors {
