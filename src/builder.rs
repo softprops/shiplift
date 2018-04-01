@@ -36,37 +36,34 @@ pub struct PullOptionsBuilder {
 }
 
 impl PullOptionsBuilder {
+
     pub fn new() -> PullOptionsBuilder {
         PullOptionsBuilder { ..Default::default() }
     }
 
     pub fn image<I>(&mut self, img: I) -> &mut PullOptionsBuilder
-    where
-        I: Into<String>,
+        where I: Into<String>
     {
         self.params.insert("fromImage", img.into());
         self
     }
 
     pub fn src<S>(&mut self, s: S) -> &mut PullOptionsBuilder
-    where
-        S: Into<String>,
+        where S: Into<String>
     {
         self.params.insert("fromSrc", s.into());
         self
     }
 
     pub fn repo<R>(&mut self, r: R) -> &mut PullOptionsBuilder
-    where
-        R: Into<String>,
+        where R: Into<String>
     {
         self.params.insert("repo", r.into());
         self
     }
 
     pub fn tag<T>(&mut self, t: T) -> &mut PullOptionsBuilder
-    where
-        T: Into<String>,
+        where T: Into<String>
     {
         self.params.insert("tag", t.into());
         self
@@ -88,8 +85,7 @@ impl BuildOptions {
     /// path is expected to be a file path to a directory containing a Dockerfile
     /// describing how to build a Docker image
     pub fn builder<S>(path: S) -> BuildOptionsBuilder
-    where
-        S: Into<String>,
+        where S: Into<String>
     {
         BuildOptionsBuilder::new(path)
     }
@@ -114,8 +110,7 @@ impl BuildOptionsBuilder {
     /// path is expected to be a file path to a directory containing a Dockerfile
     /// describing how to build a Docker image
     pub fn new<S>(path: S) -> BuildOptionsBuilder
-    where
-        S: Into<String>,
+        where S: Into<String>
     {
         BuildOptionsBuilder {
             path: path.into(),
@@ -125,8 +120,7 @@ impl BuildOptionsBuilder {
 
     /// set the name of the docker file. defaults to "DockerFile"
     pub fn dockerfile<P>(&mut self, path: P) -> &mut BuildOptionsBuilder
-    where
-        P: Into<String>,
+        where P: Into<String>
     {
         self.params.insert("dockerfile", path.into());
         self
@@ -134,16 +128,14 @@ impl BuildOptionsBuilder {
 
     /// tag this image with a name after building it
     pub fn tag<T>(&mut self, t: T) -> &mut BuildOptionsBuilder
-    where
-        T: Into<String>,
+        where T: Into<String>
     {
         self.params.insert("t", t.into());
         self
     }
 
     pub fn remote<R>(&mut self, r: R) -> &mut BuildOptionsBuilder
-    where
-        R: Into<String>,
+        where R: Into<String>
     {
         self.params.insert("remote", r.into());
         self
@@ -188,6 +180,7 @@ pub struct ContainerListOptions {
 }
 
 impl ContainerListOptions {
+
     /// return a new instance of a builder for options
     pub fn builder() -> ContainerListOptionsBuilder {
         ContainerListOptionsBuilder::new()
@@ -218,15 +211,14 @@ pub struct ContainerListOptionsBuilder {
 }
 
 impl ContainerListOptionsBuilder {
+
     pub fn new() -> ContainerListOptionsBuilder {
         ContainerListOptionsBuilder { ..Default::default() }
     }
 
-    pub fn filter(
-        &mut self,
-        filters: Vec<ContainerFilter>,
-    ) -> &mut ContainerListOptionsBuilder {
+    pub fn filter(&mut self, filters: Vec<ContainerFilter>) -> &mut ContainerListOptionsBuilder {
         let mut param = HashMap::new();
+
         for f in filters {
             match f {
                 ContainerFilter::ExitCode(c) => {
@@ -240,6 +232,7 @@ impl ContainerListOptionsBuilder {
             };
 
         }
+
         // structure is a a json encoded object mapping string keys to a list
         // of string values
         self.params.insert("filters", json::encode(&param).unwrap());
@@ -285,10 +278,7 @@ impl ToJson for ContainerOptions {
 
         // The HostConfig element gets initialized to an empty object,
         // for backward compatibility.
-        body_members.insert(
-            "HostConfig".to_string(),
-            Json::Object(BTreeMap::new()),
-        );
+        body_members.insert("HostConfig".to_string(), Json::Object(BTreeMap::new()));
 
         let mut body = Json::Object(body_members);
 
@@ -302,13 +292,9 @@ impl ToJson for ContainerOptions {
 
 /// Function to insert a JSON value into a tree where the desired
 /// location of the value is given as a path of JSON keys.
-fn insert<'a, I, V>(
-    key_path: &mut Peekable<I>,
-    value: &V,
-    parent_node: &mut Json,
-) where
-    V: ToJson,
-    I: Iterator<Item = &'a str>,
+fn insert<'a, I, V>(key_path: &mut Peekable<I>, value: &V, parent_node: &mut Json)
+    where V: ToJson,
+          I: Iterator<Item = &'a str>
 {
     let local_key = key_path.next().unwrap();
 
@@ -339,14 +325,9 @@ impl ContainerOptions {
         Ok(json::encode(&self.to_json())?)
     }
 
-    pub fn parse_from<'a, K, V>(
-        &self,
-        params: &'a HashMap<K, V>,
-        body: &mut Json,
-    ) where
-        &'a HashMap<K, V>: IntoIterator,
-        K: ToString + Eq + Hash,
-        V: ToJson,
+    pub fn parse_from<'a, K, V>(&self, params: &'a HashMap<K, V>, body: &mut Json)
+        where K: ToString + Eq + Hash,
+              V: ToJson
     {
         for (k, v) in params.iter() {
             let key_string = k.to_string();
@@ -364,6 +345,7 @@ pub struct ContainerOptionsBuilder {
 }
 
 impl ContainerOptionsBuilder {
+
     pub fn new(image: &str) -> ContainerOptionsBuilder {
         let mut params = HashMap::new();
         let params_list = HashMap::new();
@@ -383,10 +365,7 @@ impl ContainerOptionsBuilder {
         self
     }
 
-    pub fn volumes(
-        &mut self,
-        volumes: Vec<&str>,
-    ) -> &mut ContainerOptionsBuilder {
+    pub fn volumes(&mut self, volumes: Vec<&str>) -> &mut ContainerOptionsBuilder {
         for v in volumes {
             self.params_list
                 .entry("HostConfig.Binds")
@@ -406,10 +385,7 @@ impl ContainerOptionsBuilder {
         self
     }
 
-    pub fn extra_hosts(
-        &mut self,
-        hosts: Vec<&str>,
-    ) -> &mut ContainerOptionsBuilder {
+    pub fn extra_hosts(&mut self, hosts: Vec<&str>) -> &mut ContainerOptionsBuilder {
         for host in hosts {
             self.params_list
                 .entry("HostConfig.ExtraHosts")
@@ -420,10 +396,7 @@ impl ContainerOptionsBuilder {
         self
     }
 
-    pub fn volumes_from(
-        &mut self,
-        volumes: Vec<&str>,
-    ) -> &mut ContainerOptionsBuilder {
+    pub fn volumes_from(&mut self, volumes: Vec<&str>) -> &mut ContainerOptionsBuilder {
         for volume in volumes {
             self.params_list
                 .entry("HostConfig.VolumesFrom")
@@ -433,54 +406,35 @@ impl ContainerOptionsBuilder {
         self
     }
 
-    pub fn network_mode(
-        &mut self,
-        network: &str,
-    ) -> &mut ContainerOptionsBuilder {
+    pub fn network_mode(&mut self, network: &str) -> &mut ContainerOptionsBuilder {
         if !network.is_empty() {
-            self.params.insert(
-                "HostConfig.NetworkMode",
-                Json::String(network.to_owned()),
-            );
+            self.params.insert("HostConfig.NetworkMode", Json::String(network.to_owned()));
         }
         self
     }
 
     pub fn env(&mut self, envs: Vec<&str>) -> &mut ContainerOptionsBuilder {
         for env in envs {
-            self.params_list.entry("Env").or_insert(Vec::new()).push(
-                env.to_owned(),
-            );
+            self.params_list.entry("Env").or_insert(Vec::new()).push(env.to_owned());
         }
         self
     }
 
     pub fn cmd(&mut self, cmds: Vec<&str>) -> &mut ContainerOptionsBuilder {
         for cmd in cmds {
-            self.params_list.entry("Cmd").or_insert(Vec::new()).push(
-                cmd.to_owned(),
-            );
+            self.params_list.entry("Cmd").or_insert(Vec::new()).push(cmd.to_owned());
         }
         self
     }
 
-    pub fn entrypoint(
-        &mut self,
-        entrypoint: &str,
-    ) -> &mut ContainerOptionsBuilder {
+    pub fn entrypoint(&mut self, entrypoint: &str) -> &mut ContainerOptionsBuilder {
         if !entrypoint.is_empty() {
-            self.params.insert(
-                "Entrypoint",
-                Json::String(entrypoint.to_owned()),
-            );
+            self.params.insert("Entrypoint", Json::String(entrypoint.to_owned()));
         }
         self
     }
 
-    pub fn capabilities(
-        &mut self,
-        capabilities: Vec<&str>,
-    ) -> &mut ContainerOptionsBuilder {
+    pub fn capabilities(&mut self, capabilities: Vec<&str>) -> &mut ContainerOptionsBuilder {
         for c in capabilities {
             self.params_list
                 .entry("HostConfig.CapAdd")
@@ -490,10 +444,9 @@ impl ContainerOptionsBuilder {
         self
     }
 
-    pub fn devices(
-        &mut self,
-        devices: Vec<HashMap<String, String>>,
-    ) -> &mut ContainerOptionsBuilder {
+    pub fn devices(&mut self, devices: Vec<HashMap<String, String>>)
+        -> &mut ContainerOptionsBuilder
+    {
         for d in devices {
             self.params_hash
                 .entry("HostConfig.Devices".to_string())
@@ -503,10 +456,7 @@ impl ContainerOptionsBuilder {
         self
     }
 
-    pub fn log_driver(
-        &mut self,
-        log_driver: &str,
-    ) -> &mut ContainerOptionsBuilder {
+    pub fn log_driver(&mut self, log_driver: &str) -> &mut ContainerOptionsBuilder {
         if !log_driver.is_empty() {
             self.params.insert(
                 "HostConfig.LogConfig.Type",
@@ -516,23 +466,18 @@ impl ContainerOptionsBuilder {
         self
     }
 
-    pub fn restart_policy(
-        &mut self,
-        name: &str,
-        maximum_retry_count: u64,
-    ) -> &mut ContainerOptionsBuilder {
+    pub fn restart_policy(&mut self, name: &str, maximum_retry_count: u64)
+        -> &mut ContainerOptionsBuilder
+    {
         if !name.is_empty() {
-            self.params.insert(
-                "HostConfig.RestartPolicy.Name",
-                Json::String(name.to_owned()),
-            );
+            self.params.insert("HostConfig.RestartPolicy.Name", Json::String(name.to_owned()));
         }
+
         if name == "on-failure" {
-            self.params.insert(
-                "HostConfig.RestartPolicy.MaximumRetryCount",
-                Json::U64(maximum_retry_count),
-            );
+            let k = "HostConfig.RestartPolicy.MaximumRetryCount";
+            self.params.insert(k, Json::U64(maximum_retry_count));
         }
+
         self
     }
 
@@ -552,6 +497,7 @@ pub struct ExecContainerOptions {
 }
 
 impl ExecContainerOptions {
+
     /// return a new instance of a builder for options
     pub fn builder() -> ExecContainerOptionsBuilder {
         ExecContainerOptionsBuilder::new()
@@ -564,6 +510,7 @@ impl ExecContainerOptions {
         for (k, v) in &self.params {
             body.insert(k.to_string(), v.to_json());
         }
+
         for (k, v) in &self.params_bool {
             body.insert(k.to_string(), v.to_json());
         }
@@ -590,9 +537,7 @@ impl ExecContainerOptionsBuilder {
     /// Command to run, as an array of strings
     pub fn cmd(&mut self, cmds: Vec<&str>) -> &mut ExecContainerOptionsBuilder {
         for cmd in cmds {
-            self.params.entry("Cmd").or_insert(Vec::new()).push(
-                cmd.to_owned(),
-            );
+            self.params.entry("Cmd").or_insert(Vec::new()).push(cmd.to_owned());
         }
         self
     }
@@ -600,27 +545,19 @@ impl ExecContainerOptionsBuilder {
     /// A list of environment variables in the form "VAR=value"
     pub fn env(&mut self, envs: Vec<&str>) -> &mut ExecContainerOptionsBuilder {
         for env in envs {
-            self.params.entry("Env").or_insert(Vec::new()).push(
-                env.to_owned(),
-            );
+            self.params.entry("Env").or_insert(Vec::new()).push(env.to_owned());
         }
         self
     }
 
     /// Attach to stdout of the exec command
-    pub fn attach_stdout(
-        &mut self,
-        stdout: bool,
-    ) -> &mut ExecContainerOptionsBuilder {
+    pub fn attach_stdout(&mut self, stdout: bool) -> &mut ExecContainerOptionsBuilder {
         self.params_bool.insert("AttachStdout", stdout);
         self
     }
 
     /// Attach to stderr of the exec command
-    pub fn attach_stderr(
-        &mut self,
-        stderr: bool,
-    ) -> &mut ExecContainerOptionsBuilder {
+    pub fn attach_stderr(&mut self, stderr: bool) -> &mut ExecContainerOptionsBuilder {
         self.params_bool.insert("AttachStderr", stderr);
         self
     }
@@ -666,10 +603,10 @@ pub enum EventFilterType {
 fn event_filter_type_to_string(filter: EventFilterType) -> &'static str {
     match filter {
         EventFilterType::Container => "container",
-        EventFilterType::Image => "image",
-        EventFilterType::Volume => "volume",
-        EventFilterType::Network => "network",
-        EventFilterType::Daemon => "daemon",
+        EventFilterType::Image     => "image",
+        EventFilterType::Volume    => "volume",
+        EventFilterType::Network   => "network",
+        EventFilterType::Daemon    => "daemon",
     }
 }
 
@@ -716,10 +653,7 @@ impl EventsOptionsBuilder {
         self
     }
 
-    pub fn filter(
-        &mut self,
-        filters: Vec<EventFilter>,
-    ) -> &mut EventsOptionsBuilder {
+    pub fn filter(&mut self, filters: Vec<EventFilter>) -> &mut EventsOptionsBuilder {
         let mut params = HashMap::new();
         for f in filters {
             match f {
@@ -798,6 +732,7 @@ pub struct LogsOptionsBuilder {
 }
 
 impl LogsOptionsBuilder {
+
     pub fn new() -> LogsOptionsBuilder {
         LogsOptionsBuilder { ..Default::default() }
     }
@@ -886,22 +821,14 @@ impl ImageListOptionsBuilder {
         self
     }
 
-    pub fn filter(
-        &mut self,
-        filters: Vec<ImageFilter>,
-    ) -> &mut ImageListOptionsBuilder {
+    pub fn filter(&mut self, filters: Vec<ImageFilter>) -> &mut ImageListOptionsBuilder {
         let mut param = HashMap::new();
         for f in filters {
             match f {
-                ImageFilter::Dangling => {
-                    param.insert("dangling", vec![true.to_string()])
-                }
+                ImageFilter::Dangling     => param.insert("dangling", vec![true.to_string()]),
                 ImageFilter::LabelName(n) => param.insert("label", vec![n]),
-                ImageFilter::Label(n, v) => {
-                    param.insert("label", vec![format!("{}={}", n, v)])
-                }
+                ImageFilter::Label(n, v)  => param.insert("label", vec![format!("{}={}", n, v)]),
             };
-
         }
         // structure is a a json encoded object mapping string keys to a list
         // of string values
@@ -1009,14 +936,9 @@ impl NetworkCreateOptions {
         Ok(json::encode(&self.to_json())?)
     }
 
-    pub fn parse_from<'a, K, V>(
-        &self,
-        params: &'a HashMap<K, V>,
-        body: &mut BTreeMap<String, Json>,
-    ) where
-        &'a HashMap<K, V>: IntoIterator,
-        K: ToString + Eq + Hash,
-        V: ToJson,
+    pub fn parse_from<'a, K, V>(&self, params: &'a HashMap<K, V>, body: &mut BTreeMap<String, Json>)
+        where K: ToString + Eq + Hash,
+              V: ToJson
     {
         for (k, v) in params.iter() {
             let key = k.to_string();
@@ -1054,10 +976,9 @@ impl NetworkCreateOptionsBuilder {
         self
     }
 
-    pub fn label(
-        &mut self,
-        labels: Vec<HashMap<String, String>>,
-    ) -> &mut NetworkCreateOptionsBuilder {
+    pub fn label(&mut self, labels: Vec<HashMap<String, String>>)
+        -> &mut NetworkCreateOptionsBuilder
+    {
         for l in labels {
             self.params_hash
                 .entry("Labels".to_string())
@@ -1092,27 +1013,6 @@ impl ToJson for ContainerConnectionOptions {
 
 
 impl ContainerConnectionOptions {
-    /// serialize options as a string. returns None if no options are defined
-    pub fn serialize(&self) -> Result<String> {
-        Ok(json::encode(&self.to_json())?)
-    }
-
-    pub fn parse_from<'a, K, V>(
-        &self,
-        params: &'a HashMap<K, V>,
-        body: &mut BTreeMap<String, Json>,
-    ) where
-        &'a HashMap<K, V>: IntoIterator,
-        K: ToString + Eq + Hash,
-        V: ToJson,
-    {
-        for (k, v) in params.iter() {
-            let key = k.to_string();
-            let value = v.to_json();
-
-            body.insert(key, value);
-        }
-    }
 
     pub fn new(container_id: &str) -> ContainerConnectionOptions {
         let mut params = HashMap::new();
@@ -1120,6 +1020,23 @@ impl ContainerConnectionOptions {
         ContainerConnectionOptions {
             Container: None,
             params: params.clone(),
+        }
+    }
+
+    /// serialize options as a string. returns None if no options are defined
+    pub fn serialize(&self) -> Result<String> {
+        Ok(json::encode(&self.to_json())?)
+    }
+
+    pub fn parse_from<'a, K, V>(&self, params: &'a HashMap<K, V>, body: &mut BTreeMap<String, Json>)
+        where K: ToString + Eq + Hash,
+              V: ToJson
+    {
+        for (k, v) in params.iter() {
+            let key = k.to_string();
+            let value = v.to_json();
+
+            body.insert(key, value);
         }
     }
 

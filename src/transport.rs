@@ -45,30 +45,23 @@ impl fmt::Debug for Transport {
 }
 
 impl Transport {
-    pub fn request<'a, B>(
-        &'a self,
-        method: Method,
-        endpoint: &str,
-        body: Option<(B, ContentType)>,
-    ) -> Result<String>
-    where
-        B: Into<Body<'a>>,
+    pub fn request<'a, B>(&'a self, method: Method, endpoint: &str, body: Option<(B, ContentType)>)
+        -> Result<String>
+        where
+            B: Into<Body<'a>>
     {
-        let mut res = self.stream(method, endpoint, body)?;
+        let mut res  = self.stream(method, endpoint, body)?;
         let mut body = String::new();
-        res.read_to_string(&mut body)?;
+        let _        = res.read_to_string(&mut body)?;
+
         debug!("{} raw response: {}", endpoint, body);
         Ok(body)
     }
 
-    pub fn stream<'c, B>(
-        &'c self,
-        method: Method,
-        endpoint: &str,
-        body: Option<(B, ContentType)>,
-    ) -> Result<Box<Read>>
-    where
-        B: Into<Body<'c>>,
+    pub fn stream<'c, B>(&'c self, method: Method, endpoint: &str, body: Option<(B, ContentType)>)
+        -> Result<Box<Read>>
+        where
+            B: Into<Body<'c>>
     {
         let headers = {
             let mut headers = header::Headers::new();
@@ -78,22 +71,23 @@ impl Transport {
             });
             headers
         };
+
         let req = match *self {
-            Transport::Tcp {
-                ref client,
-                ref host,
-            } => client.request(method, &format!("{}{}", host, endpoint)[..]),
-            Transport::Unix {
-                ref client,
-                ref path,
-            } => client.request(method, DomainUrl::new(&path, endpoint)),
+            Transport::Tcp { ref client, ref host, } => {
+                client.request(method, &format!("{}{}", host, endpoint)[..])
+            },
+            Transport::Unix { ref client, ref path, } => {
+                client.request(method, DomainUrl::new(&path, endpoint))
+            },
         }.headers(headers);
 
         let embodied = match body {
             Some((b, c)) => req.header(c).body(b),
-            _ => req,
+            _            => req,
         };
+
         let mut res = embodied.send()?;
+
         match res.status {
             StatusCode::Ok                 |
             StatusCode::Created            |
@@ -114,16 +108,15 @@ impl Transport {
 /// contains a Docker JSON error structure.
 fn get_error_message(res: &mut Response) -> Option<String> {
     let mut output = String::new();
+
     if res.read_to_string(&mut output).is_ok() {
-        let json_response = json::Json::from_str(output.as_str()).ok();
-        let message = json_response
+        json::Json::from_str(output.as_str())
+            .ok()
             .as_ref()
             .and_then(|x| x.as_object())
             .and_then(|x| x.get("message"))
             .and_then(|x| x.as_string())
-            .map(|x| x.to_owned());
-
-        message
+            .map(|x| x.to_owned())
     } else {
         None
     }
