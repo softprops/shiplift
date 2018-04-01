@@ -13,6 +13,8 @@
 //! }
 //! ```
 
+#![recursion_limit = "256"]
+
 #[macro_use]
 extern crate log;
 extern crate hyper;
@@ -58,6 +60,7 @@ pub use builder::{
 /// Represents the result of all docker operations
 pub use errors::Result;
 pub use errors::Error;
+use errors::ErrorKind as EK;
 
 use hyper::{Client, Url};
 use hyper::client::Body;
@@ -138,37 +141,32 @@ impl<'a, 'b> Image<'a, 'b> {
     /// Delete's an image
     pub fn delete(&self) -> Result<Vec<Status>> {
         let raw = self.docker.delete(&format!("/images/{}", self.name)[..])?;
-        let out = match Json::from_str(&raw)? {
-            Json::Array(ref xs) => {
-                xs.iter().map(|j| {
-                    let obj = j.as_object().expect("expected json object");
+        match Json::from_str(&raw)? {
+            Json::Array(ref xs) => xs
+                .iter()
+                .map(|j| {
+                    let obj = j.as_object()
+                        .ok_or_else(|| EK::JsonTypeError("<anonym>", "Object"))?;
 
-                    obj.get("Untagged")
-                        .map(|sha| {
-                            let s = sha
-                                .as_string()
-                                .expect("expected Untagged to be a string")
-                                .to_owned();
-
-                            Status::Untagged(s)
-                        })
-                        .or_else(|| {
-                            obj.get("Deleted").map(|sha| {
-                                let s = sha
-                                    .as_string()
-                                    .expect("expected Deleted to be a string")
-                                    .to_owned();
-
-                                Status::Deleted(s)
+                    if let Some(sha) = obj.get("Untagged") {
+                        sha
+                            .as_string()
+                            .map(|s| Status::Untagged(s.to_owned()))
+                            .ok_or_else(|| EK::JsonTypeError("Untagged", "String"))
+                    } else {
+                        obj.get("Deleted")
+                            .ok_or_else(|| EK::JsonFieldMissing("Deleted' or 'Untagged"))
+                            .and_then(|sha| {
+                                sha.as_string()
+                                    .map(|s| Status::Deleted(s.to_owned()))
+                                    .ok_or_else(|| EK::JsonTypeError("Deleted", "String"))
                             })
-                        })
-                        .expect("expected Untagged or Deleted")
+                    }
                 })
-            }
-            _ => unreachable!(),
-        }.collect();
+                .map(|r| r.map_err(Error::from_kind)),
 
-        Ok(out)
+            _ => unreachable!(),
+        }.collect()
     }
 
     /// Export this image to a tarball
@@ -331,15 +329,17 @@ impl<'a, 'b> Container<'a, 'b> {
     }
 
     /// Returns a stream of stats specific to this container instance
-    pub fn stats(&self) -> Result<Box<Iterator<Item = Stats>>> {
+    pub fn stats(&self) -> Result<Box<Iterator<Item = Result<Stats>>>> {
         let raw = self.docker.stream_get(&format!("/containers/{}/stats", self.id)[..])?;
 
-        let it = jed::Iter::new(raw).into_iter().map(|j| {
-            // fixme: better error handling
-            debug!("{:?}", j);
-            let s = json::encode(&j).unwrap();
-            json::decode::<Stats>(&s).unwrap()
-        });
+        let it = jed::Iter::new(raw)
+            .into_iter()
+            .map(|j| {
+                // fixme: better error handling
+                debug!("{:?}", j);
+                let s = json::encode(&j)?;
+                json::decode::<Stats>(&s).map_err(Error::from)
+            });
 
         Ok(Box::new(it))
     }
@@ -462,16 +462,18 @@ impl<'a, 'b> Container<'a, 'b> {
         match self.docker.post(s, Some((&mut bytes, ContentType::json()))) {
             Err(e) => Err(e),
             Ok(res) => {
-                let data = "{}";
+                let data      = "{}";
                 let mut bytes = data.as_bytes();
+                let json      = Json::from_str(res.as_str())?;
+                let id        = json
+                    .search("Id")
+                    .ok_or_else(|| EK::JsonFieldMissing("Id"))
+                    .map_err(Error::from_kind)?
+                    .as_string()
+                    .ok_or_else(|| EK::JsonTypeError("Id", "String"))
+                    .map_err(Error::from_kind)?;
 
-                let post = &format!("/exec/{}/start",
-                                    Json::from_str(res.as_str())
-                                        .unwrap()
-                                        .search("Id")
-                                        .unwrap()
-                                        .as_string()
-                                        .unwrap());
+                let post = &format!("/exec/{}/start", json);
 
                 self.docker
                     .stream_post(&post[..], Some((&mut bytes, ContentType::json())))
@@ -630,55 +632,46 @@ impl Docker {
 
     /// constructs a new Docker instance for a docker host listening at a url specified by an env var `DOCKER_HOST`,
     /// falling back on unix:///var/run/docker.sock
-    pub fn new() -> Docker {
-        let fallback: std::result::Result<String, VarError> =
-            Ok("unix:///var/run/docker.sock".to_owned());
-
-        let host = env::var("DOCKER_HOST")
-            .or(fallback)
-            .map(|h| Url::parse(&h).ok().expect("invalid url"))
-            .ok()
-            .expect("expected host");
-
-        Docker::host(host)
+    pub fn new() -> Result<Docker> {
+        env::var("DOCKER_HOST")
+            .or_else(|_| Ok("unix:///var/run/docker.sock".to_owned()))
+            .and_then(|h| Url::parse(&h).map_err(Error::from))
+            .and_then(Docker::host)
     }
 
     /// constructs a new Docker instance for docker host listening at the given host url
-    pub fn host(host: Url) -> Docker {
+    pub fn host(host: Url) -> Result<Docker> {
         match host.scheme() {
-            "unix" => Docker {
+            "unix" => Ok(Docker {
                 transport: Transport::Unix {
                     client: Client::with_connector(UnixSocketConnector),
                     path: host.path().to_owned(),
                 },
-            },
+            }),
+
             _ => {
                 let client = if let Some(ref certs) = env::var("DOCKER_CERT_PATH").ok() {
-                    // fixme: don't unwrap before you know what's in the box
                     // https://github.com/hyperium/hyper/blob/master/src/net.rs#L427-L428
-                    let mut connector = SslConnectorBuilder::new(SslMethod::tls()).unwrap();
+                    let mut connector = SslConnectorBuilder::new(SslMethod::tls())?;
 
-                    connector.builder_mut().set_cipher_list("DEFAULT").unwrap();
+                    connector.builder_mut().set_cipher_list("DEFAULT")?;
 
                     let cert = &format!("{}/cert.pem", certs);
                     let key  = &format!("{}/key.pem", certs);
 
                     connector
                         .builder_mut()
-                        .set_certificate_file(&Path::new(cert), X509_FILETYPE_PEM)
-                        .unwrap();
+                        .set_certificate_file(&Path::new(cert), X509_FILETYPE_PEM)?;
 
                     connector
                         .builder_mut()
-                        .set_private_key_file(&Path::new(key), X509_FILETYPE_PEM)
-                        .unwrap();
+                        .set_private_key_file(&Path::new(key), X509_FILETYPE_PEM)?;
 
                     if let Some(_) = env::var("DOCKER_TLS_VERIFY").ok() {
                         let ca = &format!("{}/ca.pem", certs);
                         connector
                             .builder_mut()
-                            .set_ca_file(&Path::new(ca))
-                            .unwrap();
+                            .set_ca_file(&Path::new(ca))?;
                     }
 
                     let ssl = OpensslClient::from(connector.build());
@@ -687,17 +680,23 @@ impl Docker {
                     Client::new()
                 };
 
-                Docker {
-                    transport: Transport::Tcp {
-                        client: client,
-                        host: format!(
-                            "{}://{}:{}",
-                            host.scheme(),
-                            host.host_str().unwrap().to_owned(),
-                            host.port_or_known_default().unwrap()
-                        ),
-                    },
-                }
+                let hoststr = host.host_str()
+                    .ok_or_else(|| EK::NoHostString)
+                    .map_err(Error::from_kind)?
+                    .to_owned();
+
+                let port = host.port_or_known_default()
+                    .ok_or_else(|| EK::NoPort)
+                    .map_err(Error::from_kind)?
+                    .to_owned();
+
+                let host = format!("{}://{}:{}", host.scheme(), hoststr, port);
+
+                let d = Docker {
+                    transport: Transport::Tcp { client, host },
+                };
+
+                Ok(d)
             }
         }
     }
@@ -734,7 +733,7 @@ impl Docker {
     }
 
     /// Returns an interator over streamed docker events
-    pub fn events(&self, opts: &EventsOptions) -> Result<Box<Iterator<Item = Event>>> {
+    pub fn events(&self, opts: &EventsOptions) -> Result<Box<Iterator<Item = Result<Event>>>> {
         let mut path = vec!["/events".to_owned()];
 
         if let Some(query) = opts.serialize() {
@@ -747,10 +746,10 @@ impl Docker {
             .into_iter()
             .map(|j| {
                 debug!("{:?}", j);
-                // fixme: better error handling
-                let s = json::encode(&j).unwrap();
 
-                json::decode::<Event>(&s).unwrap()
+                let s = json::encode(&j)?;
+
+                json::decode::<Event>(&s).map_err(Error::from)
             });
 
         Ok(Box::new(it))
