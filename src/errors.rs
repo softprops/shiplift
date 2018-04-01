@@ -20,6 +20,11 @@ error_chain! {
             description("HyperFault")
                 display("{}", code)
         }
+
+        Utf8 {
+            description("Error while trying to handle non-utf8 string")
+                display("Error while trying to handle non-utf8 string")
+        }
     }
 
 }
