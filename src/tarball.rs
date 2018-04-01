@@ -15,25 +15,6 @@ pub fn dir<W>(buf: W, path: &str) -> Result<()>
         W: Write,
 {
     let archive = Archive::new(GzEncoder::new(buf, Compression::Best));
-    fn bundle<F>(dir: &Path, f: &F, bundle_dir: bool) -> Result<()>
-        where
-            F: Fn(&Path) -> Result<()>,
-    {
-        if fs::metadata(dir)?.is_dir() {
-            if bundle_dir {
-                f(&dir)?;
-            }
-            for entry in fs::read_dir(dir)? {
-                let entry = entry?;
-                if fs::metadata(entry.path())?.is_dir() {
-                    bundle(&entry.path(), f, true)?;
-                } else {
-                    f(&entry.path().as_path())?;
-                }
-            }
-        }
-        Ok(())
-    }
 
     {
         let base_path           = Path::new(path).canonicalize()?;
@@ -60,10 +41,7 @@ pub fn dir<W>(buf: W, path: &str) -> Result<()>
             if path.is_dir() {
                 archive.append_dir(Path::new(relativized), &canonical)?
             } else {
-                archive.append_file(
-                    Path::new(relativized),
-                    &mut File::open(&canonical)?,
-                )?
+                archive.append_file(Path::new(relativized), &mut File::open(&canonical)?)?
             }
             Ok(())
         };
@@ -71,5 +49,25 @@ pub fn dir<W>(buf: W, path: &str) -> Result<()>
         archive.finish()?;
     }
 
+    Ok(())
+}
+
+fn bundle<F>(dir: &Path, f: &F, bundle_dir: bool) -> Result<()>
+    where
+        F: Fn(&Path) -> Result<()>,
+{
+    if fs::metadata(dir)?.is_dir() {
+        if bundle_dir {
+            f(&dir)?;
+        }
+        for entry in fs::read_dir(dir)? {
+            let entry = entry?;
+            if fs::metadata(entry.path())?.is_dir() {
+                bundle(&entry.path(), f, true)?;
+            } else {
+                f(&entry.path().as_path())?;
+            }
+        }
+    }
     Ok(())
 }
