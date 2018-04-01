@@ -5,7 +5,8 @@ extern crate hyper;
 use self::hyper::buffer::BufReader;
 use self::hyper::header::ContentType;
 use self::hyper::status::StatusCode;
-use self::super::{Error, Result};
+use errors::{Result, ErrorKind};
+
 use hyper::Client;
 use hyper::client::Body;
 use hyper::client::response::Response;
@@ -94,57 +95,16 @@ impl Transport {
         };
         let mut res = embodied.send()?;
         match res.status {
-            StatusCode::Ok |
-            StatusCode::Created |
+            StatusCode::Ok                 |
+            StatusCode::Created            |
             StatusCode::SwitchingProtocols => Ok(Box::new(res)),
-            StatusCode::NoContent => Ok(
-                Box::new(BufReader::new("".as_bytes())),
-            ),
+            StatusCode::NoContent          => Ok(Box::new(BufReader::new("".as_bytes()))),
             // todo: constantize these
-            StatusCode::BadRequest => {
-                Err(Error::Fault {
-                    code: res.status,
-                    message: get_error_message(&mut res).unwrap_or(
-                        "bad parameter"
-                            .to_owned(),
-                    ),
-                })
-            }
-            StatusCode::NotFound => {
-                Err(Error::Fault {
-                    code: res.status,
-                    message: get_error_message(&mut res).unwrap_or(
-                        "not found".to_owned(),
-                    ),
-                })
-            }
-            StatusCode::NotAcceptable => {
-                Err(Error::Fault {
-                    code: res.status,
-                    message: get_error_message(&mut res).unwrap_or(
-                        "not acceptable"
-                            .to_owned(),
-                    ),
-                })
-            }
-            StatusCode::Conflict => {
-                Err(Error::Fault {
-                    code: res.status,
-                    message: get_error_message(&mut res).unwrap_or(
-                        "conflict found"
-                            .to_owned(),
-                    ),
-                })
-            }
-            StatusCode::InternalServerError => {
-                Err(Error::Fault {
-                    code: res.status,
-                    message: get_error_message(&mut res).unwrap_or(
-                        "internal server error"
-                            .to_owned(),
-                    ),
-                })
-            }
+            StatusCode::BadRequest          |
+            StatusCode::NotFound            |
+            StatusCode::NotAcceptable       |
+            StatusCode::Conflict            |
+            StatusCode::InternalServerError => Err(ErrorKind::HyperFault(res.status).into()),
             _ => unreachable!(),
         }
     }

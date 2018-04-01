@@ -28,6 +28,8 @@ extern crate byteorder;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde;
+#[macro_use]
+extern crate error_chain;
 
 pub mod builder;
 pub mod rep;
@@ -69,7 +71,7 @@ use tty::Tty;
 use url::form_urlencoded;
 
 /// Represents the result of all docker operations
-pub type Result<T> = std::result::Result<T, Error>;
+pub use errors::Result;
 
 /// Entrypoint interface for communicating with docker daemon
 pub struct Docker {
