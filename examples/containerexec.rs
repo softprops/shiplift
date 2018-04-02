@@ -4,7 +4,7 @@ use shiplift::{Docker, ExecContainerOptions};
 use std::env;
 
 fn main() {
-    let docker = Docker::new();
+    let docker = Docker::new().unwrap();
     let options = ExecContainerOptions::builder()
         .cmd(vec![
             "bash",

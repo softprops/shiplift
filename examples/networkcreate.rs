@@ -4,7 +4,7 @@ use shiplift::{Docker, NetworkCreateOptions};
 use std::env;
 
 fn main() {
-    let docker = Docker::new();
+    let docker = Docker::new().unwrap();
     let networks = docker.networks();
     if let Some(network_name) = env::args().nth(1) {
         let info = networks
