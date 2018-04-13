@@ -275,8 +275,9 @@ impl ContainerListOptionsBuilder {
 pub struct ContainerOptions {
     pub name: Option<String>,
     params: HashMap<&'static str, Json>,
-    params_list: HashMap<&'static str, Vec<String>>,
-    params_hash: HashMap<String, Vec<HashMap<String, String>>>,
+    params_vec: HashMap<&'static str, Vec<String>>,
+    params_hash_vec_hash: HashMap<&'static str, Vec<HashMap<String, String>>>,
+    params_hash_hash_vec_hash: HashMap<&'static str, HashMap<String, Vec<HashMap<String, String>>>>,
 }
 
 impl ToJson for ContainerOptions {
@@ -293,8 +294,9 @@ impl ToJson for ContainerOptions {
         let mut body = Json::Object(body_members);
 
         self.parse_from(&self.params, &mut body);
-        self.parse_from(&self.params_list, &mut body);
-        self.parse_from(&self.params_hash, &mut body);
+        self.parse_from(&self.params_vec, &mut body);
+        self.parse_from(&self.params_hash_vec_hash, &mut body);
+        self.parse_from(&self.params_hash_hash_vec_hash, &mut body);
 
         body
     }
@@ -359,22 +361,25 @@ impl ContainerOptions {
 pub struct ContainerOptionsBuilder {
     name: Option<String>,
     params: HashMap<&'static str, Json>,
-    params_list: HashMap<&'static str, Vec<String>>,
-    params_hash: HashMap<String, Vec<HashMap<String, String>>>,
+    params_vec: HashMap<&'static str, Vec<String>>,
+    params_hash_vec_hash: HashMap<&'static str, Vec<HashMap<String, String>>>,
+    params_hash_hash_vec_hash: HashMap<&'static str, HashMap<String, Vec<HashMap<String, String>>>>,
 }
 
 impl ContainerOptionsBuilder {
     pub fn new(image: &str) -> ContainerOptionsBuilder {
         let mut params = HashMap::new();
-        let params_list = HashMap::new();
-        let params_hash = HashMap::new();
+        let params_vec = HashMap::new();
+        let params_hash_vec_hash = HashMap::new();
+        let params_hash_hash_vec_hash = HashMap::new();
 
         params.insert("Image", Json::String(image.to_owned()));
         ContainerOptionsBuilder {
             name: None,
             params: params,
-            params_list: params_list,
-            params_hash: params_hash,
+            params_vec: params_vec,
+            params_hash_vec_hash: params_hash_vec_hash,
+            params_hash_hash_vec_hash: params_hash_hash_vec_hash,
         }
     }
 
@@ -388,7 +393,7 @@ impl ContainerOptionsBuilder {
         volumes: Vec<&str>,
     ) -> &mut ContainerOptionsBuilder {
         for v in volumes {
-            self.params_list
+            self.params_vec
                 .entry("HostConfig.Binds")
                 .or_insert(Vec::new())
                 .push(v.to_owned());
@@ -396,9 +401,26 @@ impl ContainerOptionsBuilder {
         self
     }
 
+    pub fn expose(
+        &mut self,
+        srcport: u32,
+        protocol: &str,
+        hostport: u32,
+    ) -> &mut ContainerOptionsBuilder {
+        let mut host_port: HashMap<String, String> = HashMap::new();
+        host_port.insert("HostPort".to_string(), hostport.to_string());
+
+        self.params_hash_hash_vec_hash.entry("HostConfig.PortBindings")
+            .or_insert(HashMap::<String, Vec<HashMap<String, String>>>::new())
+            .entry(format!("{}/{}", srcport.to_string(), protocol))
+            .or_insert(Vec::new())
+            .push(host_port);
+        self
+    }
+
     pub fn links(&mut self, links: Vec<&str>) -> &mut ContainerOptionsBuilder {
         for link in links {
-            self.params_list
+            self.params_vec
                 .entry("HostConfig.Links")
                 .or_insert(Vec::new())
                 .push(link.to_owned());
@@ -411,7 +433,7 @@ impl ContainerOptionsBuilder {
         hosts: Vec<&str>,
     ) -> &mut ContainerOptionsBuilder {
         for host in hosts {
-            self.params_list
+            self.params_vec
                 .entry("HostConfig.ExtraHosts")
                 .or_insert(Vec::new())
                 .push(host.to_owned());
@@ -425,7 +447,7 @@ impl ContainerOptionsBuilder {
         volumes: Vec<&str>,
     ) -> &mut ContainerOptionsBuilder {
         for volume in volumes {
-            self.params_list
+            self.params_vec
                 .entry("HostConfig.VolumesFrom")
                 .or_insert(Vec::new())
                 .push(volume.to_owned());
@@ -448,7 +470,7 @@ impl ContainerOptionsBuilder {
 
     pub fn env(&mut self, envs: Vec<&str>) -> &mut ContainerOptionsBuilder {
         for env in envs {
-            self.params_list.entry("Env").or_insert(Vec::new()).push(
+            self.params_vec.entry("Env").or_insert(Vec::new()).push(
                 env.to_owned(),
             );
         }
@@ -457,7 +479,7 @@ impl ContainerOptionsBuilder {
 
     pub fn cmd(&mut self, cmds: Vec<&str>) -> &mut ContainerOptionsBuilder {
         for cmd in cmds {
-            self.params_list.entry("Cmd").or_insert(Vec::new()).push(
+            self.params_vec.entry("Cmd").or_insert(Vec::new()).push(
                 cmd.to_owned(),
             );
         }
@@ -482,7 +504,7 @@ impl ContainerOptionsBuilder {
         capabilities: Vec<&str>,
     ) -> &mut ContainerOptionsBuilder {
         for c in capabilities {
-            self.params_list
+            self.params_vec
                 .entry("HostConfig.CapAdd")
                 .or_insert(Vec::new())
                 .push(c.to_owned());
@@ -495,8 +517,8 @@ impl ContainerOptionsBuilder {
         devices: Vec<HashMap<String, String>>,
     ) -> &mut ContainerOptionsBuilder {
         for d in devices {
-            self.params_hash
-                .entry("HostConfig.Devices".to_string())
+            self.params_hash_vec_hash
+                .entry("HostConfig.Devices")
                 .or_insert(Vec::new())
                 .push(d);
         }
@@ -540,8 +562,9 @@ impl ContainerOptionsBuilder {
         ContainerOptions {
             name: self.name.clone(),
             params: self.params.clone(),
-            params_list: self.params_list.clone(),
-            params_hash: self.params_hash.clone(),
+            params_vec: self.params_vec.clone(),
+            params_hash_vec_hash: self.params_hash_vec_hash.clone(),
+            params_hash_hash_vec_hash: self.params_hash_hash_vec_hash.clone(),
         }
     }
 }
@@ -984,7 +1007,7 @@ impl NetworkListOptions {
 pub struct NetworkCreateOptions {
     pub name: Option<String>,
     params: HashMap<&'static str, String>,
-    params_hash: HashMap<String, Vec<HashMap<String, String>>>,
+    params_hash_vec_hash: HashMap<String, Vec<HashMap<String, String>>>,
 }
 
 impl ToJson for NetworkCreateOptions {
@@ -992,7 +1015,7 @@ impl ToJson for NetworkCreateOptions {
         let mut body: BTreeMap<String, Json> = BTreeMap::new();
 
         self.parse_from(&self.params, &mut body);
-        self.parse_from(&self.params_hash, &mut body);
+        self.parse_from(&self.params_hash_vec_hash, &mut body);
 
         body.to_json()
     }
@@ -1031,19 +1054,19 @@ impl NetworkCreateOptions {
 pub struct NetworkCreateOptionsBuilder {
     name: Option<String>,
     params: HashMap<&'static str, String>,
-    params_hash: HashMap<String, Vec<HashMap<String, String>>>,
+    params_hash_vec_hash: HashMap<String, Vec<HashMap<String, String>>>,
 }
 
 impl NetworkCreateOptionsBuilder {
     pub fn new(name: &str) -> NetworkCreateOptionsBuilder {
         let mut params = HashMap::new();
-        let params_hash = HashMap::new();
+        let params_hash_vec_hash = HashMap::new();
 
         params.insert("Name", name.to_owned());
         NetworkCreateOptionsBuilder {
             name: None,
             params: params,
-            params_hash: params_hash,
+            params_hash_vec_hash: params_hash_vec_hash,
         }
     }
 
@@ -1059,7 +1082,7 @@ impl NetworkCreateOptionsBuilder {
         labels: Vec<HashMap<String, String>>,
     ) -> &mut NetworkCreateOptionsBuilder {
         for l in labels {
-            self.params_hash
+            self.params_hash_vec_hash
                 .entry("Labels".to_string())
                 .or_insert(Vec::new())
                 .push(l)
@@ -1071,7 +1094,7 @@ impl NetworkCreateOptionsBuilder {
         NetworkCreateOptions {
             name: self.name.clone(),
             params: self.params.clone(),
-            params_hash: self.params_hash.clone(),
+            params_hash_vec_hash: self.params_hash_vec_hash.clone(),
         }
     }
 }

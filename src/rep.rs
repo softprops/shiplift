@@ -109,8 +109,8 @@ pub struct NetworkSettings {
     pub Gateway: String,
     pub IPAddress: String,
     pub IPPrefixLen: u64,
-    pub MacAddress: String, /*    pub PortMapping: Option<???>,
-                             *   pub Ports: Option<???> */
+    pub MacAddress: String,
+    pub Ports: Option<HashMap<String, Vec<HashMap<String, String>>>>
 }
 
 #[derive(Clone, Debug, RustcEncodable, RustcDecodable, Serialize, Deserialize)]
@@ -124,7 +124,7 @@ pub struct HostConfig {
     pub MemorySwap: Option<u64>,
     pub NetworkMode: String,
     pub PidMode: Option<String>,
-    // pub PortBindings: ???
+    pub PortBindings: HashMap<String, Vec<HashMap<String, String>>>,
     pub Privileged: bool,
     pub PublishAllPorts: bool,
     pub ReadonlyRootfs: Option<bool>, /* pub RestartPolicy: ???
@@ -143,7 +143,7 @@ pub struct Config {
     pub Domainname: String,
     pub Entrypoint: Option<Vec<String>>,
     pub Env: Option<Vec<String>>,
-    // ExposedPorts
+    pub ExposedPorts: Option<HashMap<String, HashMap<String, String>>>,
     pub Hostname: String,
     pub Image: String,
     pub Labels: HashMap<String, String>,
