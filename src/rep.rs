@@ -110,7 +110,7 @@ pub struct NetworkSettings {
     pub IPAddress: String,
     pub IPPrefixLen: u64,
     pub MacAddress: String,
-    pub Ports: Option<HashMap<String, Vec<HashMap<String, String>>>>
+    pub Ports: Option<HashMap<String, Option<Vec<HashMap<String, String>>>>>
 }
 
 #[derive(Clone, Debug, RustcEncodable, RustcDecodable, Serialize, Deserialize)]
