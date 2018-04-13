@@ -1194,6 +1194,29 @@ mod tests {
         );
     }
 
+    #[test]
+    fn container_options_expose() {
+        let options = ContainerOptionsBuilder::new("test_image")
+            .expose(80, "tcp", 8080)
+            .build();
+
+        assert_eq!(
+            r#"{"HostConfig":{"PortBindings":{"80/tcp":[{"HostPort":"8080"}]}},"Image":"test_image"}"#,
+            options.serialize().unwrap()
+        );
+
+        // try exposing two
+        let options = ContainerOptionsBuilder::new("test_image")
+            .expose(80, "tcp", 8080)
+            .expose(81, "tcp", 8081)
+            .build();
+
+        assert_eq!(
+            r#"{"HostConfig":{"PortBindings":{"80/tcp":[{"HostPort":"8080"}],"81/tcp":[{"HostPort":"8081"}]}},"Image":"test_image"}"#,
+            options.serialize().unwrap()
+        );
+    }
+
     /// Test container options that are nested 3 levels deep.
     #[test]
     fn container_options_nested() {
