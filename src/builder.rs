@@ -406,6 +406,23 @@ impl ContainerOptionsBuilder {
         self
     }
 
+    pub fn labels(&mut self, labels: &HashMap<&str, &str>) -> &mut ContainerOptionsBuilder {
+
+        let mut json_labels : BTreeMap<String, Json> = BTreeMap::new();
+        for (k, v) in labels {
+            let key : &str = k.as_ref();
+            let value : &str = v.as_ref();
+            json_labels.insert(key  .to_owned(), Json::String(value.to_string()));
+        }
+
+        self.params.insert(
+            "Labels",
+            Json::Object(json_labels),
+        );
+
+        self
+    }
+
     pub fn extra_hosts(
         &mut self,
         hosts: Vec<&str>,
