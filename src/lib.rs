@@ -733,7 +733,7 @@ impl Docker {
         self.get("/_ping")
     }
 
-    /// Returns an interator over streamed docker events
+    /// Returns an iterator over streamed docker events
     pub fn events(
         &self,
         opts: &EventsOptions,
