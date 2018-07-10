@@ -16,11 +16,9 @@
 #[macro_use]
 extern crate log;
 extern crate hyper;
-extern crate hyper_openssl;
 extern crate hyperlocal;
 extern crate flate2;
 extern crate jed;
-extern crate openssl;
 extern crate rustc_serialize;
 extern crate url;
 extern crate tar;
@@ -28,6 +26,11 @@ extern crate byteorder;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde;
+
+#[cfg(feature = "openssl")]
+extern crate hyper_openssl;
+#[cfg(feature = "openssl")]
+extern crate openssl;
 
 pub mod builder;
 pub mod rep;
@@ -47,10 +50,14 @@ use hyper::{Client, Url};
 use hyper::client::Body;
 use hyper::header::ContentType;
 use hyper::method::Method;
+#[cfg(feature = "openssl")]
 use hyper::net::HttpsConnector;
+#[cfg(feature = "openssl")]
 use hyper_openssl::OpensslClient;
 use hyperlocal::UnixSocketConnector;
+#[cfg(feature = "openssl")]
 use openssl::ssl::{SslConnectorBuilder, SslMethod};
+#[cfg(feature = "openssl")]
 use openssl::x509::X509_FILETYPE_PEM;
 use rep::{Change, Container as ContainerRep, ContainerCreateInfo,
           ContainerDetails, Event, Exit, History, ImageDetails, Info,
@@ -89,7 +96,7 @@ impl<'a, 'b> Image<'a, 'b> {
         S: Into<Cow<'b, str>>,
     {
         Image {
-            docker: docker,
+            docker,
             name: name.into(),
         }
     }
@@ -159,7 +166,7 @@ pub struct Images<'a> {
 impl<'a> Images<'a> {
     /// Exports an interface for interacting with docker images
     pub fn new(docker: &'a Docker) -> Images<'a> {
-        Images { docker: docker }
+        Images { docker }
     }
 
     /// Builds a new image build by reading a Dockerfile in a target directory
@@ -256,7 +263,7 @@ impl<'a, 'b> Container<'a, 'b> {
         S: Into<Cow<'b, str>>,
     {
         Container {
-            docker: docker,
+            docker,
             id: id.into(),
         }
     }
@@ -650,10 +657,17 @@ impl Docker {
                 }
             }
             _ => {
+                #[cfg(not(feature = "openssl"))]
+                let client = Client::new();
+
+                #[cfg(feature = "openssl")]
                 let client = if let Some(ref certs) = env::var(
                     "DOCKER_CERT_PATH",
-                ).ok()
-                {
+                ).ok() {
+                    extern crate openssl;
+                    extern crate hyper_openssl;
+
+
                     // fixme: don't unwrap before you know what's in the box
                     // https://github.com/hyperium/hyper/blob/master/src/net.rs#L427-L428
                     let mut connector =
@@ -687,9 +701,10 @@ impl Docker {
                 } else {
                     Client::new()
                 };
+
                 Docker {
                     transport: Transport::Tcp {
-                        client: client,
+                        client,
                         host: format!(
                             "{}://{}:{}",
                             host.scheme(),

@@ -1104,7 +1104,7 @@ impl NetworkCreateOptionsBuilder {
 
 /// Interface for connect container to network
 pub struct ContainerConnectionOptions {
-    pub Container: Option<String>,
+    pub container: Option<String>,
     params: HashMap<&'static str, String>,
 }
 
@@ -1144,7 +1144,7 @@ impl ContainerConnectionOptions {
         let mut params = HashMap::new();
         params.insert("Container", container_id.to_owned());
         ContainerConnectionOptions {
-            Container: None,
+            container: None,
             params: params.clone(),
         }
     }
@@ -1152,7 +1152,7 @@ impl ContainerConnectionOptions {
     pub fn force(&mut self) -> ContainerConnectionOptions {
         self.params.insert("Force", "true".to_owned());
         ContainerConnectionOptions {
-            Container: None,
+            container: None,
             params: self.params.clone(),
         }
     }
