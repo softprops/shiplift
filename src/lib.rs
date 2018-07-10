@@ -75,6 +75,11 @@ use transport::{Transport, tar};
 use tty::Tty;
 use url::form_urlencoded;
 
+
+const HOST_ENV_VARIABLE: &str = "DOCKER_HOST";
+const CERT_ENV_VARIABLE: &str = "DOCKER_CERT_PATH";
+const DEFAULT_UNIX_SOCKET: &str = "unix:///var/run/docker.sock";
+
 /// Represents the result of all docker operations
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -634,85 +639,105 @@ impl<'a, 'b> Network<'a, 'b> {
 impl Docker {
     /// constructs a new Docker instance for a docker host listening at a url specified by an env var `DOCKER_HOST`,
     /// falling back on unix:///var/run/docker.sock
-    pub fn new() -> Docker {
-        let fallback: std::result::Result<String, VarError> =
-            Ok("unix:///var/run/docker.sock".to_owned());
-        let host = env::var("DOCKER_HOST")
-            .or(fallback)
-            .map(|h| Url::parse(&h).ok().expect("invalid url"))
-            .ok()
-            .expect("expected host");
+    pub fn new(host: Option<String>) -> Result<Docker> {
+        let env = env::var("DOCKER_HOST").clone();
+
+        let default_host = env
+            .as_ref()
+            .map(String::as_str)
+            .unwrap_or(DEFAULT_UNIX_SOCKET);
+
+        let host = host
+            .as_ref()
+            .map(String::as_str)
+            .unwrap_or(default_host);
+
+
+        let host = Url::parse(host)
+                .map_err( |h |
+                    Error::Fault {
+                        code: hyper::status::StatusCode::BadRequest,
+                        message: format!("Couldn't parse invalid host: {:?}\n", &h)
+                    }
+                )?;
+
         Docker::host(host)
     }
 
     /// constructs a new Docker instance for docker host listening at the given host url
-    pub fn host(host: Url) -> Docker {
+    pub fn host(host: Url) -> Result<Docker> {
         match host.scheme() {
             "unix" => {
-                Docker {
+                Ok(Docker {
                     transport: Transport::Unix {
                         client: Client::with_connector(UnixSocketConnector),
                         path: host.path().to_owned(),
                     },
-                }
+                })
             }
             _ => {
                 #[cfg(not(feature = "openssl"))]
                 let client = Client::new();
 
                 #[cfg(feature = "openssl")]
-                let client = if let Some(ref certs) = env::var(
-                    "DOCKER_CERT_PATH",
-                ).ok() {
-                    extern crate openssl;
-                    extern crate hyper_openssl;
-
-
+                let client = if let Ok(ref certs) =
+                        env::var(CERT_ENV_VARIABLE.to_owned()) {
                     // fixme: don't unwrap before you know what's in the box
                     // https://github.com/hyperium/hyper/blob/master/src/net.rs#L427-L428
                     let mut connector =
-                        SslConnectorBuilder::new(SslMethod::tls()).unwrap();
-                    connector.builder_mut().set_cipher_list("DEFAULT").unwrap();
+                        SslConnectorBuilder::new(SslMethod::tls()).unwrap()?;
+                    connector.builder_mut().set_cipher_list("DEFAULT").unwrap()?;
+
                     let cert = &format!("{}/cert.pem", certs);
                     let key = &format!("{}/key.pem", certs);
+
                     connector
                         .builder_mut()
                         .set_certificate_file(
                             &Path::new(cert),
                             X509_FILETYPE_PEM,
                         )
-                        .unwrap();
+                        .unwrap()?;
                     connector
                         .builder_mut()
                         .set_private_key_file(
                             &Path::new(key),
                             X509_FILETYPE_PEM,
                         )
-                        .unwrap();
-                    if let Some(_) = env::var("DOCKER_TLS_VERIFY").ok() {
+                        .unwrap()?;
+
+                    if let Ok(_) = env::var("DOCKER_TLS_VERIFY") {
                         let ca = &format!("{}/ca.pem", certs);
                         connector
                             .builder_mut()
                             .set_ca_file(&Path::new(ca))
                             .unwrap();
                     }
+
                     let ssl = OpensslClient::from(connector.build());
                     Client::with_connector(HttpsConnector::new(ssl))
                 } else {
                     Client::new()
                 };
 
-                Docker {
+                let hostname = host.host_str().ok_or(
+                    Error::Fault {code: hyper::status::StatusCode::BadRequest,
+                    message: "Wrong host name\n".to_owned()})?;
+                let port = host.port_or_known_default().ok_or(
+                    Error::Fault {code: hyper::status::StatusCode::BadRequest,
+                    message: "Wrong port\n".to_owned()})?;
+
+                Ok(Docker {
                     transport: Transport::Tcp {
                         client,
                         host: format!(
                             "{}://{}:{}",
                             host.scheme(),
-                            host.host_str().unwrap().to_owned(),
-                            host.port_or_known_default().unwrap()
+                            hostname,
+                            port
                         ),
                     },
-                }
+                })
             }
         }
     }
