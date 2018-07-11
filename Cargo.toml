@@ -13,8 +13,8 @@ openssl = false
 
 # select features you would like to use
 [features]
-#default = [ "openssl" ]
-default = []
+default = [ "openssl" ]
+# default = []
 
 [dependencies]
 byteorder = "1.0.0"

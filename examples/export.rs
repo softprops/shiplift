@@ -6,7 +6,7 @@ use std::fs::OpenOptions;
 use std::io::copy;
 
 fn main() {
-    let docker = Docker::new();
+    let docker = Docker::new(None).unwrap();
     if let Some(id) = env::args().nth(1) {
         let mut export = OpenOptions::new()
             .write(true)
