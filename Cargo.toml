@@ -11,10 +11,13 @@ keywords = ["docker", "unix", "containers", "hyper", "ship"]
 license = "MIT"
 openssl = false
 
-# select features you would like to use
+# select feature by Cargo flag:
+# --cfg feature="${feature_name}"
 [features]
-default = [ "openssl" ]
-# default = []
+default = [ "ssl" ]
+
+ssl = [ "openssl", "hyper-openssl" ]
+without-ssl = []
 
 [dependencies]
 byteorder = "1.0.0"
@@ -30,7 +33,7 @@ serde = "1.0"
 serde_derive = "1.0"
 
 hyper-openssl = { version = "0.2", optional = true }
-openssl = { vesrion = "0.9", optional = true }
+openssl = { version = "0.9", optional = true }
 
 [dev-dependencies]
 env_logger = "0.4.0"
