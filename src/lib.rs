@@ -5,7 +5,7 @@
 //! ```no_run
 //! extern crate shiplift;
 //!
-//! let docker = shiplift::Docker::new();
+//! let docker = shiplift::Docker::new(None).unwrap();
 //! let images = docker.images().list(&Default::default()).unwrap();
 //! println!("docker images in stock");
 //! for i in images {
@@ -16,11 +16,9 @@
 #[macro_use]
 extern crate log;
 extern crate hyper;
-extern crate hyper_openssl;
 extern crate hyperlocal;
 extern crate flate2;
 extern crate jed;
-extern crate openssl;
 extern crate rustc_serialize;
 extern crate url;
 extern crate tar;
@@ -28,6 +26,11 @@ extern crate byteorder;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde;
+
+#[cfg(feature = "ssl")]
+extern crate hyper_openssl;
+#[cfg(feature = "ssl")]
+extern crate openssl;
 
 pub mod builder;
 pub mod rep;
@@ -47,11 +50,19 @@ use hyper::{Client, Url};
 use hyper::client::Body;
 use hyper::header::ContentType;
 use hyper::method::Method;
+
+#[cfg(feature = "ssl")]
 use hyper::net::HttpsConnector;
+#[cfg(feature = "ssl")]
 use hyper_openssl::OpensslClient;
 use hyperlocal::UnixSocketConnector;
+#[cfg(feature = "ssl")]
 use openssl::ssl::{SslConnectorBuilder, SslMethod};
+#[cfg(feature = "ssl")]
 use openssl::x509::X509_FILETYPE_PEM;
+#[cfg(feature = "ssl")]
+use std::path::Path;
+
 use rep::{Change, Container as ContainerRep, ContainerCreateInfo,
           ContainerDetails, Event, Exit, History, ImageDetails, Info,
           SearchResult, Stats, Status, Top, Version};
@@ -59,14 +70,20 @@ use rep::{NetworkCreateInfo, NetworkDetails as NetworkInfo};
 use rep::Image as ImageRep;
 use rustc_serialize::json::{self, Json};
 use std::borrow::Cow;
-use std::env::{self, VarError};
+use std::env;
 use std::io::Read;
 use std::iter::IntoIterator;
-use std::path::Path;
 use std::time::Duration;
 use transport::{Transport, tar};
 use tty::Tty;
 use url::form_urlencoded;
+
+
+#[cfg(feature = "ssl")]
+const CERT_ENV_VARIABLE: &str = "DOCKER_CERT_PATH";
+
+const HOST_ENV_VARIABLE: &str = "DOCKER_HOST";
+const DEFAULT_UNIX_SOCKET: &str = "unix:///var/run/docker.sock";
 
 /// Represents the result of all docker operations
 pub type Result<T> = std::result::Result<T, Error>;
@@ -89,7 +106,7 @@ impl<'a, 'b> Image<'a, 'b> {
         S: Into<Cow<'b, str>>,
     {
         Image {
-            docker: docker,
+            docker,
             name: name.into(),
         }
     }
@@ -159,7 +176,7 @@ pub struct Images<'a> {
 impl<'a> Images<'a> {
     /// Exports an interface for interacting with docker images
     pub fn new(docker: &'a Docker) -> Images<'a> {
-        Images { docker: docker }
+        Images { docker }
     }
 
     /// Builds a new image build by reading a Dockerfile in a target directory
@@ -256,7 +273,7 @@ impl<'a, 'b> Container<'a, 'b> {
         S: Into<Cow<'b, str>>,
     {
         Container {
-            docker: docker,
+            docker,
             id: id.into(),
         }
     }
@@ -627,77 +644,98 @@ impl<'a, 'b> Network<'a, 'b> {
 impl Docker {
     /// constructs a new Docker instance for a docker host listening at a url specified by an env var `DOCKER_HOST`,
     /// falling back on unix:///var/run/docker.sock
-    pub fn new() -> Docker {
-        let fallback: std::result::Result<String, VarError> =
-            Ok("unix:///var/run/docker.sock".to_owned());
-        let host = env::var("DOCKER_HOST")
-            .or(fallback)
-            .map(|h| Url::parse(&h).ok().expect("invalid url"))
-            .ok()
-            .expect("expected host");
+    pub fn new(host: Option<String>) -> Result<Docker> {
+        let env = env::var(HOST_ENV_VARIABLE);
+
+        let host = host
+            .as_ref()
+            .map(String::as_str)
+            .unwrap_or(env
+                .as_ref()
+                .map(String::as_str)
+                .unwrap_or(DEFAULT_UNIX_SOCKET)
+            );
+
+
+        let host = Url::parse(host)
+                .map_err( |h |
+                    Error::Fault {
+                        code: hyper::status::StatusCode::BadRequest,
+                        message: format!("Couldn't parse invalid host: {:?}\n", &h)
+                    }
+                )?;
+
         Docker::host(host)
     }
 
     /// constructs a new Docker instance for docker host listening at the given host url
-    pub fn host(host: Url) -> Docker {
+    pub fn host(host: Url) -> Result<Docker> {
         match host.scheme() {
             "unix" => {
-                Docker {
+                Ok(Docker {
                     transport: Transport::Unix {
                         client: Client::with_connector(UnixSocketConnector),
                         path: host.path().to_owned(),
                     },
-                }
+                })
             }
             _ => {
-                let client = if let Some(ref certs) = env::var(
-                    "DOCKER_CERT_PATH",
-                ).ok()
-                {
+                #[cfg(not(feature = "ssl"))]
+                let client = Client::new();
+
+                #[cfg(feature = "ssl")]
+                let client = if let Ok(ref certs) =
+                        env::var(CERT_ENV_VARIABLE.to_owned()) {
                     // fixme: don't unwrap before you know what's in the box
                     // https://github.com/hyperium/hyper/blob/master/src/net.rs#L427-L428
                     let mut connector =
-                        SslConnectorBuilder::new(SslMethod::tls()).unwrap();
-                    connector.builder_mut().set_cipher_list("DEFAULT").unwrap();
+                        SslConnectorBuilder::new(SslMethod::tls())?;
+
+                    connector.set_cipher_list("DEFAULT")?;
+
                     let cert = &format!("{}/cert.pem", certs);
                     let key = &format!("{}/key.pem", certs);
+
                     connector
-                        .builder_mut()
                         .set_certificate_file(
                             &Path::new(cert),
                             X509_FILETYPE_PEM,
-                        )
-                        .unwrap();
+                        )?;
                     connector
-                        .builder_mut()
                         .set_private_key_file(
                             &Path::new(key),
                             X509_FILETYPE_PEM,
-                        )
-                        .unwrap();
-                    if let Some(_) = env::var("DOCKER_TLS_VERIFY").ok() {
+                        )?;
+
+                    if let Ok(_) = env::var("DOCKER_TLS_VERIFY") {
                         let ca = &format!("{}/ca.pem", certs);
                         connector
-                            .builder_mut()
-                            .set_ca_file(&Path::new(ca))
-                            .unwrap();
+
+                            .set_ca_file(&Path::new(ca))?
                     }
+
                     let ssl = OpensslClient::from(connector.build());
                     Client::with_connector(HttpsConnector::new(ssl))
                 } else {
                     Client::new()
                 };
-                Docker {
+
+                let hostname = host.host_str().ok_or(
+                    Error::Message("Wrong host name\n".to_string()))?;
+                let port = host.port_or_known_default().ok_or(
+                    Error::Message("Wrong port\n".to_string()))?;
+
+                Ok(Docker {
                     transport: Transport::Tcp {
-                        client: client,
+                        client,
                         host: format!(
                             "{}://{}:{}",
                             host.scheme(),
-                            host.host_str().unwrap().to_owned(),
-                            host.port_or_known_default().unwrap()
+                            hostname,
+                            port
                         ),
                     },
-                }
+                })
             }
         }
     }
@@ -733,7 +771,7 @@ impl Docker {
         self.get("/_ping")
     }
 
-    /// Returns an interator over streamed docker events
+    /// Returns an iterator over streamed docker events
     pub fn events(
         &self,
         opts: &EventsOptions,
