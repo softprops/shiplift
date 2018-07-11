@@ -5,7 +5,7 @@
 //! ```no_run
 //! extern crate shiplift;
 //!
-//! let docker = shiplift::Docker::new(None);
+//! let docker = shiplift::Docker::new(None).unwrap();
 //! let images = docker.images().list(&Default::default()).unwrap();
 //! println!("docker images in stock");
 //! for i in images {
