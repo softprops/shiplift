@@ -5,7 +5,7 @@
 //! ```no_run
 //! extern crate shiplift;
 //!
-//! let docker = shiplift::Docker::new();
+//! let docker = shiplift::Docker::new(None);
 //! let images = docker.images().list(&Default::default()).unwrap();
 //! println!("docker images in stock");
 //! for i in images {
@@ -50,6 +50,7 @@ use hyper::{Client, Url};
 use hyper::client::Body;
 use hyper::header::ContentType;
 use hyper::method::Method;
+
 #[cfg(feature = "openssl")]
 use hyper::net::HttpsConnector;
 #[cfg(feature = "openssl")]
@@ -59,6 +60,9 @@ use hyperlocal::UnixSocketConnector;
 use openssl::ssl::{SslConnectorBuilder, SslMethod};
 #[cfg(feature = "openssl")]
 use openssl::x509::X509_FILETYPE_PEM;
+#[cfg(feature = "openssl")]
+use std::path::Path;
+
 use rep::{Change, Container as ContainerRep, ContainerCreateInfo,
           ContainerDetails, Event, Exit, History, ImageDetails, Info,
           SearchResult, Stats, Status, Top, Version};
@@ -66,18 +70,19 @@ use rep::{NetworkCreateInfo, NetworkDetails as NetworkInfo};
 use rep::Image as ImageRep;
 use rustc_serialize::json::{self, Json};
 use std::borrow::Cow;
-use std::env::{self, VarError};
+use std::env;
 use std::io::Read;
 use std::iter::IntoIterator;
-use std::path::Path;
 use std::time::Duration;
 use transport::{Transport, tar};
 use tty::Tty;
 use url::form_urlencoded;
 
 
-const HOST_ENV_VARIABLE: &str = "DOCKER_HOST";
+#[cfg(feature = "openssl")]
 const CERT_ENV_VARIABLE: &str = "DOCKER_CERT_PATH";
+
+const HOST_ENV_VARIABLE: &str = "DOCKER_HOST";
 const DEFAULT_UNIX_SOCKET: &str = "unix:///var/run/docker.sock";
 
 /// Represents the result of all docker operations
@@ -640,17 +645,16 @@ impl Docker {
     /// constructs a new Docker instance for a docker host listening at a url specified by an env var `DOCKER_HOST`,
     /// falling back on unix:///var/run/docker.sock
     pub fn new(host: Option<String>) -> Result<Docker> {
-        let env = env::var("DOCKER_HOST").clone();
-
-        let default_host = env
-            .as_ref()
-            .map(String::as_str)
-            .unwrap_or(DEFAULT_UNIX_SOCKET);
+        let env = env::var(HOST_ENV_VARIABLE);
 
         let host = host
             .as_ref()
             .map(String::as_str)
-            .unwrap_or(default_host);
+            .unwrap_or(env
+                .as_ref()
+                .map(String::as_str)
+                .unwrap_or(DEFAULT_UNIX_SOCKET)
+            );
 
 
         let host = Url::parse(host)
@@ -685,8 +689,9 @@ impl Docker {
                     // fixme: don't unwrap before you know what's in the box
                     // https://github.com/hyperium/hyper/blob/master/src/net.rs#L427-L428
                     let mut connector =
-                        SslConnectorBuilder::new(SslMethod::tls()).unwrap()?;
-                    connector.builder_mut().set_cipher_list("DEFAULT").unwrap()?;
+                        SslConnectorBuilder::new(SslMethod::tls())?;
+
+                    connector.builder_mut().set_cipher_list("DEFAULT")?;
 
                     let cert = &format!("{}/cert.pem", certs);
                     let key = &format!("{}/key.pem", certs);
@@ -696,22 +701,19 @@ impl Docker {
                         .set_certificate_file(
                             &Path::new(cert),
                             X509_FILETYPE_PEM,
-                        )
-                        .unwrap()?;
+                        )?;
                     connector
                         .builder_mut()
                         .set_private_key_file(
                             &Path::new(key),
                             X509_FILETYPE_PEM,
-                        )
-                        .unwrap()?;
+                        )?;
 
                     if let Ok(_) = env::var("DOCKER_TLS_VERIFY") {
                         let ca = &format!("{}/ca.pem", certs);
                         connector
                             .builder_mut()
-                            .set_ca_file(&Path::new(ca))
-                            .unwrap();
+                            .set_ca_file(&Path::new(ca))?
                     }
 
                     let ssl = OpensslClient::from(connector.build());
@@ -721,11 +723,9 @@ impl Docker {
                 };
 
                 let hostname = host.host_str().ok_or(
-                    Error::Fault {code: hyper::status::StatusCode::BadRequest,
-                    message: "Wrong host name\n".to_owned()})?;
+                    Error::Message("Wrong host name\n".to_string()))?;
                 let port = host.port_or_known_default().ok_or(
-                    Error::Fault {code: hyper::status::StatusCode::BadRequest,
-                    message: "Wrong port\n".to_owned()})?;
+                    Error::Message("Wrong port\n".to_string()))?;
 
                 Ok(Docker {
                     transport: Transport::Tcp {

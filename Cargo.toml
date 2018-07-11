@@ -13,7 +13,7 @@ openssl = false
 
 # select features you would like to use
 [features]
-default = [ "openssl" ]
+default = [ "openssl", "hyper-openssl" ]
 # default = []
 
 [dependencies]

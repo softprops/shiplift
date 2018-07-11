@@ -29,7 +29,7 @@ will have already set up every thing you need to get started when you run `docke
 
 ```rust
 extern crate shiplift;
-let docker = shiplift::Docker::new();
+let docker = shiplift::Docker::new(None);
 ```
 
 If you wish to be more explicit you can provide a host in the form of a `url.Url`.
