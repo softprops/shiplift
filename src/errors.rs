@@ -2,6 +2,7 @@
 
 use hyper::status::StatusCode;
 
+#[allow(unused_imports)]
 error_chain! {
     types {
         Error, ErrorKind, ResultExt, Result;
@@ -12,7 +13,7 @@ error_chain! {
         Io(::std::io::Error);
         Hyper(::hyper::Error);
         HyperParser(::hyper::error::ParseError);
-        OpenSSL(::openssl::error::ErrorStack);
+        OpenSSL(::openssl::error::ErrorStack) #[cfg(feature = "ssl")];
         SerdeJsonError(::serde_json::error::Error);
     }
 

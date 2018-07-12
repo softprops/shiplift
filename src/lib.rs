@@ -15,13 +15,29 @@
 
 #![recursion_limit = "256"]
 
+// Optional ssl
+// TODO: maybe there is a way to put this in another file
+#[cfg(feature = "ssl")]
+extern crate hyper_openssl;
+#[cfg(feature = "ssl")]
+extern crate openssl;
+#[cfg(feature = "ssl")]
+use openssl::ssl::{SslConnectorBuilder, SslMethod};
+#[cfg(feature = "ssl")]
+use hyper_openssl::OpensslClient;
+#[cfg(feature = "ssl")]
+use openssl::x509::X509_FILETYPE_PEM;
+#[cfg(feature = "ssl")]
+use std::path::Path;
+#[cfg(feature = "ssl")]
+use hyper::net::HttpsConnector;
+
+
 #[macro_use]
 extern crate log;
 extern crate hyper;
-extern crate hyper_openssl;
 extern crate hyperlocal;
 extern crate flate2;
-extern crate openssl;
 extern crate rustc_serialize;
 extern crate url;
 extern crate tar;
@@ -39,6 +55,9 @@ pub mod errors;
 pub mod rep;
 pub mod transport;
 pub mod tty;
+pub mod reader;
+
+use reader::Bufreader;
 
 pub use builder::{
     BuildOptions,
@@ -66,12 +85,9 @@ use hyper::{Client, Url};
 use hyper::client::Body;
 use hyper::header::ContentType;
 use hyper::method::Method;
-use hyper::net::HttpsConnector;
-use hyper_openssl::OpensslClient;
 use hyperlocal::UnixSocketConnector;
-use openssl::ssl::{SslConnectorBuilder, SslMethod};
-use openssl::x509::X509_FILETYPE_PEM;
 use serde_json::Value;
+use serde::de::DeserializeOwned;
 
 use rep::{
     Change,
@@ -94,10 +110,8 @@ use rep::{
 };
 
 use std::borrow::Cow;
-use std::env::{self, VarError};
+use std::env;
 use std::io::Read;
-use std::iter::IntoIterator;
-use std::path::Path;
 use std::time::Duration;
 use transport::{Transport, tar};
 use tty::Tty;
@@ -121,7 +135,7 @@ impl<'a, 'b> Image<'a, 'b> {
         where S: Into<Cow<'b, str>>
     {
         Image {
-            docker: docker,
+            docker,
             name:   name.into(),
         }
     }
@@ -233,7 +247,7 @@ impl<'a> Images<'a> {
     }
 
     /// Pull and create a new docker images from an existing image
-    pub fn pull(&self, opts: &PullOptions) -> Result<Vec<Value>> {
+    pub fn pull(&self, opts: &PullOptions) -> Result<Bufreader<rep::Image>> {
         let mut path = vec!["/images/create".to_owned()];
 
         if let Some(query) = opts.serialize() {
@@ -241,10 +255,7 @@ impl<'a> Images<'a> {
         }
 
         self.docker
-            .stream_post(&path.join("?"), None as Option<(&'a str, ContentType)>)
-            .and_then(|r| {
-                ::serde_json::from_reader::<_, Vec<_>>(r).map_err(Error::from)
-            })
+            .bufreader_post(&path.join("?"), None as Option<(&'a str, ContentType)>)
     }
 
     /// exports a collection of named images,
@@ -277,7 +288,7 @@ impl<'a, 'b> Container<'a, 'b> {
             where S: Into<Cow<'b, str>>
     {
         Container {
-            docker: docker,
+            docker,
             id: id.into(),
         }
     }
@@ -331,12 +342,9 @@ impl<'a, 'b> Container<'a, 'b> {
     }
 
     /// Returns a stream of stats specific to this container instance
-    pub fn stats(&self) -> Result<Vec<Stats>> {
+    pub fn stats(&self) -> Result<Bufreader<Stats>> {
         self.docker
-            .stream_get(&format!("/containers/{}/stats", self.id)[..])
-            .and_then(|r| {
-                ::serde_json::from_reader::<_, Vec<Stats>>(r).map_err(Error::from)
-            })
+            .bufreader_get(&format!("/containers/{}/stats", self.id)[..])
     }
 
     /// Start the container instance
@@ -461,8 +469,8 @@ impl<'a, 'b> Container<'a, 'b> {
                 let mut bytes = data.as_bytes();
                 let json      = ::serde_json::from_str::<Value>(res.as_str())?;
 
-                if let Value::Object(ref obj) = json {
-                    let id        = json
+                if let Value::Object(ref _obj) = json {
+                    let _id        = json
                         .get("Id")
                         .ok_or_else(|| EK::JsonFieldMissing("Id"))
                         .map_err(Error::from_kind)?
@@ -642,7 +650,7 @@ impl Docker {
 
     /// constructs a new Docker instance for docker host listening at the given host url
     pub fn host(host: Url) -> Result<Docker> {
-        match host.scheme() {
+        match host.scheme().as_ref() {
             "unix" => Ok(Docker {
                 transport: Transport::Unix {
                     client: Client::with_connector(UnixSocketConnector),
@@ -651,27 +659,29 @@ impl Docker {
             }),
 
             _ => {
+                #[cfg(not(feature = "ssl"))]
+                let client = Client::new();
+
+
+                #[cfg(feature = "ssl")]
                 let client = if let Some(ref certs) = env::var("DOCKER_CERT_PATH").ok() {
                     // https://github.com/hyperium/hyper/blob/master/src/net.rs#L427-L428
                     let mut connector = SslConnectorBuilder::new(SslMethod::tls())?;
 
-                    connector.builder_mut().set_cipher_list("DEFAULT")?;
+                    connector.set_cipher_list("DEFAULT")?;
 
                     let cert = &format!("{}/cert.pem", certs);
                     let key  = &format!("{}/key.pem", certs);
 
                     connector
-                        .builder_mut()
                         .set_certificate_file(&Path::new(cert), X509_FILETYPE_PEM)?;
 
                     connector
-                        .builder_mut()
                         .set_private_key_file(&Path::new(key), X509_FILETYPE_PEM)?;
 
                     if let Some(_) = env::var("DOCKER_TLS_VERIFY").ok() {
                         let ca = &format!("{}/ca.pem", certs);
                         connector
-                            .builder_mut()
                             .set_ca_file(&Path::new(ca))?;
                     }
 
@@ -734,17 +744,14 @@ impl Docker {
     }
 
     /// Returns an interator over streamed docker events
-    pub fn events(&self, opts: &EventsOptions) -> Result<Vec<Event>> {
+    pub fn events(&self, opts: &EventsOptions) -> Result<Bufreader<Event>> {
         let mut path = vec!["/events".to_owned()];
 
         if let Some(query) = opts.serialize() {
             path.push(query);
         }
 
-        self.stream_get(&path.join("?")[..])
-            .and_then(|r| {
-                ::serde_json::from_reader::<_, Vec<Event>>(r).map_err(Error::from)
-            })
+        self.bufreader_get(&path.join("?")[..])
     }
 
     fn get<'a>(&self, endpoint: &str) -> Result<String> {
@@ -768,7 +775,22 @@ impl Docker {
         self.transport.stream(Method::Post, endpoint, body)
     }
 
+    fn bufreader_post<'a, B, T>(&'a self, endpoint: &str, body: Option<(B, ContentType)>)
+                          -> Result<Bufreader<T>>
+        where B: Into<Body<'a>>,
+              T: DeserializeOwned
+    {
+        self.transport.bufreader(Method::Post, endpoint, body)
+    }
+
     fn stream_get<'a>(&self, endpoint: &str) -> Result<Box<Read>> {
         self.transport.stream(Method::Get, endpoint, None as Option<(&'a str, ContentType)>)
+    }
+
+    fn bufreader_get<'a, T>(&self, endpoint: &str) -> Result<Bufreader<T>>
+        where
+        T: DeserializeOwned
+    {
+        self.transport.bufreader(Method::Get, endpoint, None as Option<(&'a str, ContentType)>)
     }
 }

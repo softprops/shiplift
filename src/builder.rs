@@ -3,7 +3,6 @@
 use std::cmp::Eq;
 use std::collections::{BTreeMap, HashMap};
 use std::hash::Hash;
-use std::iter::IntoIterator;
 use std::iter::Peekable;
 use url::form_urlencoded;
 use serde_json::Value;
@@ -968,7 +967,7 @@ impl NetworkCreateOptionsBuilder {
 /// Interface for connect container to network
 #[derive(Serialize)]
 pub struct ContainerConnectionOptions {
-    pub Container: Option<String>,
+    pub container: Option<String>,
     params: HashMap<&'static str, String>,
 }
 
@@ -978,7 +977,7 @@ impl ContainerConnectionOptions {
         let mut params = HashMap::new();
         params.insert("Container", container_id.to_owned());
         ContainerConnectionOptions {
-            Container: None,
+            container: None,
             params: params.clone(),
         }
     }
@@ -1003,7 +1002,7 @@ impl ContainerConnectionOptions {
     pub fn force(&mut self) -> ContainerConnectionOptions {
         self.params.insert("Force", "true".to_owned());
         ContainerConnectionOptions {
-            Container: None,
+            container: None,
             params: self.params.clone(),
         }
     }

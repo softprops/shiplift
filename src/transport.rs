@@ -17,6 +17,7 @@ use hyperlocal::DomainUrl;
 use rustc_serialize::json;
 use std::fmt;
 use std::io::Read;
+use serde::de::DeserializeOwned;
 
 pub fn tar() -> ContentType {
     ContentType(mime::Mime(
@@ -58,8 +59,8 @@ impl Transport {
         Ok(body)
     }
 
-    pub fn stream<'c, B>(&'c self, method: Method, endpoint: &str, body: Option<(B, ContentType)>)
-        -> Result<Box<Read>>
+    pub fn response<'c, B>(&'c self, method: Method, endpoint: &str, body: Option<(B, ContentType)>)
+                         -> hyper::Result<hyper::client::Response>
         where
             B: Into<Body<'c>>
     {
@@ -83,10 +84,29 @@ impl Transport {
 
         let embodied = match body {
             Some((b, c)) => req.header(c).body(b),
-            _            => req,
+            _ => req,
         };
 
-        let mut res = embodied.send()?;
+        embodied.send()
+    }
+
+    pub fn bufreader<'c, B, T>(&'c self, method: Method, endpoint: &str, body: Option<(B, ContentType)>)
+                         -> Result<super::reader::Bufreader<T>>
+        where
+            B: Into<Body<'c>>,
+            T: DeserializeOwned
+    {
+        let res = self.response(method, endpoint, body)?;
+
+        Ok(super::reader::Bufreader::<T>::new(res))
+    }
+
+    pub fn stream<'c, B>(&'c self, method: Method, endpoint: &str, body: Option<(B, ContentType)>)
+        -> Result<Box<Read>>
+        where
+            B: Into<Body<'c>>
+    {
+        let res = self.response(method, endpoint, body)?;
 
         match res.status {
             StatusCode::Ok                 |
@@ -106,6 +126,7 @@ impl Transport {
 
 /// Extract the error message content from an HTTP response that
 /// contains a Docker JSON error structure.
+#[allow(dead_code)]
 fn get_error_message(res: &mut Response) -> Option<String> {
     let mut output = String::new();
 
