@@ -4,7 +4,7 @@ use shiplift::{Docker, PullOptions};
 use std::env;
 
 fn main() {
-    let docker = Docker::new().unwrap();
+    let docker = Docker::new(None).unwrap();
     if let Some(img) = env::args().nth(1) {
         let image = docker
             .images()

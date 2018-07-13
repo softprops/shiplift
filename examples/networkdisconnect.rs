@@ -4,7 +4,7 @@ use shiplift::{ContainerConnectionOptions, Docker};
 use std::env;
 
 fn main() {
-    let docker = Docker::new().unwrap();
+    let docker = Docker::new(None).unwrap();
     let networks = docker.networks();
     let container_id = env::args().nth(1).unwrap();
     let network_id = env::args().nth(2).unwrap();

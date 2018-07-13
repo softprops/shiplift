@@ -624,8 +624,9 @@ impl<'a, 'b> Network<'a, 'b> {
 impl Docker {
     /// constructs a new Docker instance for a docker host listening at a url specified by an env var `DOCKER_HOST`,
     /// falling back on unix:///var/run/docker.sock
-    pub fn new() -> Result<Docker> {
-        env::var("DOCKER_HOST")
+    pub fn new(host: Option<String>) -> Result<Docker> {
+        host
+            .ok_or(env::var("DOCKER_HOST"))
             .or_else(|_| Ok("unix:///var/run/docker.sock".to_owned()))
             .and_then(|h| Url::parse(&h).map_err(Error::from))
             .and_then(Docker::host)
