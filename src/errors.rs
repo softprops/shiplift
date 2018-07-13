@@ -2,7 +2,6 @@
 
 use hyper::status::StatusCode;
 
-#[allow(unused_imports)]
 error_chain! {
     types {
         Error, ErrorKind, ResultExt, Result;
@@ -50,4 +49,3 @@ error_chain! {
     }
 
 }
-

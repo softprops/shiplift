@@ -337,7 +337,6 @@ pub struct Change {
     pub Path: String,
 }
 
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[allow(non_snake_case)]
 pub struct Top {

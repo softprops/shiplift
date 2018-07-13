@@ -1,44 +1,43 @@
+//! Helper iterator for streaming requests
+//!
 //! Source of code without generic types:
 //! https://github.com/faradayio/boondock/blob/master/src/stats.rs
 
-use std::iter;
-use std::io::{BufRead, BufReader};
 use hyper::client::response::Response;
+use std::io::{BufRead, BufReader};
+use std::iter;
 
-use serde_json;
 use errors::*;
-use std::marker::PhantomData;
 use serde::de::DeserializeOwned;
+use serde_json;
+use std::marker::PhantomData;
 
-pub struct Bufreader<T: DeserializeOwned> {
+pub struct BufIterator<T: DeserializeOwned> {
     buf: BufReader<Response>,
-    _phantom: PhantomData<T>
+    _phantom: PhantomData<T>,
 }
 
-impl <T: DeserializeOwned> Bufreader<T> {
-    pub fn new(r: Response) -> Bufreader<T> {
-        Bufreader {
+impl<T: DeserializeOwned> BufIterator<T> {
+    pub fn new(r: Response) -> BufIterator<T> {
+        BufIterator {
             buf: BufReader::new(r),
-            _phantom: PhantomData
+            _phantom: PhantomData,
         }
     }
 }
 
-impl <T: DeserializeOwned> iter::Iterator for Bufreader<T> {
+impl<T: DeserializeOwned> iter::Iterator for BufIterator<T> {
     type Item = Result<T>;
 
     fn next(&mut self) -> Option<Result<T>> {
         let mut line = String::new();
 
-        if let Err(err) = self.buf.read_line(&mut line) {
-            return Some(Err(err.into()));
+        match self.buf.read_line(&mut line) {
+            // Error while reading
+            Err(err) => Some(Err(err.into())),
+            // found EOF
+            Ok(0) => None,
+            Ok(_) => Some(serde_json::from_str::<T>(&line).map_err(Error::from)),
         }
-
-        println!("////////{}", line);
-        if line.len() == 1 {
-            return None
-        }
-
-        Some(serde_json::from_str::<T>(&line).map_err(Error::from))
     }
 }

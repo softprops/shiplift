@@ -22,98 +22,72 @@ extern crate hyper_openssl;
 #[cfg(feature = "ssl")]
 extern crate openssl;
 #[cfg(feature = "ssl")]
-use openssl::ssl::{SslConnectorBuilder, SslMethod};
+use hyper::net::HttpsConnector;
 #[cfg(feature = "ssl")]
 use hyper_openssl::OpensslClient;
+#[cfg(feature = "ssl")]
+use openssl::ssl::{SslConnectorBuilder, SslMethod};
 #[cfg(feature = "ssl")]
 use openssl::x509::X509_FILETYPE_PEM;
 #[cfg(feature = "ssl")]
 use std::path::Path;
-#[cfg(feature = "ssl")]
-use hyper::net::HttpsConnector;
-
 
 #[macro_use]
 extern crate log;
+extern crate byteorder;
+extern crate flate2;
 extern crate hyper;
 extern crate hyperlocal;
-extern crate flate2;
 extern crate rustc_serialize;
-extern crate url;
 extern crate tar;
-extern crate byteorder;
+extern crate url;
 #[macro_use]
 extern crate serde_derive;
-extern crate serde_json;
 extern crate serde;
+extern crate serde_json;
 #[macro_use]
 extern crate error_chain;
 
-mod tarball;
 pub mod builder;
 pub mod errors;
+pub mod reader;
 pub mod rep;
+mod tarball;
 pub mod transport;
 pub mod tty;
-pub mod reader;
 
-use reader::Bufreader;
+use reader::BufIterator;
 
 pub use builder::{
-    BuildOptions,
-    ContainerConnectionOptions,
-    ContainerFilter,
-    ContainerListOptions,
-    ContainerOptions,
-    EventsOptions,
-    ExecContainerOptions,
-    ImageFilter,
-    ImageListOptions,
-    LogsOptions,
-    NetworkCreateOptions,
-    NetworkListOptions,
-    PullOptions,
-    RmContainerOptions
+    BuildOptions, ContainerConnectionOptions, ContainerFilter, ContainerListOptions,
+    ContainerOptions, EventsOptions, ExecContainerOptions, ImageFilter, ImageListOptions,
+    LogsOptions, NetworkCreateOptions, NetworkListOptions, PullOptions, RmContainerOptions,
 };
 
-/// Represents the result of all docker operations
-pub use errors::Result;
 pub use errors::Error;
 use errors::ErrorKind as EK;
+/// Represents the result of all docker operations
+pub use errors::Result;
 
-use hyper::{Client, Url};
 use hyper::client::Body;
 use hyper::header::ContentType;
 use hyper::method::Method;
+use hyper::{Client, Url};
 use hyperlocal::UnixSocketConnector;
-use serde_json::Value;
 use serde::de::DeserializeOwned;
+use serde_json::Value;
 
 use rep::{
-    Change,
-    Container as ContainerRep,
-    ContainerCreateInfo,
-    ContainerDetails,
-    Event,
-    Exit,
-    History,
-    Image as ImageRep,
-    ImageDetails,
-    Info,
-    NetworkCreateInfo,
-    NetworkDetails as NetworkInfo,
-    SearchResult,
-    Stats,
-    Status,
-    Top,
-    Version,
+    Change, Container as ContainerRep, ContainerCreateInfo, ContainerDetails, Event, Exit, History,
+    Image as ImageRep, ImageDetails, Info, NetworkCreateInfo, NetworkDetails as NetworkInfo,
+    SearchResult, Stats, Status, Top, Version,
 };
 
 use std::borrow::Cow;
 use std::env;
 use std::io::Read;
 use std::time::Duration;
-use transport::{Transport, tar};
+use transport::{tar, Transport};
 use tty::Tty;
 use url::form_urlencoded;
 
@@ -129,14 +103,14 @@ pub struct Image<'a, 'b> {
 }
 
 impl<'a, 'b> Image<'a, 'b> {
-
     /// Exports an interface for operations that may be performed against a named image
     pub fn new<S>(docker: &'a Docker, name: S) -> Image<'a, 'b>
-        where S: Into<Cow<'b, str>>
+    where
+        S: Into<Cow<'b, str>>,
     {
         Image {
             docker,
-            name:   name.into(),
+            name: name.into(),
         }
     }
 
@@ -148,23 +122,25 @@ impl<'a, 'b> Image<'a, 'b> {
 
     /// Lists the history of the images set of changes
     pub fn history(&self) -> Result<Vec<History>> {
-        let raw = self.docker.get(&format!("/images/{}/history", self.name)[..])?;
+        let raw = self
+            .docker
+            .get(&format!("/images/{}/history", self.name)[..])?;
         ::serde_json::from_str::<Vec<History>>(&raw).map_err(Error::from)
     }
 
-    /// Delete's an image
+    /// Deletes an image
     pub fn delete(&self) -> Result<Vec<Status>> {
         let raw = self.docker.delete(&format!("/images/{}", self.name)[..])?;
         match ::serde_json::from_str(&raw)? {
             Value::Array(ref xs) => xs
                 .iter()
                 .map(|j| {
-                    let obj = j.as_object()
+                    let obj = j
+                        .as_object()
                         .ok_or_else(|| EK::JsonTypeError("<anonym>", "Object"))?;
 
                     if let Some(sha) = obj.get("Untagged") {
-                        sha
-                            .as_str()
+                        sha.as_str()
                             .map(|s| Status::Untagged(s.to_owned()))
                             .ok_or_else(|| EK::JsonTypeError("Untagged", "String"))
                     } else {
@@ -185,7 +161,8 @@ impl<'a, 'b> Image<'a, 'b> {
 
     /// Export this image to a tarball
     pub fn export(&self) -> Result<Box<Read>> {
-        self.docker.stream_get(&format!("/images/{}/get", self.name)[..])
+        self.docker
+            .stream_get(&format!("/images/{}/get", self.name)[..])
     }
 }
 
@@ -216,9 +193,7 @@ impl<'a> Images<'a> {
 
         self.docker
             .stream_post(&path.join("?"), Some((body, tar())))
-            .and_then(|r| {
-                ::serde_json::from_reader::<_, Vec<_>>(r).map_err(Error::from)
-            })
+            .and_then(|r| ::serde_json::from_reader::<_, Vec<_>>(r).map_err(Error::from))
     }
 
     /// Lists the docker images on the current docker host
@@ -241,13 +216,13 @@ impl<'a> Images<'a> {
     /// Search for docker images by term
     pub fn search(&self, term: &str) -> Result<Vec<SearchResult>> {
         let query = form_urlencoded::serialize(vec![("term", term)]);
-        let raw   = self.docker.get(&format!("/images/search?{}", query)[..])?;
+        let raw = self.docker.get(&format!("/images/search?{}", query)[..])?;
 
         ::serde_json::from_str::<Vec<SearchResult>>(&raw).map_err(Error::from)
     }
 
     /// Pull and create a new docker images from an existing image
-    pub fn pull(&self, opts: &PullOptions) -> Result<Bufreader<rep::Image>> {
+    pub fn pull(&self, opts: &PullOptions) -> Result<BufIterator<Value>> {
         let mut path = vec!["/images/create".to_owned()];
 
         if let Some(query) = opts.serialize() {
@@ -268,7 +243,8 @@ impl<'a> Images<'a> {
 
         let query = form_urlencoded::serialize(params);
 
-        self.docker.stream_get(&format!("/images/get?{}", query)[..])
+        self.docker
+            .stream_get(&format!("/images/get?{}", query)[..])
     }
 
     // pub fn import(self, tarball: Box<Read>) -> Result<()> {
@@ -285,7 +261,8 @@ pub struct Container<'a, 'b> {
 impl<'a, 'b> Container<'a, 'b> {
     /// Exports an interface exposing operations against a container instance
     pub fn new<S>(docker: &'a Docker, id: S) -> Container<'a, 'b>
-            where S: Into<Cow<'b, str>>
+    where
+        S: Into<Cow<'b, str>>,
     {
         Container {
             docker,
@@ -300,7 +277,9 @@ impl<'a, 'b> Container<'a, 'b> {
 
     /// Inspects the current docker container instance's details
     pub fn inspect(&self) -> Result<ContainerDetails> {
-        let raw = self.docker.get(&format!("/containers/{}/json", self.id)[..])?;
+        let raw = self
+            .docker
+            .get(&format!("/containers/{}/json", self.id)[..])?;
         ::serde_json::from_str::<ContainerDetails>(&raw).map_err(Error::from)
     }
 
@@ -331,18 +310,21 @@ impl<'a, 'b> Container<'a, 'b> {
 
     /// Returns a set of changes made to the container instance
     pub fn changes(&self) -> Result<Vec<Change>> {
-        let raw = self.docker.get(&format!("/containers/{}/changes", self.id)[..])?;
+        let raw = self
+            .docker
+            .get(&format!("/containers/{}/changes", self.id)[..])?;
 
         ::serde_json::from_str::<Vec<Change>>(&raw).map_err(Error::from)
     }
 
     /// Exports the current docker container into a tarball
     pub fn export(&self) -> Result<Box<Read>> {
-        self.docker.stream_get(&format!("/containers/{}/export", self.id)[..])
+        self.docker
+            .stream_get(&format!("/containers/{}/export", self.id)[..])
     }
 
     /// Returns a stream of stats specific to this container instance
-    pub fn stats(&self) -> Result<Bufreader<Stats>> {
+    pub fn stats(&self) -> Result<BufIterator<Option<Stats>>> {
         self.docker
             .bufreader_get(&format!("/containers/{}/stats", self.id)[..])
     }
@@ -401,7 +383,7 @@ impl<'a, 'b> Container<'a, 'b> {
     /// Rename the container instance
     pub fn rename(&self, name: &str) -> Result<()> {
         let query = form_urlencoded::serialize(vec![("name", name)]);
-        let s     = &format!("/containers/{}/rename?{}", self.id, query)[..];
+        let s = &format!("/containers/{}/rename?{}", self.id, query)[..];
 
         self.docker
             .post(s, None as Option<(&'a str, ContentType)>)
@@ -428,7 +410,7 @@ impl<'a, 'b> Container<'a, 'b> {
 
     /// Wait until the container stops
     pub fn wait(&self) -> Result<Exit> {
-        let s   = &format!("/containers/{}/wait", self.id)[..];
+        let s = &format!("/containers/{}/wait", self.id)[..];
         let raw = self.docker.post(s, None as Option<(&'a str, ContentType)>)?;
 
         ::serde_json::from_str::<Exit>(&raw).map_err(Error::from)
@@ -457,7 +439,7 @@ impl<'a, 'b> Container<'a, 'b> {
 
     /// Exec the specified command in the container
     pub fn exec(&self, opts: &ExecContainerOptions) -> Result<Tty> {
-        let data      = opts.serialize()?;
+        let data = opts.serialize()?;
         let mut bytes = data.as_bytes();
 
         let s = &format!("/containers/{}/exec", self.id)[..];
@@ -465,12 +447,12 @@ impl<'a, 'b> Container<'a, 'b> {
         match self.docker.post(s, Some((&mut bytes, ContentType::json()))) {
             Err(e) => Err(e),
             Ok(res) => {
-                let data      = "{}";
+                let data = "{}";
                 let mut bytes = data.as_bytes();
-                let json      = ::serde_json::from_str::<Value>(res.as_str())?;
+                let json = ::serde_json::from_str::<Value>(res.as_str())?;
 
                 if let Value::Object(ref _obj) = json {
-                    let _id        = json
+                    let _id = json
                         .get("Id")
                         .ok_or_else(|| EK::JsonFieldMissing("Id"))
                         .map_err(Error::from_kind)?
@@ -486,7 +468,6 @@ impl<'a, 'b> Container<'a, 'b> {
                 } else {
                     Err(Error::from_kind(EK::JsonTypeError("<anonymous>", "Object")))
                 }
-
             }
         }
     }
@@ -524,15 +505,17 @@ impl<'a> Containers<'a> {
 
     /// Returns a builder interface for creating a new container instance
     pub fn create(&'a self, opts: &ContainerOptions) -> Result<ContainerCreateInfo> {
-        let data      = opts.serialize()?;
+        let data = opts.serialize()?;
         let mut bytes = data.as_bytes();
-        let mut path  = vec!["/containers/create".to_owned()];
+        let mut path = vec!["/containers/create".to_owned()];
 
         if let Some(ref name) = opts.name {
             path.push(form_urlencoded::serialize(vec![("name", name)]));
         }
 
-        let raw = self.docker.post(&path.join("?"), Some((&mut bytes, ContentType::json())))?;
+        let raw = self
+            .docker
+            .post(&path.join("?"), Some((&mut bytes, ContentType::json())))?;
 
         ::serde_json::from_str::<ContainerCreateInfo>(&raw).map_err(Error::from)
     }
@@ -544,7 +527,6 @@ pub struct Networks<'a> {
 }
 
 impl<'a> Networks<'a> {
-
     /// Exports an interface for interacting with docker Networks
     pub fn new(docker: &'a Docker) -> Networks<'a> {
         Networks { docker }
@@ -568,11 +550,13 @@ impl<'a> Networks<'a> {
     }
 
     pub fn create(&'a self, opts: &NetworkCreateOptions) -> Result<NetworkCreateInfo> {
-        let data      = opts.serialize()?;
+        let data = opts.serialize()?;
         let mut bytes = data.as_bytes();
-        let path      = vec!["/networks/create".to_owned()];
+        let path = vec!["/networks/create".to_owned()];
 
-        let raw = self.docker.post(&path.join("?"), Some((&mut bytes, ContentType::json())))?;
+        let raw = self
+            .docker
+            .post(&path.join("?"), Some((&mut bytes, ContentType::json())))?;
 
         ::serde_json::from_str::<NetworkCreateInfo>(&raw).map_err(Error::from)
     }
@@ -585,10 +569,10 @@ pub struct Network<'a, 'b> {
 }
 
 impl<'a, 'b> Network<'a, 'b> {
-
     /// Exports an interface exposing operations against a network instance
     pub fn new<S>(docker: &'a Docker, id: S) -> Network<'a, 'b>
-        where S: Into<Cow<'b, str>>
+    where
+        S: Into<Cow<'b, str>>,
     {
         Network {
             docker,
@@ -625,7 +609,7 @@ impl<'a, 'b> Network<'a, 'b> {
     }
 
     fn do_connection(&self, segment: &str, opts: &ContainerConnectionOptions) -> Result<()> {
-        let data      = opts.serialize()?;
+        let data = opts.serialize()?;
         let mut bytes = data.as_bytes();
 
         let s = &format!("/networks/{}/{}", self.id, segment)[..];
@@ -638,7 +622,6 @@ impl<'a, 'b> Network<'a, 'b> {
 
 // https://docs.docker.com/reference/api/docker_remote_api_v1.17/
 impl Docker {
-
     /// constructs a new Docker instance for a docker host listening at a url specified by an env var `DOCKER_HOST`,
     /// falling back on unix:///var/run/docker.sock
     pub fn new() -> Result<Docker> {
@@ -662,7 +645,6 @@ impl Docker {
                 #[cfg(not(feature = "ssl"))]
                 let client = Client::new();
 
-
                 #[cfg(feature = "ssl")]
                 let client = if let Some(ref certs) = env::var("DOCKER_CERT_PATH").ok() {
                     // https://github.com/hyperium/hyper/blob/master/src/net.rs#L427-L428
@@ -671,18 +653,15 @@ impl Docker {
                     connector.set_cipher_list("DEFAULT")?;
 
                     let cert = &format!("{}/cert.pem", certs);
-                    let key  = &format!("{}/key.pem", certs);
+                    let key = &format!("{}/key.pem", certs);
 
-                    connector
-                        .set_certificate_file(&Path::new(cert), X509_FILETYPE_PEM)?;
+                    connector.set_certificate_file(&Path::new(cert), X509_FILETYPE_PEM)?;
 
-                    connector
-                        .set_private_key_file(&Path::new(key), X509_FILETYPE_PEM)?;
+                    connector.set_private_key_file(&Path::new(key), X509_FILETYPE_PEM)?;
 
                     if let Some(_) = env::var("DOCKER_TLS_VERIFY").ok() {
                         let ca = &format!("{}/ca.pem", certs);
-                        connector
-                            .set_ca_file(&Path::new(ca))?;
+                        connector.set_ca_file(&Path::new(ca))?;
                     }
 
                     let ssl = OpensslClient::from(connector.build());
@@ -691,12 +670,14 @@ impl Docker {
                     Client::new()
                 };
 
-                let hoststr = host.host_str()
+                let hoststr = host
+                    .host_str()
                     .ok_or_else(|| EK::NoHostString)
                     .map_err(Error::from_kind)?
                     .to_owned();
 
-                let port = host.port_or_known_default()
+                let port = host
+                    .port_or_known_default()
                     .ok_or_else(|| EK::NoPort)
                     .map_err(Error::from_kind)?
                     .to_owned();
@@ -744,7 +725,7 @@ impl Docker {
     }
 
     /// Returns an interator over streamed docker events
-    pub fn events(&self, opts: &EventsOptions) -> Result<Bufreader<Event>> {
+    pub fn events(&self, opts: &EventsOptions) -> Result<BufIterator<Event>> {
         let mut path = vec!["/events".to_owned()];
 
         if let Some(query) = opts.serialize() {
@@ -755,42 +736,67 @@ impl Docker {
     }
 
     fn get<'a>(&self, endpoint: &str) -> Result<String> {
-        self.transport.request(Method::Get, endpoint, None as Option<(&'a str, ContentType)>)
+        self.transport.request(
+            Method::Get,
+            endpoint,
+            None as Option<(&'a str, ContentType)>,
+        )
     }
 
     fn post<'a, B>(&'a self, endpoint: &str, body: Option<(B, ContentType)>) -> Result<String>
-        where B: Into<Body<'a>>
+    where
+        B: Into<Body<'a>>,
     {
         self.transport.request(Method::Post, endpoint, body)
     }
 
     fn delete<'a>(&self, endpoint: &str) -> Result<String> {
-        self.transport.request(Method::Delete, endpoint, None as Option<(&'a str, ContentType)>)
+        self.transport.request(
+            Method::Delete,
+            endpoint,
+            None as Option<(&'a str, ContentType)>,
+        )
     }
 
-    fn stream_post<'a, B>(&'a self, endpoint: &str, body: Option<(B, ContentType)>)
-        -> Result<Box<Read>>
-        where B: Into<Body<'a>>
+    fn stream_post<'a, B>(
+        &'a self,
+        endpoint: &str,
+        body: Option<(B, ContentType)>,
+    ) -> Result<Box<Read>>
+    where
+        B: Into<Body<'a>>,
     {
         self.transport.stream(Method::Post, endpoint, body)
     }
 
-    fn bufreader_post<'a, B, T>(&'a self, endpoint: &str, body: Option<(B, ContentType)>)
-                          -> Result<Bufreader<T>>
-        where B: Into<Body<'a>>,
-              T: DeserializeOwned
+    fn bufreader_post<'a, B, T>(
+        &'a self,
+        endpoint: &str,
+        body: Option<(B, ContentType)>,
+    ) -> Result<BufIterator<T>>
+    where
+        B: Into<Body<'a>>,
+        T: DeserializeOwned,
     {
         self.transport.bufreader(Method::Post, endpoint, body)
     }
 
     fn stream_get<'a>(&self, endpoint: &str) -> Result<Box<Read>> {
-        self.transport.stream(Method::Get, endpoint, None as Option<(&'a str, ContentType)>)
+        self.transport.stream(
+            Method::Get,
+            endpoint,
+            None as Option<(&'a str, ContentType)>,
+        )
     }
 
-    fn bufreader_get<'a, T>(&self, endpoint: &str) -> Result<Bufreader<T>>
-        where
-        T: DeserializeOwned
+    fn bufreader_get<'a, T>(&self, endpoint: &str) -> Result<BufIterator<T>>
+    where
+        T: DeserializeOwned,
     {
-        self.transport.bufreader(Method::Get, endpoint, None as Option<(&'a str, ContentType)>)
+        self.transport.bufreader(
+            Method::Get,
+            endpoint,
+            None as Option<(&'a str, ContentType)>,
+        )
     }
 }
