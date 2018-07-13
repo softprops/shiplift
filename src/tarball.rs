@@ -1,5 +1,6 @@
 use flate2::write::GzEncoder;
 use flate2::Compression;
+
 use std::fs::{self, File};
 use std::io::Write;
 use std::path::{Path, MAIN_SEPARATOR};
@@ -15,7 +16,6 @@ where
     W: Write,
 {
     let archive = Archive::new(GzEncoder::new(buf, Compression::Best));
-
     {
         let base_path = Path::new(path).canonicalize()?;
         let mut base_path_str = base_path
@@ -30,7 +30,7 @@ where
             }
         }
 
-        let append = |path: &Path| {
+        let mut append = |path: &Path| {
             let canonical = path.canonicalize()?;
             let relativized = canonical
                 .to_str()
@@ -45,9 +45,9 @@ where
             }
             Ok(())
         };
-        bundle(Path::new(path), &append, false)?;
-        archive.finish()?;
+        bundle(Path::new(path), &mut append, false)?;
     }
+    archive.finish()?;
 
     Ok(())
 }
