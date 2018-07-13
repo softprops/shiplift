@@ -1,24 +1,24 @@
-use flate2::write::GzEncoder;
 use flate2::Compression;
-
+use flate2::write::GzEncoder;
 use std::fs::{self, File};
-use std::io::Write;
-use std::path::{Path, MAIN_SEPARATOR};
+use std::io::{self, Write};
+use std::path::{MAIN_SEPARATOR, Path};
 use tar::Archive;
 
+use errors::Result;
 use errors::Error;
 use errors::ErrorKind as EK;
-use errors::Result;
 
 // todo: this is pretty involved. (re)factor this into its own crate
 pub fn dir<W>(buf: W, path: &str) -> Result<()>
-where
-    W: Write,
+    where
+        W: Write,
 {
     let archive = Archive::new(GzEncoder::new(buf, Compression::Best));
+
     {
-        let base_path = Path::new(path).canonicalize()?;
-        let mut base_path_str = base_path
+        let base_path           = Path::new(path).canonicalize()?;
+        let mut base_path_str   = base_path
             .to_str()
             .ok_or_else(|| EK::Utf8)
             .map_err(Error::from_kind)?
@@ -30,7 +30,7 @@ where
             }
         }
 
-        let mut append = |path: &Path| {
+        let append = |path: &Path| {
             let canonical = path.canonicalize()?;
             let relativized = canonical
                 .to_str()
@@ -45,16 +45,16 @@ where
             }
             Ok(())
         };
-        bundle(Path::new(path), &mut append, false)?;
+        bundle(Path::new(path), &append, false)?;
+        archive.finish()?;
     }
-    archive.finish()?;
 
     Ok(())
 }
 
 fn bundle<F>(dir: &Path, f: &F, bundle_dir: bool) -> Result<()>
-where
-    F: Fn(&Path) -> Result<()>,
+    where
+        F: Fn(&Path) -> Result<()>,
 {
     if fs::metadata(dir)?.is_dir() {
         if bundle_dir {
