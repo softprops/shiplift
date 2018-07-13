@@ -173,6 +173,15 @@ impl BuildOptionsBuilder {
         self
     }
 
+    /// `bridge`, `host`, `none`, `container:<name|id>`, or a custom network name.
+    pub fn network_mode<T>(&mut self, t: T) -> &mut BuildOptionsBuilder
+        where
+            T: Into<String>,
+    {
+        self.params.insert("networkmode", t.into());
+        self
+    }
+
     // todo: memory
     // todo: memswap
     // todo: cpushares
