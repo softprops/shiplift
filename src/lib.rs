@@ -47,14 +47,8 @@ pub mod transport;
 pub mod tty;
 pub mod structs;
 
-
-pub use builder::{
-    BuildOptions, ContainerConnectionOptions, ContainerFilter, ContainerListOptions,
-    ContainerOptions, EventsOptions, ExecContainerOptions, ImageFilter, ImageListOptions,
-    LogsOptions, NetworkCreateOptions, NetworkListOptions, PullOptions, RmContainerOptions,
-};
-
 pub use errors::Error;
 pub use errors::Result;
 
 pub use structs::*;
+pub use builder::*;

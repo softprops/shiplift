@@ -22,11 +22,7 @@ use std::path::Path;
 
 use reader::BufIterator;
 
-pub use builder::{
-    BuildOptions, ContainerConnectionOptions, ContainerFilter, ContainerListOptions,
-    ContainerOptions, EventsOptions, ExecContainerOptions, ImageFilter, ImageListOptions,
-    LogsOptions, NetworkCreateOptions, NetworkListOptions, PullOptions, RmContainerOptions,
-};
+pub use builder::*;
 
 pub use errors::Error;
 use errors::ErrorKind as EK;
@@ -56,6 +52,7 @@ use std::time::Duration;
 use transport::{tar, Transport};
 use tty::Tty;
 use url::form_urlencoded;
+use builder::ContainerArchiveOptions;
 
 /// Entrypoint interface for communicating with docker daemon
 pub struct Docker {
@@ -418,7 +415,7 @@ impl<'a, 'b> Container<'a, 'b> {
                 let json = ::serde_json::from_str::<Value>(res.as_str())?;
 
                 if let Value::Object(ref _obj) = json {
-                    let _id = json
+                    let id = json
                         .get("Id")
                         .ok_or_else(|| EK::JsonFieldMissing("Id"))
                         .map_err(Error::from_kind)?
@@ -426,7 +423,7 @@ impl<'a, 'b> Container<'a, 'b> {
                         .ok_or_else(|| EK::JsonTypeError("Id", "String"))
                         .map_err(Error::from_kind)?;
 
-                    let post = &format!("/exec/{}/start", json);
+                    let post = &format!("/exec/{}/start", id);
 
                     self.docker
                         .stream_post(&post[..], Some((&mut bytes, ContentType::json())))
@@ -436,6 +433,24 @@ impl<'a, 'b> Container<'a, 'b> {
                 }
             }
         }
+    }
+
+    pub fn archive_put(&self, opts: &ContainerArchiveOptions) -> Result<Vec<Value>> {
+        let mut path = vec![(&format!("/containers/{}/archive", self.id)).to_owned()];
+
+        if let Some(query) = opts.serialize() {
+            path.push(query);
+        }
+
+        let mut bytes = vec![];
+
+        tarball::dir(&mut bytes, &opts.local_path)?;
+
+        let body = Body::BufBody(&bytes[..], bytes.len());
+
+        self.docker
+            .stream_put(&path.join("?"), Some((body, tar())))
+            .and_then(|r| ::serde_json::from_reader::<_, Vec<_>>(r).map_err(Error::from))
     }
 
     // todo attach, attach/ws, copy, archive
@@ -449,7 +464,7 @@ pub struct Containers<'a> {
 impl<'a> Containers<'a> {
     /// Exports an interface for interacting with docker containers
     pub fn new(docker: &'a Docker) -> Containers<'a> {
-        Containers { docker: docker }
+        Containers { docker }
     }
 
     /// Lists the container instances on the docker host
@@ -717,6 +732,13 @@ impl Docker {
         self.transport.request(Method::Post, endpoint, body)
     }
 
+    fn put<'a, B>(&'a self, endpoint: &str, body: Option<(B, ContentType)>) -> Result<String>
+        where
+            B: Into<Body<'a>>,
+    {
+        self.transport.request(Method::Put, endpoint, body)
+    }
+
     fn delete<'a>(&self, endpoint: &str) -> Result<String> {
         self.transport.request(
             Method::Delete,
@@ -734,6 +756,17 @@ impl Docker {
         B: Into<Body<'a>>,
     {
         self.transport.stream(Method::Post, endpoint, body)
+    }
+
+    fn stream_put<'a, B>(
+        &'a self,
+        endpoint: &str,
+        body: Option<(B, ContentType)>,
+    ) -> Result<Box<Read>>
+        where
+            B: Into<Body<'a>>,
+    {
+        self.transport.stream(Method::Put, endpoint, body)
     }
 
     fn bufreader_post<'a, B, T>(

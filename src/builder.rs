@@ -361,9 +361,9 @@ impl ContainerOptionsBuilder {
         params.insert("Image", Value::String(image.to_owned()));
         ContainerOptionsBuilder {
             name: None,
-            params: params,
-            params_list: params_list,
-            params_hash: params_hash,
+            params,
+            params_list,
+            params_hash,
         }
     }
 
@@ -515,7 +515,9 @@ impl ContainerOptionsBuilder {
 
 #[derive(Serialize)]
 pub struct ExecContainerOptions {
+    #[serde(flatten)]
     params: HashMap<&'static str, Vec<String>>,
+    #[serde(flatten)]
     params_bool: HashMap<&'static str, bool>,
 }
 
@@ -581,6 +583,73 @@ impl ExecContainerOptionsBuilder {
 
     pub fn build(&self) -> ExecContainerOptions {
         ExecContainerOptions {
+            params: self.params.clone(),
+            params_bool: self.params_bool.clone(),
+        }
+    }
+}
+
+//
+#[derive(Serialize)]
+pub struct ContainerArchiveOptions {
+    #[serde(skip)]
+    pub local_path: String,
+    #[serde(flatten)]
+    params: HashMap<&'static str, String>,
+    #[serde(flatten)]
+    params_bool: HashMap<&'static str, bool>,
+}
+
+impl ContainerArchiveOptions {
+    /// return a new instance of a builder for options
+    pub fn builder() -> ContainerArchiveOptionsBuilder {
+        ContainerArchiveOptionsBuilder::new()
+    }
+
+    /// serialize options as a string. returns None if no options are defined
+    pub fn serialize(&self) -> Option<String> {
+        if self.params.is_empty() {
+            None
+        } else {
+            Some(form_urlencoded::serialize(&self.params))
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct ContainerArchiveOptionsBuilder {
+    local_path: String,
+    params: HashMap<&'static str, String>,
+    params_bool: HashMap<&'static str, bool>,
+}
+
+impl ContainerArchiveOptionsBuilder {
+    pub fn new() -> ContainerArchiveOptionsBuilder {
+        ContainerArchiveOptionsBuilder {
+            local_path: String::new(),
+            params: HashMap::new(),
+            params_bool: HashMap::new(),
+        }
+    }
+
+    pub fn path(&mut self, cmds: String) -> &mut ContainerArchiveOptionsBuilder {
+        self.params.insert("path", cmds);
+        self
+    }
+
+    pub fn local_path(&mut self, path: String) -> &mut ContainerArchiveOptionsBuilder {
+        self.local_path = path;
+        self
+    }
+
+    pub fn no_overwrite(&mut self, o: bool) -> &mut ContainerArchiveOptionsBuilder {
+        self.params_bool.insert("noOverwriteDirNonDir", o);
+        self
+    }
+
+    pub fn build(&self) -> ContainerArchiveOptions {
+        ContainerArchiveOptions {
+            local_path: self.local_path.clone(),
             params: self.params.clone(),
             params_bool: self.params_bool.clone(),
         }
@@ -940,7 +1009,9 @@ impl NetworkListOptions {
 #[derive(Serialize)]
 pub struct NetworkCreateOptions {
     pub name: Option<String>,
+    #[serde(flatten)]
     params: HashMap<&'static str, String>,
+    #[serde(flatten)]
     params_hash: HashMap<String, Vec<HashMap<String, String>>>,
 }
 
@@ -987,8 +1058,8 @@ impl NetworkCreateOptionsBuilder {
         params.insert("Name", name.to_owned());
         NetworkCreateOptionsBuilder {
             name: None,
-            params: params,
-            params_hash: params_hash,
+            params,
+            params_hash,
         }
     }
 
@@ -1025,6 +1096,7 @@ impl NetworkCreateOptionsBuilder {
 #[derive(Serialize)]
 pub struct ContainerConnectionOptions {
     pub container: Option<String>,
+    #[serde(flatten)]
     params: HashMap<&'static str, String>,
 }
 

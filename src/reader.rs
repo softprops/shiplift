@@ -3,7 +3,7 @@
 //! Source of code without generic types:
 //! https://github.com/faradayio/boondock/blob/master/src/stats.rs
 
-use hyper::client::response::Response;
+use hyper::client::Response;
 use std::io::{BufRead, BufReader};
 use std::iter;
 
