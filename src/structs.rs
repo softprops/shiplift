@@ -435,7 +435,7 @@ impl<'a, 'b> Container<'a, 'b> {
         }
     }
 
-    pub fn archive_put(&self, opts: &ContainerArchiveOptions) -> Result<Vec<Value>> {
+    pub fn archive_put(&self, opts: &ContainerArchiveOptions) -> Result<()> {
         let mut path = vec![(&format!("/containers/{}/archive", self.id)).to_owned()];
 
         if let Some(query) = opts.serialize() {
@@ -450,7 +450,7 @@ impl<'a, 'b> Container<'a, 'b> {
 
         self.docker
             .stream_put(&path.join("?"), Some((body, tar())))
-            .and_then(|r| ::serde_json::from_reader::<_, Vec<_>>(r).map_err(Error::from))
+            .map(|_| ())
     }
 
     // todo attach, attach/ws, copy, archive
@@ -730,13 +730,6 @@ impl Docker {
         B: Into<Body<'a>>,
     {
         self.transport.request(Method::Post, endpoint, body)
-    }
-
-    fn put<'a, B>(&'a self, endpoint: &str, body: Option<(B, ContentType)>) -> Result<String>
-        where
-            B: Into<Body<'a>>,
-    {
-        self.transport.request(Method::Put, endpoint, body)
     }
 
     fn delete<'a>(&self, endpoint: &str) -> Result<String> {
