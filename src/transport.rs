@@ -5,15 +5,17 @@ extern crate hyper;
 use self::hyper::buffer::BufReader;
 use self::hyper::header::ContentType;
 use self::hyper::status::StatusCode;
-use self::super::{Error, Result};
-use hyper::Client;
-use hyper::client::Body;
+use errors::{ErrorKind, Result};
+
 use hyper::client::response::Response;
+use hyper::client::Body;
 use hyper::header;
 use hyper::method::Method;
 use hyper::mime;
+use hyper::Client;
 use hyperlocal::DomainUrl;
 use rustc_serialize::json;
+use serde::de::DeserializeOwned;
 use std::fmt;
 use std::io::Read;
 
@@ -55,17 +57,18 @@ impl Transport {
     {
         let mut res = self.stream(method, endpoint, body)?;
         let mut body = String::new();
-        res.read_to_string(&mut body)?;
+        let _ = res.read_to_string(&mut body)?;
+
         debug!("{} raw response: {}", endpoint, body);
         Ok(body)
     }
 
-    pub fn stream<'c, B>(
+    pub fn response<'c, B>(
         &'c self,
         method: Method,
         endpoint: &str,
         body: Option<(B, ContentType)>,
-    ) -> Result<Box<Read>>
+    ) -> hyper::Result<hyper::client::Response>
     where
         B: Into<Body<'c>>,
     {
@@ -77,6 +80,7 @@ impl Transport {
             });
             headers
         };
+
         let req = match *self {
             Transport::Tcp {
                 ref client,
@@ -92,59 +96,47 @@ impl Transport {
             Some((b, c)) => req.header(c).body(b),
             _ => req,
         };
-        let mut res = embodied.send()?;
+
+        embodied.send()
+    }
+
+    pub fn bufreader<'c, B, T>(
+        &'c self,
+        method: Method,
+        endpoint: &str,
+        body: Option<(B, ContentType)>,
+    ) -> Result<super::reader::BufIterator<T>>
+    where
+        B: Into<Body<'c>>,
+        T: DeserializeOwned,
+    {
+        let res = self.response(method, endpoint, body)?;
+
+        Ok(super::reader::BufIterator::<T>::new(res))
+    }
+
+    pub fn stream<'c, B>(
+        &'c self,
+        method: Method,
+        endpoint: &str,
+        body: Option<(B, ContentType)>,
+    ) -> Result<Box<Read>>
+    where
+        B: Into<Body<'c>>,
+    {
+        let res = self.response(method, endpoint, body)?;
+
         match res.status {
-            StatusCode::Ok |
-            StatusCode::Created |
-            StatusCode::SwitchingProtocols => Ok(Box::new(res)),
-            StatusCode::NoContent => Ok(
-                Box::new(BufReader::new("".as_bytes())),
-            ),
+            StatusCode::Ok | StatusCode::Created | StatusCode::SwitchingProtocols => {
+                Ok(Box::new(res))
+            }
+            StatusCode::NoContent => Ok(Box::new(BufReader::new("".as_bytes()))),
             // todo: constantize these
-            StatusCode::BadRequest => {
-                Err(Error::Fault {
-                    code: res.status,
-                    message: get_error_message(&mut res).unwrap_or(
-                        "bad parameter"
-                            .to_owned(),
-                    ),
-                })
-            }
-            StatusCode::NotFound => {
-                Err(Error::Fault {
-                    code: res.status,
-                    message: get_error_message(&mut res).unwrap_or(
-                        "not found".to_owned(),
-                    ),
-                })
-            }
-            StatusCode::NotAcceptable => {
-                Err(Error::Fault {
-                    code: res.status,
-                    message: get_error_message(&mut res).unwrap_or(
-                        "not acceptable"
-                            .to_owned(),
-                    ),
-                })
-            }
-            StatusCode::Conflict => {
-                Err(Error::Fault {
-                    code: res.status,
-                    message: get_error_message(&mut res).unwrap_or(
-                        "conflict found"
-                            .to_owned(),
-                    ),
-                })
-            }
-            StatusCode::InternalServerError => {
-                Err(Error::Fault {
-                    code: res.status,
-                    message: get_error_message(&mut res).unwrap_or(
-                        "internal server error"
-                            .to_owned(),
-                    ),
-                })
-            }
+            StatusCode::BadRequest
+            | StatusCode::NotFound
+            | StatusCode::NotAcceptable
+            | StatusCode::Conflict
+            | StatusCode::InternalServerError => Err(ErrorKind::HyperFault(res.status).into()),
             _ => unreachable!(),
         }
     }
@@ -152,18 +144,18 @@ impl Transport {
 
 /// Extract the error message content from an HTTP response that
 /// contains a Docker JSON error structure.
+#[allow(dead_code)]
 fn get_error_message(res: &mut Response) -> Option<String> {
     let mut output = String::new();
+
     if res.read_to_string(&mut output).is_ok() {
-        let json_response = json::Json::from_str(output.as_str()).ok();
-        let message = json_response
+        json::Json::from_str(output.as_str())
+            .ok()
             .as_ref()
             .and_then(|x| x.as_object())
             .and_then(|x| x.get("message"))
             .and_then(|x| x.as_string())
-            .map(|x| x.to_owned());
-
-        message
+            .map(|x| x.to_owned())
     } else {
         None
     }

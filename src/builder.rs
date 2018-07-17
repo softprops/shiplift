@@ -1,13 +1,17 @@
 //! Interfaces for building various structures
 
-use self::super::Result;
-use rustc_serialize::json::{self, Json, ToJson};
+use serde::Serialize;
+use serde_json::map::Map;
+use serde_json::Number;
+use serde_json::Value;
 use std::cmp::Eq;
 use std::collections::{BTreeMap, HashMap};
 use std::hash::Hash;
-use std::iter::IntoIterator;
 use std::iter::Peekable;
 use url::form_urlencoded;
+
+use errors::Error;
+use errors::Result;
 
 #[derive(Default)]
 pub struct PullOptions {
@@ -37,7 +41,9 @@ pub struct PullOptionsBuilder {
 
 impl PullOptionsBuilder {
     pub fn new() -> PullOptionsBuilder {
-        PullOptionsBuilder { ..Default::default() }
+        PullOptionsBuilder {
+            ..Default::default()
+        }
     }
 
     pub fn image<I>(&mut self, img: I) -> &mut PullOptionsBuilder
@@ -73,7 +79,9 @@ impl PullOptionsBuilder {
     }
 
     pub fn build(&self) -> PullOptions {
-        PullOptions { params: self.params.clone() }
+        PullOptions {
+            params: self.params.clone(),
+        }
     }
 }
 
@@ -228,30 +236,27 @@ pub struct ContainerListOptionsBuilder {
 
 impl ContainerListOptionsBuilder {
     pub fn new() -> ContainerListOptionsBuilder {
-        ContainerListOptionsBuilder { ..Default::default() }
+        ContainerListOptionsBuilder {
+            ..Default::default()
+        }
     }
 
-    pub fn filter(
-        &mut self,
-        filters: Vec<ContainerFilter>,
-    ) -> &mut ContainerListOptionsBuilder {
+    pub fn filter(&mut self, filters: Vec<ContainerFilter>) -> &mut ContainerListOptionsBuilder {
         let mut param = HashMap::new();
+
         for f in filters {
             match f {
-                ContainerFilter::ExitCode(c) => {
-                    param.insert("exit", vec![c.to_string()])
-                }
+                ContainerFilter::ExitCode(c) => param.insert("exit", vec![c.to_string()]),
                 ContainerFilter::Status(s) => param.insert("status", vec![s]),
                 ContainerFilter::LabelName(n) => param.insert("label", vec![n]),
-                ContainerFilter::Label(n, v) => {
-                    param.insert("label", vec![format!("{}={}", n, v)])
-                }
+                ContainerFilter::Label(n, v) => param.insert("label", vec![format!("{}={}", n, v)]),
             };
-
         }
+
         // structure is a a json encoded object mapping string keys to a list
         // of string values
-        self.params.insert("filters", json::encode(&param).unwrap());
+        self.params
+            .insert("filters", ::serde_json::to_string(&param).unwrap());
         self
     }
 
@@ -276,47 +281,26 @@ impl ContainerListOptionsBuilder {
     }
 
     pub fn build(&self) -> ContainerListOptions {
-        ContainerListOptions { params: self.params.clone() }
+        ContainerListOptions {
+            params: self.params.clone(),
+        }
     }
 }
 
 /// Interface for building a new docker container from an existing image
+#[derive(Serialize)]
 pub struct ContainerOptions {
     pub name: Option<String>,
-    params: HashMap<&'static str, Json>,
+    params: HashMap<&'static str, Value>,
     params_list: HashMap<&'static str, Vec<String>>,
     params_hash: HashMap<String, Vec<HashMap<String, String>>>,
 }
 
-impl ToJson for ContainerOptions {
-    fn to_json(&self) -> Json {
-        let mut body_members = BTreeMap::new();
-
-        // The HostConfig element gets initialized to an empty object,
-        // for backward compatibility.
-        body_members.insert(
-            "HostConfig".to_string(),
-            Json::Object(BTreeMap::new()),
-        );
-
-        let mut body = Json::Object(body_members);
-
-        self.parse_from(&self.params, &mut body);
-        self.parse_from(&self.params_list, &mut body);
-        self.parse_from(&self.params_hash, &mut body);
-
-        body
-    }
-}
-
 /// Function to insert a JSON value into a tree where the desired
 /// location of the value is given as a path of JSON keys.
-fn insert<'a, I, V>(
-    key_path: &mut Peekable<I>,
-    value: &V,
-    parent_node: &mut Json,
-) where
-    V: ToJson,
+fn insert<'a, I, V>(key_path: &mut Peekable<I>, value: &V, parent_node: &mut Value)
+where
+    V: Serialize,
     I: Iterator<Item = &'a str>,
 {
     let local_key = key_path.next().unwrap();
@@ -326,13 +310,13 @@ fn insert<'a, I, V>(
             .as_object_mut()
             .unwrap()
             .entry(local_key.to_string())
-            .or_insert(Json::Object(BTreeMap::new()));
+            .or_insert(Value::Object(Map::new()));
 
         insert(key_path, value, node);
     } else {
         parent_node.as_object_mut().unwrap().insert(
             local_key.to_string(),
-            value.to_json(),
+            ::serde_json::to_value(value).unwrap(),
         );
     }
 }
@@ -345,17 +329,13 @@ impl ContainerOptions {
 
     /// serialize options as a string. returns None if no options are defined
     pub fn serialize(&self) -> Result<String> {
-        Ok(json::encode(&self.to_json())?)
+        Ok(::serde_json::to_string(&::serde_json::to_value(self)?)?)
     }
 
-    pub fn parse_from<'a, K, V>(
-        &self,
-        params: &'a HashMap<K, V>,
-        body: &mut Json,
-    ) where
-        &'a HashMap<K, V>: IntoIterator,
+    pub fn parse_from<'a, K, V>(&self, params: &'a HashMap<K, V>, body: &mut Value)
+    where
         K: ToString + Eq + Hash,
-        V: ToJson,
+        V: Serialize,
     {
         for (k, v) in params.iter() {
             let key_string = k.to_string();
@@ -367,7 +347,7 @@ impl ContainerOptions {
 #[derive(Default)]
 pub struct ContainerOptionsBuilder {
     name: Option<String>,
-    params: HashMap<&'static str, Json>,
+    params: HashMap<&'static str, Value>,
     params_list: HashMap<&'static str, Vec<String>>,
     params_hash: HashMap<String, Vec<HashMap<String, String>>>,
 }
@@ -378,12 +358,12 @@ impl ContainerOptionsBuilder {
         let params_list = HashMap::new();
         let params_hash = HashMap::new();
 
-        params.insert("Image", Json::String(image.to_owned()));
+        params.insert("Image", Value::String(image.to_owned()));
         ContainerOptionsBuilder {
             name: None,
-            params: params,
-            params_list: params_list,
-            params_hash: params_hash,
+            params,
+            params_list,
+            params_hash,
         }
     }
 
@@ -392,10 +372,7 @@ impl ContainerOptionsBuilder {
         self
     }
 
-    pub fn volumes(
-        &mut self,
-        volumes: Vec<&str>,
-    ) -> &mut ContainerOptionsBuilder {
+    pub fn volumes(&mut self, volumes: Vec<&str>) -> &mut ContainerOptionsBuilder {
         for v in volumes {
             self.params_list
                 .entry("HostConfig.Binds")
@@ -415,27 +392,7 @@ impl ContainerOptionsBuilder {
         self
     }
 
-    pub fn labels(&mut self, labels: &HashMap<&str, &str>) -> &mut ContainerOptionsBuilder {
-
-        let mut json_labels : BTreeMap<String, Json> = BTreeMap::new();
-        for (k, v) in labels {
-            let key : &str = k.as_ref();
-            let value : &str = v.as_ref();
-            json_labels.insert(key  .to_owned(), Json::String(value.to_string()));
-        }
-
-        self.params.insert(
-            "Labels",
-            Json::Object(json_labels),
-        );
-
-        self
-    }
-
-    pub fn extra_hosts(
-        &mut self,
-        hosts: Vec<&str>,
-    ) -> &mut ContainerOptionsBuilder {
+    pub fn extra_hosts(&mut self, hosts: Vec<&str>) -> &mut ContainerOptionsBuilder {
         for host in hosts {
             self.params_list
                 .entry("HostConfig.ExtraHosts")
@@ -446,10 +403,7 @@ impl ContainerOptionsBuilder {
         self
     }
 
-    pub fn volumes_from(
-        &mut self,
-        volumes: Vec<&str>,
-    ) -> &mut ContainerOptionsBuilder {
+    pub fn volumes_from(&mut self, volumes: Vec<&str>) -> &mut ContainerOptionsBuilder {
         for volume in volumes {
             self.params_list
                 .entry("HostConfig.VolumesFrom")
@@ -459,54 +413,43 @@ impl ContainerOptionsBuilder {
         self
     }
 
-    pub fn network_mode(
-        &mut self,
-        network: &str,
-    ) -> &mut ContainerOptionsBuilder {
+    pub fn network_mode(&mut self, network: &str) -> &mut ContainerOptionsBuilder {
         if !network.is_empty() {
-            self.params.insert(
-                "HostConfig.NetworkMode",
-                Json::String(network.to_owned()),
-            );
+            self.params
+                .insert("HostConfig.NetworkMode", Value::String(network.to_owned()));
         }
         self
     }
 
     pub fn env(&mut self, envs: Vec<&str>) -> &mut ContainerOptionsBuilder {
         for env in envs {
-            self.params_list.entry("Env").or_insert(Vec::new()).push(
-                env.to_owned(),
-            );
+            self.params_list
+                .entry("Env")
+                .or_insert(Vec::new())
+                .push(env.to_owned());
         }
         self
     }
 
     pub fn cmd(&mut self, cmds: Vec<&str>) -> &mut ContainerOptionsBuilder {
         for cmd in cmds {
-            self.params_list.entry("Cmd").or_insert(Vec::new()).push(
-                cmd.to_owned(),
-            );
+            self.params_list
+                .entry("Cmd")
+                .or_insert(Vec::new())
+                .push(cmd.to_owned());
         }
         self
     }
 
-    pub fn entrypoint(
-        &mut self,
-        entrypoint: &str,
-    ) -> &mut ContainerOptionsBuilder {
+    pub fn entrypoint(&mut self, entrypoint: &str) -> &mut ContainerOptionsBuilder {
         if !entrypoint.is_empty() {
-            self.params.insert(
-                "Entrypoint",
-                Json::String(entrypoint.to_owned()),
-            );
+            self.params
+                .insert("Entrypoint", Value::String(entrypoint.to_owned()));
         }
         self
     }
 
-    pub fn capabilities(
-        &mut self,
-        capabilities: Vec<&str>,
-    ) -> &mut ContainerOptionsBuilder {
+    pub fn capabilities(&mut self, capabilities: Vec<&str>) -> &mut ContainerOptionsBuilder {
         for c in capabilities {
             self.params_list
                 .entry("HostConfig.CapAdd")
@@ -529,14 +472,11 @@ impl ContainerOptionsBuilder {
         self
     }
 
-    pub fn log_driver(
-        &mut self,
-        log_driver: &str,
-    ) -> &mut ContainerOptionsBuilder {
+    pub fn log_driver(&mut self, log_driver: &str) -> &mut ContainerOptionsBuilder {
         if !log_driver.is_empty() {
             self.params.insert(
                 "HostConfig.LogConfig.Type",
-                Json::String(log_driver.to_owned()),
+                Value::String(log_driver.to_owned()),
             );
         }
         self
@@ -550,15 +490,16 @@ impl ContainerOptionsBuilder {
         if !name.is_empty() {
             self.params.insert(
                 "HostConfig.RestartPolicy.Name",
-                Json::String(name.to_owned()),
+                Value::String(name.to_owned()),
             );
         }
+
         if name == "on-failure" {
-            self.params.insert(
-                "HostConfig.RestartPolicy.MaximumRetryCount",
-                Json::U64(maximum_retry_count),
-            );
+            let k = "HostConfig.RestartPolicy.MaximumRetryCount";
+            self.params
+                .insert(k, Value::Number(Number::from(maximum_retry_count)));
         }
+
         self
     }
 
@@ -572,8 +513,11 @@ impl ContainerOptionsBuilder {
     }
 }
 
+#[derive(Serialize)]
 pub struct ExecContainerOptions {
+    #[serde(flatten)]
     params: HashMap<&'static str, Vec<String>>,
+    #[serde(flatten)]
     params_bool: HashMap<&'static str, bool>,
 }
 
@@ -585,17 +529,7 @@ impl ExecContainerOptions {
 
     /// serialize options as a string. returns None if no options are defined
     pub fn serialize(&self) -> Result<String> {
-        let mut body = BTreeMap::new();
-
-        for (k, v) in &self.params {
-            body.insert(k.to_string(), v.to_json());
-        }
-        for (k, v) in &self.params_bool {
-            body.insert(k.to_string(), v.to_json());
-        }
-
-        let json_obj: Json = body.to_json();
-        Ok(json::encode(&json_obj)?)
+        ::serde_json::to_string(&self).map_err(Error::from)
     }
 }
 
@@ -616,9 +550,10 @@ impl ExecContainerOptionsBuilder {
     /// Command to run, as an array of strings
     pub fn cmd(&mut self, cmds: Vec<&str>) -> &mut ExecContainerOptionsBuilder {
         for cmd in cmds {
-            self.params.entry("Cmd").or_insert(Vec::new()).push(
-                cmd.to_owned(),
-            );
+            self.params
+                .entry("Cmd")
+                .or_insert(Vec::new())
+                .push(cmd.to_owned());
         }
         self
     }
@@ -626,33 +561,95 @@ impl ExecContainerOptionsBuilder {
     /// A list of environment variables in the form "VAR=value"
     pub fn env(&mut self, envs: Vec<&str>) -> &mut ExecContainerOptionsBuilder {
         for env in envs {
-            self.params.entry("Env").or_insert(Vec::new()).push(
-                env.to_owned(),
-            );
+            self.params
+                .entry("Env")
+                .or_insert(Vec::new())
+                .push(env.to_owned());
         }
         self
     }
 
     /// Attach to stdout of the exec command
-    pub fn attach_stdout(
-        &mut self,
-        stdout: bool,
-    ) -> &mut ExecContainerOptionsBuilder {
+    pub fn attach_stdout(&mut self, stdout: bool) -> &mut ExecContainerOptionsBuilder {
         self.params_bool.insert("AttachStdout", stdout);
         self
     }
 
     /// Attach to stderr of the exec command
-    pub fn attach_stderr(
-        &mut self,
-        stderr: bool,
-    ) -> &mut ExecContainerOptionsBuilder {
+    pub fn attach_stderr(&mut self, stderr: bool) -> &mut ExecContainerOptionsBuilder {
         self.params_bool.insert("AttachStderr", stderr);
         self
     }
 
     pub fn build(&self) -> ExecContainerOptions {
         ExecContainerOptions {
+            params: self.params.clone(),
+            params_bool: self.params_bool.clone(),
+        }
+    }
+}
+
+//
+#[derive(Serialize)]
+pub struct ContainerArchiveOptions {
+    #[serde(skip)]
+    pub local_path: String,
+    #[serde(flatten)]
+    params: HashMap<&'static str, String>,
+    #[serde(flatten)]
+    params_bool: HashMap<&'static str, bool>,
+}
+
+impl ContainerArchiveOptions {
+    /// return a new instance of a builder for options
+    pub fn builder() -> ContainerArchiveOptionsBuilder {
+        ContainerArchiveOptionsBuilder::new()
+    }
+
+    /// serialize options as a string. returns None if no options are defined
+    pub fn serialize(&self) -> Option<String> {
+        if self.params.is_empty() {
+            None
+        } else {
+            Some(form_urlencoded::serialize(&self.params))
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct ContainerArchiveOptionsBuilder {
+    local_path: String,
+    params: HashMap<&'static str, String>,
+    params_bool: HashMap<&'static str, bool>,
+}
+
+impl ContainerArchiveOptionsBuilder {
+    pub fn new() -> ContainerArchiveOptionsBuilder {
+        ContainerArchiveOptionsBuilder {
+            local_path: String::new(),
+            params: HashMap::new(),
+            params_bool: HashMap::new(),
+        }
+    }
+
+    pub fn path(&mut self, cmds: String) -> &mut ContainerArchiveOptionsBuilder {
+        self.params.insert("path", cmds);
+        self
+    }
+
+    pub fn local_path(&mut self, path: String) -> &mut ContainerArchiveOptionsBuilder {
+        self.local_path = path;
+        self
+    }
+
+    pub fn no_overwrite(&mut self, o: bool) -> &mut ContainerArchiveOptionsBuilder {
+        self.params_bool.insert("noOverwriteDirNonDir", o);
+        self
+    }
+
+    pub fn build(&self) -> ContainerArchiveOptions {
+        ContainerArchiveOptions {
+            local_path: self.local_path.clone(),
             params: self.params.clone(),
             params_bool: self.params_bool.clone(),
         }
@@ -679,7 +676,6 @@ impl EventsOptions {
         }
     }
 }
-
 
 pub enum EventFilterType {
     Container,
@@ -727,7 +723,9 @@ pub struct EventsOptionsBuilder {
 
 impl EventsOptionsBuilder {
     pub fn new() -> EventsOptionsBuilder {
-        EventsOptionsBuilder { ..Default::default() }
+        EventsOptionsBuilder {
+            ..Default::default()
+        }
     }
 
     /// Filter events since a given timestamp
@@ -742,58 +740,56 @@ impl EventsOptionsBuilder {
         self
     }
 
-    pub fn filter(
-        &mut self,
-        filters: Vec<EventFilter>,
-    ) -> &mut EventsOptionsBuilder {
+    pub fn filter(&mut self, filters: Vec<EventFilter>) -> &mut EventsOptionsBuilder {
         let mut params = HashMap::new();
         for f in filters {
             match f {
                 EventFilter::Container(n) => {
                     self.containers.push(n);
                     params.insert("container", self.containers.clone())
-                },
+                }
                 EventFilter::Event(n) => {
                     self.events.push(n);
                     params.insert("event", self.events.clone())
-                },
+                }
                 EventFilter::Image(n) => {
                     self.images.push(n);
                     params.insert("image", self.images.clone())
-                },
+                }
                 EventFilter::Label(n) => {
                     self.labels.push(n);
                     params.insert("label", self.labels.clone())
-                },
+                }
                 EventFilter::Volume(n) => {
                     self.volumes.push(n);
                     params.insert("volume", self.volumes.clone())
-                },
+                }
                 EventFilter::Network(n) => {
                     self.networks.push(n);
                     params.insert("network", self.networks.clone())
-                },
+                }
                 EventFilter::Daemon(n) => {
                     self.daemons.push(n);
                     params.insert("daemon", self.daemons.clone())
-                },
+                }
                 EventFilter::Type(n) => {
                     let event_type = event_filter_type_to_string(n).to_string();
                     self.types.push(event_type);
                     params.insert("type", self.types.clone())
                 }
             };
-
         }
-        self.params.insert("filters", json::encode(&params).unwrap());
+        self.params
+            .insert("filters", ::serde_json::to_string(&params).unwrap());
         self
     }
 
     pub fn build(&self) -> EventsOptions {
-        EventsOptions { params: self.params.clone() }
+        EventsOptions {
+            params: self.params.clone(),
+        }
     }
 }
-
 
 /// Options for controlling log request results
 #[derive(Default)]
@@ -825,7 +821,9 @@ pub struct LogsOptionsBuilder {
 
 impl LogsOptionsBuilder {
     pub fn new() -> LogsOptionsBuilder {
-        LogsOptionsBuilder { ..Default::default() }
+        LogsOptionsBuilder {
+            ..Default::default()
+        }
     }
 
     pub fn follow(&mut self, f: bool) -> &mut LogsOptionsBuilder {
@@ -855,10 +853,11 @@ impl LogsOptionsBuilder {
     }
 
     pub fn build(&self) -> LogsOptions {
-        LogsOptions { params: self.params.clone() }
+        LogsOptions {
+            params: self.params.clone(),
+        }
     }
 }
-
 
 /// Filter options for image listings
 pub enum ImageFilter {
@@ -894,7 +893,9 @@ pub struct ImageListOptionsBuilder {
 
 impl ImageListOptionsBuilder {
     pub fn new() -> ImageListOptionsBuilder {
-        ImageListOptionsBuilder { ..Default::default() }
+        ImageListOptionsBuilder {
+            ..Default::default()
+        }
     }
 
     pub fn digests(&mut self, d: bool) -> &mut ImageListOptionsBuilder {
@@ -912,34 +913,28 @@ impl ImageListOptionsBuilder {
         self
     }
 
-    pub fn filter(
-        &mut self,
-        filters: Vec<ImageFilter>,
-    ) -> &mut ImageListOptionsBuilder {
+    pub fn filter(&mut self, filters: Vec<ImageFilter>) -> &mut ImageListOptionsBuilder {
         let mut param = HashMap::new();
         for f in filters {
             match f {
-                ImageFilter::Dangling => {
-                    param.insert("dangling", vec![true.to_string()])
-                }
+                ImageFilter::Dangling => param.insert("dangling", vec![true.to_string()]),
                 ImageFilter::LabelName(n) => param.insert("label", vec![n]),
-                ImageFilter::Label(n, v) => {
-                    param.insert("label", vec![format!("{}={}", n, v)])
-                }
+                ImageFilter::Label(n, v) => param.insert("label", vec![format!("{}={}", n, v)]),
             };
-
         }
         // structure is a a json encoded object mapping string keys to a list
         // of string values
-        self.params.insert("filters", json::encode(&param).unwrap());
+        self.params
+            .insert("filters", ::serde_json::to_string(&param).unwrap());
         self
     }
 
     pub fn build(&self) -> ImageListOptions {
-        ImageListOptions { params: self.params.clone() }
+        ImageListOptions {
+            params: self.params.clone(),
+        }
     }
 }
-
 
 /// Options for controlling log request results
 #[derive(Default)]
@@ -971,7 +966,9 @@ pub struct RmContainerOptionsBuilder {
 
 impl RmContainerOptionsBuilder {
     pub fn new() -> RmContainerOptionsBuilder {
-        RmContainerOptionsBuilder { ..Default::default() }
+        RmContainerOptionsBuilder {
+            ..Default::default()
+        }
     }
 
     pub fn force(&mut self, f: bool) -> &mut RmContainerOptionsBuilder {
@@ -985,7 +982,9 @@ impl RmContainerOptionsBuilder {
     }
 
     pub fn build(&self) -> RmContainerOptions {
-        RmContainerOptions { params: self.params.clone() }
+        RmContainerOptions {
+            params: self.params.clone(),
+        }
     }
 }
 
@@ -1007,21 +1006,13 @@ impl NetworkListOptions {
 }
 
 /// Interface for creating new docker network
+#[derive(Serialize)]
 pub struct NetworkCreateOptions {
     pub name: Option<String>,
+    #[serde(flatten)]
     params: HashMap<&'static str, String>,
+    #[serde(flatten)]
     params_hash: HashMap<String, Vec<HashMap<String, String>>>,
-}
-
-impl ToJson for NetworkCreateOptions {
-    fn to_json(&self) -> Json {
-        let mut body: BTreeMap<String, Json> = BTreeMap::new();
-
-        self.parse_from(&self.params, &mut body);
-        self.parse_from(&self.params_hash, &mut body);
-
-        body.to_json()
-    }
 }
 
 impl NetworkCreateOptions {
@@ -1032,21 +1023,20 @@ impl NetworkCreateOptions {
 
     /// serialize options as a string. returns None if no options are defined
     pub fn serialize(&self) -> Result<String> {
-        Ok(json::encode(&self.to_json())?)
+        ::serde_json::to_string(&self).map_err(Error::from)
     }
 
     pub fn parse_from<'a, K, V>(
         &self,
         params: &'a HashMap<K, V>,
-        body: &mut BTreeMap<String, Json>,
+        body: &mut BTreeMap<String, Value>,
     ) where
-        &'a HashMap<K, V>: IntoIterator,
         K: ToString + Eq + Hash,
-        V: ToJson,
+        V: Serialize,
     {
         for (k, v) in params.iter() {
             let key = k.to_string();
-            let value = v.to_json();
+            let value = ::serde_json::to_value(v).unwrap();
 
             body.insert(key, value);
         }
@@ -1068,8 +1058,8 @@ impl NetworkCreateOptionsBuilder {
         params.insert("Name", name.to_owned());
         NetworkCreateOptionsBuilder {
             name: None,
-            params: params,
-            params_hash: params_hash,
+            params,
+            params_hash,
         }
     }
 
@@ -1103,56 +1093,48 @@ impl NetworkCreateOptionsBuilder {
 }
 
 /// Interface for connect container to network
+#[derive(Serialize)]
 pub struct ContainerConnectionOptions {
-    pub Container: Option<String>,
+    pub container: Option<String>,
+    #[serde(flatten)]
     params: HashMap<&'static str, String>,
 }
 
-impl ToJson for ContainerConnectionOptions {
-    fn to_json(&self) -> Json {
-        let mut body: BTreeMap<String, Json> = BTreeMap::new();
-        self.parse_from(&self.params, &mut body);
-        body.to_json()
-    }
-}
-
-
 impl ContainerConnectionOptions {
+    pub fn new(container_id: &str) -> ContainerConnectionOptions {
+        let mut params = HashMap::new();
+        params.insert("Container", container_id.to_owned());
+        ContainerConnectionOptions {
+            container: None,
+            params: params.clone(),
+        }
+    }
+
     /// serialize options as a string. returns None if no options are defined
     pub fn serialize(&self) -> Result<String> {
-        Ok(json::encode(&self.to_json())?)
+        ::serde_json::to_string(&self).map_err(Error::from)
     }
 
     pub fn parse_from<'a, K, V>(
         &self,
         params: &'a HashMap<K, V>,
-        body: &mut BTreeMap<String, Json>,
+        body: &mut BTreeMap<String, Value>,
     ) where
-        &'a HashMap<K, V>: IntoIterator,
         K: ToString + Eq + Hash,
-        V: ToJson,
+        V: Serialize,
     {
         for (k, v) in params.iter() {
             let key = k.to_string();
-            let value = v.to_json();
+            let value = ::serde_json::to_value(v).unwrap();
 
             body.insert(key, value);
-        }
-    }
-
-    pub fn new(container_id: &str) -> ContainerConnectionOptions {
-        let mut params = HashMap::new();
-        params.insert("Container", container_id.to_owned());
-        ContainerConnectionOptions {
-            Container: None,
-            params: params.clone(),
         }
     }
 
     pub fn force(&mut self) -> ContainerConnectionOptions {
         self.params.insert("Force", "true".to_owned());
         ContainerConnectionOptions {
-            Container: None,
+            container: None,
             params: self.params.clone(),
         }
     }
@@ -1228,6 +1210,5 @@ mod tests {
             r#"{"HostConfig":{"RestartPolicy":{"Name":"always"}},"Image":"test_image"}"#,
             options.serialize().unwrap()
         );
-
     }
 }
