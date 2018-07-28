@@ -658,18 +658,16 @@ impl Docker {
                     // https://github.com/hyperium/hyper/blob/master/src/net.rs#L427-L428
                     let mut connector =
                         SslConnectorBuilder::new(SslMethod::tls()).unwrap();
-                    connector.builder_mut().set_cipher_list("DEFAULT").unwrap();
+                    connector.set_cipher_list("DEFAULT").unwrap();
                     let cert = &format!("{}/cert.pem", certs);
                     let key = &format!("{}/key.pem", certs);
                     connector
-                        .builder_mut()
                         .set_certificate_file(
                             &Path::new(cert),
                             X509_FILETYPE_PEM,
                         )
                         .unwrap();
                     connector
-                        .builder_mut()
                         .set_private_key_file(
                             &Path::new(key),
                             X509_FILETYPE_PEM,
@@ -678,7 +676,6 @@ impl Docker {
                     if let Some(_) = env::var("DOCKER_TLS_VERIFY").ok() {
                         let ca = &format!("{}/ca.pem", certs);
                         connector
-                            .builder_mut()
                             .set_ca_file(&Path::new(ca))
                             .unwrap();
                     }
