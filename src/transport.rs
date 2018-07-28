@@ -118,6 +118,15 @@ impl Transport {
                     ),
                 })
             }
+            StatusCode::NotModified => {
+                Err(Error::Fault {
+                    code: res.status,
+                    message: get_error_message(&mut res).unwrap_or(
+                        "not modified"
+                            .to_owned(),
+                    ),
+                })
+            },
             StatusCode::NotAcceptable => {
                 Err(Error::Fault {
                     code: res.status,
