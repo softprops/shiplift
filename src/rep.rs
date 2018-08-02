@@ -386,6 +386,12 @@ pub struct ContainerCreateInfo {
 
 #[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
 #[allow(non_snake_case)]
+pub struct VolumeCreateInfo {
+    pub Name: String,
+}
+
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
+#[allow(non_snake_case)]
 pub struct History {
     pub Id: String,
     pub Created: u64,
@@ -406,6 +412,18 @@ pub struct Event {
     pub from: Option<String>,
     pub time: u64,
     pub timeNano: u64,
+}
+
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
+#[allow(non_snake_case)]
+pub struct Volume {
+    pub CreatedAt: String,
+    pub Driver: String,
+    pub Labels: Option<HashMap<String, String>>,
+    pub Mountpoint: String,
+    pub Name: String,
+    pub Options: Option<HashMap<String, String>>,
+    pub Scope: String,
 }
 
 #[derive(Clone, Debug)]
