@@ -651,11 +651,19 @@ impl Docker {
     pub fn host(host: Uri) -> Docker {
         let tcp_host_str = format!(
                             "{}://{}:{}",
-                            host.scheme().unwrap(),
+                            host.scheme_part().map(|s| s.as_str()).unwrap(),
                             host.host().unwrap().to_owned(),
                             host.port().unwrap_or(80));
 
         match host.scheme_part().map(|s| s.as_str()) {
+            Some("unix") => {
+                Docker {
+                    transport: Transport::Unix {
+                        client: Client::builder().build(UnixConnector),
+                        path: host.path().to_owned(),
+                    },
+                }
+            }
             _ => {
                 if let Some(ref certs) = env::var(
                     "DOCKER_CERT_PATH",
