@@ -25,7 +25,8 @@ impl PullOptions {
         if self.params.is_empty() {
             None
         } else {
-            Some(form_urlencoded::serialize(&self.params))
+            Some(form_urlencoded::Serializer::new(String::new())
+                 .extend_pairs(&self.params).finish())
         }
     }
 }
@@ -99,7 +100,8 @@ impl BuildOptions {
         if self.params.is_empty() {
             None
         } else {
-            Some(form_urlencoded::serialize(&self.params))
+            Some(form_urlencoded::Serializer::new(String::new())
+                 .extend_pairs(&self.params).finish())
         }
     }
 }
@@ -207,7 +209,8 @@ impl ContainerListOptions {
         if self.params.is_empty() {
             None
         } else {
-            Some(form_urlencoded::serialize(&self.params))
+            Some(form_urlencoded::Serializer::new(String::new())
+                 .extend_pairs(&self.params).finish())
         }
     }
 }
@@ -675,7 +678,8 @@ impl EventsOptions {
         if self.params.is_empty() {
             None
         } else {
-            Some(form_urlencoded::serialize(&self.params))
+            Some(form_urlencoded::Serializer::new(String::new())
+                 .extend_pairs(&self.params).finish())
         }
     }
 }
@@ -812,7 +816,8 @@ impl LogsOptions {
         if self.params.is_empty() {
             None
         } else {
-            Some(form_urlencoded::serialize(&self.params))
+            Some(form_urlencoded::Serializer::new(String::new())
+                 .extend_pairs(&self.params).finish())
         }
     }
 }
@@ -881,7 +886,8 @@ impl ImageListOptions {
         if self.params.is_empty() {
             None
         } else {
-            Some(form_urlencoded::serialize(&self.params))
+            Some(form_urlencoded::Serializer::new(String::new())
+                 .extend_pairs(&self.params).finish())
         }
     }
 }
@@ -958,7 +964,8 @@ impl RmContainerOptions {
         if self.params.is_empty() {
             None
         } else {
-            Some(form_urlencoded::serialize(&self.params))
+            Some(form_urlencoded::Serializer::new(String::new())
+                 .extend_pairs(&self.params).finish())
         }
     }
 }
@@ -1001,7 +1008,8 @@ impl NetworkListOptions {
         if self.params.is_empty() {
             None
         } else {
-            Some(form_urlencoded::serialize(&self.params))
+            Some(form_urlencoded::Serializer::new(String::new())
+                 .extend_pairs(&self.params).finish())
         }
     }
 }

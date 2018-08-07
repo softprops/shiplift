@@ -1,7 +1,7 @@
 //! Representations of various client errors
 
-use hyper::Error as HttpError;
-use hyper::status::StatusCode;
+use http;
+use hyper::{self, StatusCode};
 use rustc_serialize::json::{DecoderError, EncoderError, ParserError};
 use std::error::Error as ErrorTrait;
 use std::fmt;
@@ -12,7 +12,8 @@ pub enum Error {
     Decoding(DecoderError),
     Encoding(EncoderError),
     Parse(ParserError),
-    Http(HttpError),
+    Hyper(hyper::Error),
+    Http(http::Error),
     IO(IoError),
     Fault { code: StatusCode, message: String },
 }
@@ -35,8 +36,14 @@ impl From<EncoderError> for Error {
     }
 }
 
-impl From<HttpError> for Error {
-    fn from(error: HttpError) -> Error {
+impl From<hyper::Error> for Error {
+    fn from(error: hyper::Error) -> Error {
+        Error::Hyper(error)
+    }
+}
+
+impl From<http::Error> for Error {
+    fn from(error: http::Error) -> Error {
         Error::Http(error)
     }
 }
@@ -55,6 +62,7 @@ impl fmt::Display for Error {
             &Error::Encoding(ref err) => return err.fmt(f),
             &Error::Parse(ref err) => return err.fmt(f),
             &Error::Http(ref err) => return err.fmt(f),
+            &Error::Hyper(ref err) => return err.fmt(f),
             &Error::IO(ref err) => return err.fmt(f),
             &Error::Fault { code, .. } => return write!(f, "{}", code),
         };
