@@ -16,7 +16,7 @@ flate2 = "0.2"
 http = "0.1"
 hyper = "0.12"
 hyper-openssl = "0.6"
-hyperlocal = { git = "https://github.com/dylanmckay/hyperlocal.git", branch = "update-hyper" }
+hyperlocal = "0.6"
 jed = "0.1"
 log = "0.3"
 mime = "0.3"
