@@ -373,6 +373,7 @@ pub struct Info {
     pub Name: String,
     pub OperatingSystem: String,
     // pub RegistryConfig:???
+    pub SecurityOptions: Vec<String>,
     pub SwapLimit: bool,
     pub SystemTime: Option<String>,
 }
