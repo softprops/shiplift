@@ -30,6 +30,7 @@ extern crate byteorder;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde;
+extern crate tokio;
 
 pub mod builder;
 pub mod rep;
@@ -63,6 +64,7 @@ use std::env;
 use std::io::prelude::*;
 use std::iter::IntoIterator;
 use std::path::Path;
+use std::cell::RefCell;
 use std::time::Duration;
 use transport::{Transport, tar};
 use tty::Tty;
@@ -641,7 +643,10 @@ impl Docker {
         where S: Into<String> {
         Docker {
             transport: Transport::Unix {
-                client: Client::builder().build(UnixConnector),
+                client: Client::builder()
+                    .keep_alive(false)
+                    .build(UnixConnector),
+                runtime: RefCell::new(tokio::runtime::Runtime::new().unwrap()),
                 path: socket_path.into(),
             },
         }
@@ -660,6 +665,7 @@ impl Docker {
                 Docker {
                     transport: Transport::Unix {
                         client: Client::builder().build(UnixConnector),
+                        runtime: RefCell::new(tokio::runtime::Runtime::new().unwrap()),
                         path: host.path().to_owned(),
                     },
                 }
@@ -701,12 +707,17 @@ impl Docker {
                     Docker {
                         transport: Transport::EncryptedTcp {
                             client: Client::builder().build(connector),
+                            runtime: RefCell::new(tokio::runtime::Runtime::new().unwrap()),
                             host: tcp_host_str,
                         },
                     }
                 } else {
                     Docker {
-                        transport: Transport::Tcp { client: Client::new(), host: tcp_host_str },
+                        transport: Transport::Tcp {
+                            client: Client::new(),
+                            runtime: RefCell::new(tokio::runtime::Runtime::new().unwrap()),
+                            host: tcp_host_str
+                        },
                     }
                 }
             }

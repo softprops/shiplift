@@ -1,7 +1,6 @@
 //! Transports for communicating with the docker daemon
 
 extern crate hyper;
-extern crate tokio_core;
 
 use self::super::{Error, Result};
 use hyper::Body;
@@ -15,8 +14,10 @@ use hyperlocal::UnixConnector;
 use mime::Mime;
 use rustc_serialize::json;
 use std::fmt;
+use std::cell::{RefMut, RefCell};
 use std::io::{BufReader, Cursor};
 use std::io::{Read, Write};
+use tokio::runtime::Runtime;
 
 trait InteractiveStream : Read + Write { }
 
@@ -28,11 +29,23 @@ pub fn tar() -> Mime {
 /// with the docker daemon
 pub enum Transport {
     /// A network tcp interface
-    Tcp { client: Client<HttpConnector>, host: String },
-    /// TCP/TLS.
-    EncryptedTcp { client: Client<HttpsConnector<HttpConnector>>, host: String },
+    Tcp {
+        client: Client<HttpConnector>,
+        runtime: RefCell<Runtime>,
+        host: String,
+    },
+    /// TCP/TLS.w
+    EncryptedTcp {
+        client: Client<HttpsConnector<HttpConnector>>,
+        runtime: RefCell<Runtime>,
+        host: String,
+    },
     /// A Unix domain socket
-    Unix { client: Client<UnixConnector>, path: String },
+    Unix {
+        client: Client<UnixConnector>,
+        runtime: RefCell<Runtime>,
+        path: String,
+    },
 }
 
 impl fmt::Debug for Transport {
@@ -74,23 +87,23 @@ impl Transport {
     {
         let mut builder = Request::builder();
         let req = match *self {
-            Transport::Tcp {
-                ref host, ..
-            } => builder.method(method).uri(&format!("{}{}", host, endpoint)),
-            Transport::EncryptedTcp {
-                ref host, ..
-            } => builder.method(method).uri(&format!("{}{}", host, endpoint)),
-            Transport::Unix {
-                ref path, ..
-            } => {
+            Transport::Tcp { ref host, .. } => {
+                builder.method(method).uri(&format!("{}{}", host, endpoint))
+            }
+            Transport::EncryptedTcp { ref host, .. } => {
+                builder.method(method).uri(&format!("{}{}", host, endpoint))
+            }
+            Transport::Unix { ref path, .. } => {
                 let uri: hyper::Uri = DomainUri::new(&path, endpoint).into();
                 builder.method(method).uri(&uri.to_string())
-            },
+            }
         };
         let req = req.header(header::HOST, "");
 
         match body {
-            Some((b, c)) => Ok(req.header(header::CONTENT_TYPE, &c.to_string()[..]).body(b.into())?),
+            Some((b, c)) => Ok(req
+                .header(header::CONTENT_TYPE, &c.to_string()[..])
+                .body(b.into())?),
             _ => Ok(req.body(Body::empty())?),
         }
     }
@@ -111,7 +124,7 @@ impl Transport {
             StatusCode::OK |
             StatusCode::CREATED |
             StatusCode::SWITCHING_PROTOCOLS => {
-                let chunk = res.into_body().concat2().wait()?;
+                let chunk = self.runtime().block_on(res.into_body().concat2())?;
                 Ok(Box::new(Cursor::new(chunk.into_iter().collect::<Vec<u8>>())))
             },
             StatusCode::NO_CONTENT => Ok(
@@ -176,14 +189,21 @@ impl Transport {
     }
 
     fn send_request(&self, req: Request<hyper::Body>) -> Result<hyper::Response<Body>> {
-        use self::tokio_core::reactor;
-
-        let mut core = reactor::Core::new().unwrap();
-        Ok(core.run(match self {
+        let req = match self {
             Transport::Tcp { ref client, .. } => client.request(req),
             Transport::EncryptedTcp { ref client, .. } => client.request(req),
             Transport::Unix { ref client, .. } => client.request(req),
-        })?)
+        };
+
+        self.runtime().block_on(req).map_err(Error::Hyper)
+    }
+
+    fn runtime(&self) -> RefMut<Runtime> {
+        match self {
+            Transport::Tcp { ref runtime, .. } => runtime.borrow_mut(),
+            Transport::EncryptedTcp { ref runtime, .. } => runtime.borrow_mut(),
+            Transport::Unix { ref runtime, .. } => runtime.borrow_mut(),
+        }
     }
 }
 
