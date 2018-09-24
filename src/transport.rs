@@ -16,7 +16,7 @@ use hyperlocal::UnixConnector;
 #[cfg(feature = "unix-socket")]
 use hyperlocal::Uri as DomainUri;
 use mime::Mime;
-use rustc_serialize::json;
+use serde_json::{self, Value};
 use std::cell::{RefCell, RefMut};
 use std::fmt;
 use std::io::Read;
@@ -214,12 +214,12 @@ impl Transport {
 
         match String::from_utf8(chunk.into_iter().collect()) {
             Ok(output) => {
-                let json_response = json::Json::from_str(output.as_str()).ok();
+                let json_response = serde_json::from_str::<Value>(output.as_str()).ok();
                 let message = json_response
                     .as_ref()
                     .and_then(|x| x.as_object())
                     .and_then(|x| x.get("message"))
-                    .and_then(|x| x.as_string())
+                    .and_then(|x| x.as_str())
                     .map(|x| x.to_owned());
 
                 message
