@@ -8,7 +8,7 @@ use hyper::client::{Client, HttpConnector};
 use hyper::{Method, Request, Response, StatusCode};
 use hyper::header;
 use hyper_openssl::HttpsConnector;
-use hyper::rt::{Future, Stream};
+use hyper::rt::Stream;
 use hyperlocal::Uri as DomainUri;
 use hyperlocal::UnixConnector;
 use mime::Mime;
@@ -132,7 +132,7 @@ impl Transport {
             StatusCode::BAD_REQUEST => {
                 Err(Error::Fault {
                     code: res.status(),
-                    message: get_error_message(res).unwrap_or(
+                    message: self.get_error_message(res).unwrap_or(
                         "bad parameter"
                             .to_owned(),
                     ),
@@ -141,7 +141,7 @@ impl Transport {
             StatusCode::NOT_FOUND => {
                 Err(Error::Fault {
                     code: res.status(),
-                    message: get_error_message(res).unwrap_or(
+                    message: self.get_error_message(res).unwrap_or(
                         "not found".to_owned(),
                     ),
                 })
@@ -149,7 +149,7 @@ impl Transport {
             StatusCode::NOT_MODIFIED => {
                 Err(Error::Fault {
                     code: res.status(),
-                    message: get_error_message(res).unwrap_or(
+                    message: self.get_error_message(res).unwrap_or(
                         "not modified"
                             .to_owned(),
                     ),
@@ -158,7 +158,7 @@ impl Transport {
             StatusCode::NOT_ACCEPTABLE => {
                 Err(Error::Fault {
                     code: res.status(),
-                    message: get_error_message(res).unwrap_or(
+                    message: self.get_error_message(res).unwrap_or(
                         "not acceptable"
                             .to_owned(),
                     ),
@@ -167,7 +167,7 @@ impl Transport {
             StatusCode::CONFLICT => {
                 Err(Error::Fault {
                     code: res.status(),
-                    message: get_error_message(res).unwrap_or(
+                    message: self.get_error_message(res).unwrap_or(
                         "conflict found"
                             .to_owned(),
                     ),
@@ -176,7 +176,7 @@ impl Transport {
             StatusCode::INTERNAL_SERVER_ERROR => {
                 Err(Error::Fault {
                     code: res.status(),
-                    message: get_error_message(res).unwrap_or(
+                    message: self.get_error_message(res).unwrap_or(
                         "internal server error"
                             .to_owned(),
                     ),
@@ -203,30 +203,31 @@ impl Transport {
             Transport::Unix { ref runtime, .. } => runtime.borrow_mut(),
         }
     }
-}
 
-/// Extract the error message content from an HTTP response that
-/// contains a Docker JSON error structure.
-fn get_error_message(res: Response<Body>) -> Option<String> {
-    let chunk = match res.into_body().concat2().wait() {
-        Ok(c) => c,
-        Err(..) => return None,
-    };
+    /// Extract the error message content from an HTTP response that
+    /// contains a Docker JSON error structure.
+    fn get_error_message(&self, res: Response<Body>) -> Option<String> {
+        let chunk = match self.runtime().block_on(res.into_body().concat2()) {
+            Ok(c) => c,
+            Err(..) => return None,
+        };
 
-    match String::from_utf8(chunk.into_iter().collect()) {
-        Ok(output) => {
-            let json_response = json::Json::from_str(output.as_str()).ok();
-            let message = json_response
-                .as_ref()
-                .and_then(|x| x.as_object())
-                .and_then(|x| x.get("message"))
-                .and_then(|x| x.as_string())
-                .map(|x| x.to_owned());
+        match String::from_utf8(chunk.into_iter().collect()) {
+            Ok(output) => {
+                let json_response = json::Json::from_str(output.as_str()).ok();
+                let message = json_response
+                    .as_ref()
+                    .and_then(|x| x.as_object())
+                    .and_then(|x| x.get("message"))
+                    .and_then(|x| x.as_string())
+                    .map(|x| x.to_owned());
 
-            message
+                message
+            }
+            Err(..) => {
+                None
+            },
         }
-        Err(..) => {
-            None
-        },
     }
 }
+
