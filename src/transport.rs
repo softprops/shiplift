@@ -16,10 +16,8 @@ use rustc_serialize::json;
 use std::fmt;
 use std::cell::{RefMut, RefCell};
 use std::io::{BufReader, Cursor};
-use std::io::{Read, Write};
+use std::io::Read;
 use tokio::runtime::Runtime;
-
-trait InteractiveStream : Read + Write { }
 
 pub fn tar() -> Mime {
     "application/tar".parse().unwrap()
