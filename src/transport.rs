@@ -32,7 +32,7 @@ pub enum Transport {
         runtime: RefCell<Runtime>,
         host: String,
     },
-    /// TCP/TLS.w
+    /// TCP/TLS
     EncryptedTcp {
         client: Client<HttpsConnector<HttpConnector>>,
         runtime: RefCell<Runtime>,

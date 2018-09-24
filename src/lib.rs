@@ -637,7 +637,7 @@ impl Docker {
         }
     }
 
-    /// Creates a new docker instance for a dockr host
+    /// Creates a new docker instance for a docker host
     /// listening on a given Unix socket.
     pub fn unix<S>(socket_path: S) -> Docker
         where S: Into<String> {
