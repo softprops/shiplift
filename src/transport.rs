@@ -1,6 +1,8 @@
 //! Transports for communicating with the docker daemon
 
 extern crate hyper;
+#[cfg(feature = "unix-socket")]
+extern crate hyperlocal;
 
 use self::hyper::buffer::BufReader;
 use self::hyper::header::ContentType;
