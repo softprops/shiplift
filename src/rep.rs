@@ -6,7 +6,7 @@ use std::collections::HashMap;
 pub struct SearchResult {
     pub description: String,
     pub is_official: bool,
-    pub is_trusted: bool,
+    pub is_automated: bool,
     pub name: String,
     pub star_count: u64,
 }
