@@ -285,8 +285,6 @@ pub struct MemoryStat {
     pub pgfault: u64,
     pub inactive_file: u64,
     pub total_pgpgin: u64,
-    pub swap: u64,
-    pub total_swap: u64,
 }
 
 #[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
