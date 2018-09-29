@@ -1,6 +1,8 @@
 //! Transports for communicating with the docker daemon
 
 extern crate hyper;
+#[cfg(feature = "unix-socket")]
+extern crate hyperlocal;
 
 use self::hyper::buffer::BufReader;
 use self::hyper::header::ContentType;
@@ -12,7 +14,6 @@ use hyper::client::response::Response;
 use hyper::header;
 use hyper::method::Method;
 use hyper::mime;
-use hyperlocal::DomainUrl;
 use rustc_serialize::json;
 use std::fmt;
 use std::io::Read;
@@ -31,6 +32,7 @@ pub enum Transport {
     /// A network tcp interface
     Tcp { client: Client, host: String },
     /// A Unix domain socket
+    #[cfg(feature = "unix-socket")]
     Unix { client: Client, path: String },
 }
 
@@ -38,6 +40,7 @@ impl fmt::Debug for Transport {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Transport::Tcp { ref host, .. } => write!(f, "Tcp({})", host),
+            #[cfg(feature = "unix-socket")]
             Transport::Unix { ref path, .. } => write!(f, "Unix({})", path),
         }
     }
@@ -82,10 +85,11 @@ impl Transport {
                 ref client,
                 ref host,
             } => client.request(method, &format!("{}{}", host, endpoint)[..]),
+            #[cfg(feature = "unix-socket")]
             Transport::Unix {
                 ref client,
                 ref path,
-            } => client.request(method, DomainUrl::new(&path, endpoint)),
+            } => client.request(method, hyperlocal::DomainUrl::new(&path, endpoint)),
         }.headers(headers);
 
         let embodied = match body {

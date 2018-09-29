@@ -15,7 +15,7 @@ byteorder = "1.0.0"
 flate2 = "0.2"
 hyper = "0.10"
 hyper-openssl = "0.2"
-hyperlocal = "0.3"
+hyperlocal = { version = "0.3", optional = true }
 jed = "0.1"
 log = "0.3"
 openssl = "0.9"
@@ -27,3 +27,7 @@ serde_derive = "1.0"
 
 [dev-dependencies]
 env_logger = "0.4.0"
+
+[features]
+default = ["unix-socket"]
+unix-socket = ["hyperlocal"]

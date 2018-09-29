@@ -17,6 +17,7 @@
 extern crate log;
 extern crate hyper;
 extern crate hyper_openssl;
+#[cfg(feature = "unix-socket")]
 extern crate hyperlocal;
 extern crate flate2;
 extern crate jed;
@@ -49,7 +50,6 @@ use hyper::header::ContentType;
 use hyper::method::Method;
 use hyper::net::HttpsConnector;
 use hyper_openssl::OpensslClient;
-use hyperlocal::UnixSocketConnector;
 use openssl::ssl::{SslConnectorBuilder, SslMethod};
 use openssl::x509::X509_FILETYPE_PEM;
 use rep::{Change, Container as ContainerRep, ContainerCreateInfo,
@@ -641,14 +641,19 @@ impl Docker {
     /// constructs a new Docker instance for docker host listening at the given host url
     pub fn host(host: Url) -> Docker {
         match host.scheme() {
+            #[cfg(feature = "unix-socket")]
             "unix" => {
                 Docker {
                     transport: Transport::Unix {
-                        client: Client::with_connector(UnixSocketConnector),
+                        client: Client::with_connector(hyperlocal::UnixSocketConnector),
                         path: host.path().to_owned(),
                     },
                 }
             }
+
+            #[cfg(not(feature = "unix-socket"))]
+            "unix" => panic!("Unix socket support is disabled"),
+
             _ => {
                 let client = if let Some(ref certs) = env::var(
                     "DOCKER_CERT_PATH",
