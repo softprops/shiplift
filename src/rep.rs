@@ -70,6 +70,7 @@ pub struct ContainerDetails {
     pub Id: String,
     pub Image: String,
     pub MountLabel: String,
+    pub Name: String,
     pub NetworkSettings: NetworkSettings,
     pub Path: String,
     pub ProcessLabel: String,
