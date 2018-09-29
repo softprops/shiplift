@@ -1,22 +1,26 @@
 //! Transports for communicating with the docker daemon
 
 extern crate hyper;
+#[cfg(feature = "unix-socket")]
+extern crate hyperlocal;
 
 use self::super::{Error, Result};
-use hyper::Body;
 use hyper::client::{Client, HttpConnector};
-use hyper::{Method, Request, Response, StatusCode};
 use hyper::header;
-use hyper_openssl::HttpsConnector;
 use hyper::rt::Stream;
-use hyperlocal::Uri as DomainUri;
+use hyper::Body;
+use hyper::{Method, Request, Response, StatusCode};
+use hyper_openssl::HttpsConnector;
+#[cfg(feature = "unix-socket")]
 use hyperlocal::UnixConnector;
+#[cfg(feature = "unix-socket")]
+use hyperlocal::Uri as DomainUri;
 use mime::Mime;
 use rustc_serialize::json;
+use std::cell::{RefCell, RefMut};
 use std::fmt;
-use std::cell::{RefMut, RefCell};
-use std::io::{BufReader, Cursor};
 use std::io::Read;
+use std::io::{BufReader, Cursor};
 use tokio::runtime::Runtime;
 
 pub fn tar() -> Mime {
@@ -39,6 +43,7 @@ pub enum Transport {
         host: String,
     },
     /// A Unix domain socket
+    #[cfg(feature = "unix-socket")]
     Unix {
         client: Client<UnixConnector>,
         runtime: RefCell<Runtime>,
@@ -50,7 +55,10 @@ impl fmt::Debug for Transport {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Transport::Tcp { ref host, .. } => write!(f, "Tcp({})", host),
-            Transport::EncryptedTcp { ref host, .. } => write!(f, "EncryptedTcp({})", host),
+            Transport::EncryptedTcp { ref host, .. } => {
+                write!(f, "EncryptedTcp({})", host)
+            }
+            #[cfg(feature = "unix-socket")]
             Transport::Unix { ref path, .. } => write!(f, "Unix({})", path),
         }
     }
@@ -91,6 +99,7 @@ impl Transport {
             Transport::EncryptedTcp { ref host, .. } => {
                 builder.method(method).uri(&format!("{}{}", host, endpoint))
             }
+            #[cfg(feature = "unix-socket")]
             Transport::Unix { ref path, .. } => {
                 let uri: hyper::Uri = DomainUri::new(&path, endpoint).into();
                 builder.method(method).uri(&uri.to_string())
@@ -119,77 +128,67 @@ impl Transport {
         let res = self.send_request(req)?;
 
         match res.status() {
-            StatusCode::OK |
-            StatusCode::CREATED |
-            StatusCode::SWITCHING_PROTOCOLS => {
-                let chunk = self.runtime().block_on(res.into_body().concat2())?;
-                Ok(Box::new(Cursor::new(chunk.into_iter().collect::<Vec<u8>>())))
-            },
-            StatusCode::NO_CONTENT => Ok(
-                Box::new(BufReader::new("".as_bytes())),
-            ),
+            StatusCode::OK
+            | StatusCode::CREATED
+            | StatusCode::SWITCHING_PROTOCOLS => {
+                let chunk =
+                    self.runtime().block_on(res.into_body().concat2())?;
+                Ok(Box::new(Cursor::new(
+                    chunk.into_iter().collect::<Vec<u8>>(),
+                )))
+            }
+            StatusCode::NO_CONTENT => {
+                Ok(Box::new(BufReader::new("".as_bytes())))
+            }
             // todo: constantize these
-            StatusCode::BAD_REQUEST => {
-                Err(Error::Fault {
-                    code: res.status(),
-                    message: self.get_error_message(res).unwrap_or(
-                        "bad parameter"
-                            .to_owned(),
-                    ),
-                })
-            }
-            StatusCode::NOT_FOUND => {
-                Err(Error::Fault {
-                    code: res.status(),
-                    message: self.get_error_message(res).unwrap_or(
-                        "not found".to_owned(),
-                    ),
-                })
-            }
-            StatusCode::NOT_MODIFIED => {
-                Err(Error::Fault {
-                    code: res.status(),
-                    message: self.get_error_message(res).unwrap_or(
-                        "not modified"
-                            .to_owned(),
-                    ),
-                })
-            },
-            StatusCode::NOT_ACCEPTABLE => {
-                Err(Error::Fault {
-                    code: res.status(),
-                    message: self.get_error_message(res).unwrap_or(
-                        "not acceptable"
-                            .to_owned(),
-                    ),
-                })
-            }
-            StatusCode::CONFLICT => {
-                Err(Error::Fault {
-                    code: res.status(),
-                    message: self.get_error_message(res).unwrap_or(
-                        "conflict found"
-                            .to_owned(),
-                    ),
-                })
-            }
-            StatusCode::INTERNAL_SERVER_ERROR => {
-                Err(Error::Fault {
-                    code: res.status(),
-                    message: self.get_error_message(res).unwrap_or(
-                        "internal server error"
-                            .to_owned(),
-                    ),
-                })
-            }
+            StatusCode::BAD_REQUEST => Err(Error::Fault {
+                code: res.status(),
+                message: self
+                    .get_error_message(res)
+                    .unwrap_or("bad parameter".to_owned()),
+            }),
+            StatusCode::NOT_FOUND => Err(Error::Fault {
+                code: res.status(),
+                message: self
+                    .get_error_message(res)
+                    .unwrap_or("not found".to_owned()),
+            }),
+            StatusCode::NOT_MODIFIED => Err(Error::Fault {
+                code: res.status(),
+                message: self
+                    .get_error_message(res)
+                    .unwrap_or("not modified".to_owned()),
+            }),
+            StatusCode::NOT_ACCEPTABLE => Err(Error::Fault {
+                code: res.status(),
+                message: self
+                    .get_error_message(res)
+                    .unwrap_or("not acceptable".to_owned()),
+            }),
+            StatusCode::CONFLICT => Err(Error::Fault {
+                code: res.status(),
+                message: self
+                    .get_error_message(res)
+                    .unwrap_or("conflict found".to_owned()),
+            }),
+            StatusCode::INTERNAL_SERVER_ERROR => Err(Error::Fault {
+                code: res.status(),
+                message: self
+                    .get_error_message(res)
+                    .unwrap_or("internal server error".to_owned()),
+            }),
             _ => unreachable!(),
         }
     }
 
-    fn send_request(&self, req: Request<hyper::Body>) -> Result<hyper::Response<Body>> {
+    fn send_request(
+        &self,
+        req: Request<hyper::Body>,
+    ) -> Result<hyper::Response<Body>> {
         let req = match self {
             Transport::Tcp { ref client, .. } => client.request(req),
             Transport::EncryptedTcp { ref client, .. } => client.request(req),
+            #[cfg(feature = "unix-socket")]
             Transport::Unix { ref client, .. } => client.request(req),
         };
 
@@ -200,6 +199,7 @@ impl Transport {
         match self {
             Transport::Tcp { ref runtime, .. } => runtime.borrow_mut(),
             Transport::EncryptedTcp { ref runtime, .. } => runtime.borrow_mut(),
+            #[cfg(feature = "unix-socket")]
             Transport::Unix { ref runtime, .. } => runtime.borrow_mut(),
         }
     }
@@ -224,10 +224,7 @@ impl Transport {
 
                 message
             }
-            Err(..) => {
-                None
-            },
+            Err(..) => None,
         }
     }
 }
-

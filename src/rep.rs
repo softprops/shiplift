@@ -6,7 +6,7 @@ use std::collections::HashMap;
 pub struct SearchResult {
     pub description: String,
     pub is_official: bool,
-    pub is_trusted: bool,
+    pub is_automated: bool,
     pub name: String,
     pub star_count: u64,
 }
@@ -70,6 +70,7 @@ pub struct ContainerDetails {
     pub Id: String,
     pub Image: String,
     pub MountLabel: String,
+    pub Name: String,
     pub NetworkSettings: NetworkSettings,
     pub Path: String,
     pub ProcessLabel: String,
@@ -121,7 +122,7 @@ pub struct HostConfig {
     pub CpuShares: Option<u64>,
     pub CpusetCpus: Option<String>,
     pub Memory: Option<u64>,
-    pub MemorySwap: Option<u64>,
+    pub MemorySwap: Option<i64>,
     pub NetworkMode: String,
     pub PidMode: Option<String>,
     // pub PortBindings: ???

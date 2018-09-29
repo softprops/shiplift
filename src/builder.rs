@@ -418,6 +418,11 @@ impl ContainerOptionsBuilder {
         self
     }
 
+    pub fn memory(&mut self, memory: u64) -> &mut ContainerOptionsBuilder {
+        self.params.insert("HostConfig.Memory", Json::U64(memory));
+        self
+    }
+
     pub fn labels(&mut self, labels: &HashMap<&str, &str>) -> &mut ContainerOptionsBuilder {
 
         let mut json_labels : BTreeMap<String, Json> = BTreeMap::new();
