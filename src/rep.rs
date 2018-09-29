@@ -122,7 +122,7 @@ pub struct HostConfig {
     pub CpuShares: Option<u64>,
     pub CpusetCpus: Option<String>,
     pub Memory: Option<u64>,
-    pub MemorySwap: Option<u64>,
+    pub MemorySwap: Option<i64>,
     pub NetworkMode: String,
     pub PidMode: Option<String>,
     // pub PortBindings: ???
