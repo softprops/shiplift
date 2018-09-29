@@ -402,11 +402,21 @@ pub struct Exit {
 #[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
 #[allow(non_snake_case)]
 pub struct Event {
+    pub Type: String,
+    pub Action: String,
+    pub Actor: Actor,
     pub status: Option<String>,
     pub id: Option<String>,
     pub from: Option<String>,
     pub time: u64,
     pub timeNano: u64,
+}
+
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
+#[allow(non_snake_case)]
+pub struct Actor {
+    pub ID: String,
+    pub Attributes: HashMap<String, String>,
 }
 
 #[derive(Clone, Debug)]
