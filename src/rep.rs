@@ -18,7 +18,7 @@ pub struct Image {
     pub Id: String,
     pub ParentId: String,
     pub Labels: Option<HashMap<String, String>>,
-    pub RepoTags: Vec<String>,
+    pub RepoTags: Option<Vec<String>>,
     pub RepoDigests: Option<Vec<String>>,
     pub VirtualSize: u64,
 }
