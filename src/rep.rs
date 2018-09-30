@@ -112,6 +112,21 @@ pub struct NetworkSettings {
     pub IPPrefixLen: u64,
     pub MacAddress: String, /*    pub PortMapping: Option<???>,
                              *   pub Ports: Option<???> */
+    pub Networks: HashMap<String, NetworkEntry>
+}
+
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable, Serialize, Deserialize)]
+#[allow(non_snake_case)]
+pub struct NetworkEntry {
+    pub NetworkID: String,
+    pub EndpointID: String,
+    pub Gateway: String,
+    pub IPAddress: String,
+    pub IPPrefixLen: u64,
+    pub IPv6Gateway: String,
+    pub GlobalIPv6Address: String,
+    pub GlobalIPv6PrefixLen: u64,
+    pub MacAddress: String,
 }
 
 #[derive(Clone, Debug, RustcEncodable, RustcDecodable, Serialize, Deserialize)]
