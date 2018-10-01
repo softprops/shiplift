@@ -11,25 +11,25 @@ keywords = ["docker", "unix", "containers", "hyper", "ship"]
 license = "MIT"
 
 [dependencies]
-byteorder = "1.0.0"
-flate2 = "0.2"
+byteorder = "1"
+flate2 = "1"
 http = "0.1"
 hyper = "0.12"
 hyper-openssl = "0.6"
 hyperlocal = { version = "0.6", optional = true }
 jed = "0.1"
-log = "0.3"
+log = "0.4"
 mime = "0.3"
 openssl = "0.10"
 rustc-serialize = "0.3"
 tar = "0.4"
 tokio = "0.1"
 url = "1.7"
-serde = "1.0"
-serde_derive = "1.0"
+serde = "1"
+serde_derive = "1"
 
 [dev-dependencies]
-env_logger = "0.4.0"
+env_logger = "0.5"
 
 [features]
 default = ["unix-socket"]
