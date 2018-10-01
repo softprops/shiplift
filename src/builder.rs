@@ -329,9 +329,24 @@ impl ContainerOptions {
     }
 
     /// serialize options as a string. returns None if no options are defined
-    // pub fn serialize(&self) -> Result<String> {
-    //     Ok(serde_json::to_string(&self.to_json())?)
-    // }
+    pub fn serialize(&self) -> Result<String> {
+        Ok(serde_json::to_string(&self.to_json())?)
+    }
+
+    fn to_json(&self) -> Value {
+        let mut body_members = Map::new();
+        // The HostConfig element gets initialized to an empty object,
+        // for backward compatibility.
+        body_members.insert(
+            "HostConfig".to_string(),
+            Value::Object(Map::new()),
+        );
+        let mut body = Value::Object(body_members);
+        self.parse_from(&self.params, &mut body);
+        self.parse_from(&self.params_list, &mut body);
+        self.parse_from(&self.params_hash, &mut body);
+        body
+    }
 
     pub fn parse_from<'a, K, V>(
         &self,
@@ -1128,6 +1143,7 @@ impl ContainerConnectionOptions {
 
 #[cfg(test)]
 mod tests {
+    use serde_json;
     use super::ContainerOptionsBuilder;
 
     #[test]
@@ -1185,8 +1201,10 @@ mod tests {
             .restart_policy("on-failure", 10)
             .build();
 
-        assert_eq!(r#"{"HostConfig":{"RestartPolicy":{"MaximumRetryCount":10,"Name":"on-failure"}},"Image":"test_image"}"#,
-                   options.serialize().unwrap());
+        assert_eq!(
+            r#"{"HostConfig":{"RestartPolicy":{"MaximumRetryCount":10,"Name":"on-failure"}},"Image":"test_image"}"#,
+            options.serialize().unwrap()
+       );
 
         options = ContainerOptionsBuilder::new("test_image")
             .restart_policy("always", 0)
