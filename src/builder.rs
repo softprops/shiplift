@@ -1143,7 +1143,6 @@ impl ContainerConnectionOptions {
 
 #[cfg(test)]
 mod tests {
-    use serde_json;
     use super::ContainerOptionsBuilder;
 
     #[test]

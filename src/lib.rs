@@ -22,7 +22,6 @@ extern crate hyper;
 extern crate hyper_openssl;
 #[cfg(feature = "unix-socket")]
 extern crate hyperlocal;
-extern crate jed;
 extern crate mime;
 extern crate openssl;
 extern crate tar;
@@ -68,7 +67,6 @@ use std::borrow::Cow;
 use std::cell::RefCell;
 use std::env;
 use std::io::prelude::*;
-use std::iter::IntoIterator;
 use std::path::Path;
 use std::time::Duration;
 use transport::{tar, Transport};
