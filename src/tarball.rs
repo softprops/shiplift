@@ -10,7 +10,7 @@ pub fn dir<W>(buf: W, path: &str) -> io::Result<()>
 where
     W: Write,
 {
-    let mut archive = Builder::new(GzEncoder::new(buf, Compression::Best));
+    let mut archive = Builder::new(GzEncoder::new(buf, Compression::best()));
     fn bundle<F>(dir: &Path, f: &mut F, bundle_dir: bool) -> io::Result<()>
     where
         F: FnMut(&Path) -> io::Result<()>,
