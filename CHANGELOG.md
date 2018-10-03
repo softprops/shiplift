@@ -1,6 +1,6 @@
 # 0.4.0 (unreleased)
 
-todo: document supported api version
+This release brings a number of breaking changes, all hopefully considered to be *good* :), and some new process to help track future changes. Some notable changes are listed below. The best source of truth will be the updated rustdocs.
 
 * repo labels are now optional [#102](https://github.com/softprops/shiplift/pull/102)
 * interlacing tty [#101](https://github.com/softprops/shiplift/pull/101)
@@ -15,7 +15,6 @@ todo: document supported api version
 * change `SearchResult#is_trusted` to `SearchResult#is_automated` [#89](https://github.com/softprops/shiplift/pull/89)
 * add container builder option for memory [#86](https://github.com/softprops/shiplift/pull/86)
 * allow `HostConfig#MemorySwap` to be negative [#87](https://github.com/softprops/shiplift/pull/87)
-* ...
 
 # 0.3.2
 * upgraded to hyper 0.10
