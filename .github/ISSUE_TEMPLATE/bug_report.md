@@ -8,4 +8,4 @@ about: Create a report to help us improve
 <!-- Use Help > Report Issue to prefill these. -->
 - Crate version:
 - OS:
-- Output of docker version:
+- Output of running `docker version` on the command line:
