@@ -63,4 +63,4 @@ cargo +nightly fmt
 
 
 ### Finding issues to fix
-After you've forked and cloned our repo, you can find issues to work on by heading over to our [issues list]
+After you've forked and cloned our repo, you can find issues to work on by heading over to our [issues list](https://github.com/softprops/shiplift/issues)
