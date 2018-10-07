@@ -96,6 +96,7 @@ pub struct State {
     pub error: String,
     pub exit_code: u64,
     pub finished_at: String,
+    #[serde(rename = "OOMKilled")]
     pub oom_killed: bool,
     pub paused: bool,
     pub pid: u64,
