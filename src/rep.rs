@@ -246,7 +246,9 @@ pub struct NetworkDetails {
     pub id: String,
     pub scope: String,
     pub driver: String,
-    pub enable_i_pv6: bool,
+    #[serde(rename = "EnableIPv6")]
+    pub enable_ipv6: bool,
+    #[serde(rename = "IPAM")]
     pub ipam: IPAM,
     pub internal: bool,
     pub attachable: bool,
@@ -260,8 +262,10 @@ pub struct NetworkDetails {
 pub struct NetworkContainerDetails {
     pub endpoint_id: String,
     pub mac_address: String,
-    pub i_pv4_address: String,
-    pub i_pv6_address: String,
+    #[serde(rename = "IPv4Address")]
+    pub ipv4_address: String,
+    #[serde(rename = "IPv6Address")]
+    pub ipv6_address: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -388,12 +392,14 @@ pub struct Info {
     pub driver: String,
     pub docker_root_dir: String,
     pub driver_status: Vec<Vec<String>>,
+    #[serde(rename = "ID")]
     pub id: String,
     pub kernel_version: String,
     // pub Labels: Option<???>,
     pub mem_total: u64,
     pub memory_limit: bool,
-    pub ncpu: u64,
+    #[serde(rename = "NCPU")]
+    pub n_cpu: u64,
     pub n_events_listener: u64,
     pub n_goroutines: u64,
     pub name: String,
