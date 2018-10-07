@@ -1,3 +1,21 @@
+# 0.4.0 (unreleased)
+
+This release brings a number of breaking changes, all hopefully considered to be *good* :), and some new process to help track future changes. Some notable changes are listed below. The best source of truth will be the updated rustdocs.
+
+* repo labels are now optional [#102](https://github.com/softprops/shiplift/pull/102)
+* interlacing tty [#101](https://github.com/softprops/shiplift/pull/101)
+* update `byteorder` and `flate2` dependencies [#99](https://github.com/softprops/shiplift/pull/99)
+* add `Type`, `Action`, `Actor` [#98](https://github.com/softprops/shiplift/pull/98)
+* add representations of `NetworkSettings#Networks` [#97](https://github.com/softprops/shiplift/pull/97)
+* remove `MemoryStat#{swap,total_swap}`[#96](https://github.com/softprops/shiplift/pull/96)
+* make `Image#RepoTags` an Option type [#95](https://github.com/softprops/shiplift/pull/95)
+* add `ContainerDetails#Name` [#93](https://github.com/softprops/shiplift/pull/93)
+* make unix socket support optional to enable windows use [#92](https://github.com/softprops/shiplift/pull/92)
+* upgrade to `hyper@0.12` [#91](https://github.com/softprops/shiplift/pull/91)
+* change `SearchResult#is_trusted` to `SearchResult#is_automated` [#89](https://github.com/softprops/shiplift/pull/89)
+* add container builder option for memory [#86](https://github.com/softprops/shiplift/pull/86)
+* allow `HostConfig#MemorySwap` to be negative [#87](https://github.com/softprops/shiplift/pull/87)
+
 # 0.3.2
 * upgraded to hyper 0.10
 * added interfaces for container log_driver, restart_policy
@@ -7,20 +25,7 @@
 # 0.3.1
 
 * added support for `CapAdd` on `ContainerOptions` [#32](https://github.com/softprops/shiplift/pull/32)
-* changed representation of `OnBuild` from a `String` to `Vec<String>` [#33](https://github.com/softprops/shiplift/pull/33)
-* added support for `Devices` on `ContainerOptions` [#36](https://github.com/softprops/shiplift/pull/36)
-* added support for naming containers on creation [#37](https://github.com/softprops/shiplift/pull/37)
-
-# 0.3.0
-
-* upgraded [hyper](https://github.com/hyperium/hyper/) from 0.7 to 0.9 [#13](https://github.com/softprops/shiplift/pull/29)
-* upgraded [hyperlocal](https://github.com/softprops/hyperlocal) dependency from 0.1 to 0.2
-* added documentation updates [#14](https://github.com/softprops/shiplift/pull/14)
-* added container deletion interface that takes options [#15](https://github.com/softprops/shiplift/pull/15)
-* return Err rather than panicing on IO errors communicating with the client [#16](https://github.com/softprops/shiplift/pull/16)
-* expose `container.id()` to Container service interface [#17](https://github.com/softprops/shiplift/pull/17/files)
-* add events filter to EventsOptionsBuilder [#18](https://github.com/softprops/shiplift/pull/18)
-* remove ExecDriver field of container details which no longer exists in remote api [#20](https://github.com/softprops/shiplift/pull/20)
+* changed representation of `OnBuild` from a `String` to `Ve     r exists in remote api [#20](https://github.com/softprops/shiplift/pull/20)
 * remote ExecutionDriver from info which no longer exists in remote api
 * add more options to ContainerOptions creation interface [#23](https://github.com/softprops/shiplift/pull/23)
 * fix volume parameter [#24](https://github.com/softprops/shiplift/pull/24)

@@ -162,7 +162,7 @@ pub struct Config {
     // ExposedPorts
     pub Hostname: String,
     pub Image: String,
-    pub Labels: HashMap<String, String>,
+    pub Labels: Option<HashMap<String, String>>,
     // pub MacAddress: String,
     pub OnBuild: Option<Vec<String>>,
     // pub NetworkDisabled: bool,
