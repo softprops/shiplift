@@ -3,6 +3,7 @@ Contributing to shiplift isn't limited to just filing bugs, users are more than 
 
 ## Working on shiplift
 ### Prerequisites
+* The [rust toolchain](https://rustup.rs/)
 * [Git](https://git-scm.com/)
 
 
@@ -11,7 +12,7 @@ Contributing to shiplift isn't limited to just filing bugs, users are more than 
 2. Open up Git in an environment of your choice
 3. Run the following
 
-```
+```sh
 $ git clone https://github.com/YOUR-GITHUB-PROFILE-NAME/shiplift.git
 $ cd shiplift
 ```
@@ -34,13 +35,13 @@ before, it is not too difficult.
 If you have not already configured `rustfmt` for the
 nightly toolchain, it can be done using the following steps:
 
-**1. Use Nightly Toolchain**
+**1. Use of the Nightly Toolchain**
 
-Use the `rustup override` command to make sure that you are using the nightly
-toolchain. Run this command in the `wasm-pack` directory you cloned.
+Install the nightly tookchain. This will only be necessary as long as rustfmt
+produces different results on stable and nightly.
 
 ```sh
-rustup override set nightly
+$ rustup toolchain install nightly
 ```
 
 **2. Add the rustfmt component**
@@ -48,7 +49,7 @@ rustup override set nightly
 Install the most recent version of `rustfmt` using this command:
 
 ```sh
-rustup component add rustfmt-preview --toolchain nightly
+$ rustup component add rustfmt-preview --toolchain nightly
 ```
 
 **3. Running rustfmt**
@@ -56,7 +57,7 @@ rustup component add rustfmt-preview --toolchain nightly
 To run `rustfmt`, use this command:
 
 ```sh
-cargo +nightly fmt
+$ cargo +nightly fmt
 ```
 
 [rustfmt]: https://github.com/rust-lang-nursery/rustfmt
