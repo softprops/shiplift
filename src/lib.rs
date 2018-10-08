@@ -191,7 +191,7 @@ impl<'a> Images<'a> {
     }
 
     /// Returns a reference to a set of operations available for a named image
-    pub fn get(&'a self, name: &'a str) -> Image {
+    pub fn get<'b>(&self, name: &'b str) -> Image<'a, 'b> {
         Image::new(self.docker, name)
     }
 
@@ -315,7 +315,7 @@ impl<'a, 'b> Container<'a, 'b> {
     }
 
     /// Start the container instance
-    pub fn start(&'a self) -> Result<()> {
+    pub fn start(&self) -> Result<()> {
         self.docker
             .post::<Body>(&format!("/containers/{}/start", self.id)[..], None)
             .map(|_| ())
@@ -474,13 +474,13 @@ impl<'a> Containers<'a> {
     }
 
     /// Returns a reference to a set of operations available to a specific container instance
-    pub fn get(&'a self, name: &'a str) -> Container {
+    pub fn get<'b>(&self, name: &'b str) -> Container<'a, 'b> {
         Container::new(self.docker, name)
     }
 
     /// Returns a builder interface for creating a new container instance
     pub fn create(
-        &'a self,
+        &self,
         opts: &ContainerOptions,
     ) -> Result<ContainerCreateInfo> {
         let data = serde_json::to_string(opts)?;
@@ -524,12 +524,12 @@ impl<'a> Networks<'a> {
     }
 
     /// Returns a reference to a set of operations available to a specific network instance
-    pub fn get(&'a self, id: &'a str) -> Network {
+    pub fn get<'b>(&self, id: &'b str) -> Network<'a, 'b> {
         Network::new(self.docker, id)
     }
 
     pub fn create(
-        &'a self,
+        &self,
         opts: &NetworkCreateOptions,
     ) -> Result<NetworkCreateInfo> {
         let data = opts.serialize()?;
@@ -716,16 +716,16 @@ impl Docker {
     }
 
     /// Exports an interface for interacting with docker images
-    pub fn images<'a>(&'a self) -> Images {
+    pub fn images(&self) -> Images {
         Images::new(self)
     }
 
     /// Exports an interface for interacting with docker containers
-    pub fn containers<'a>(&'a self) -> Containers {
+    pub fn containers(&self) -> Containers {
         Containers::new(self)
     }
 
-    pub fn networks<'a>(&'a self) -> Networks {
+    pub fn networks(&self) -> Networks {
         Networks::new(self)
     }
 
