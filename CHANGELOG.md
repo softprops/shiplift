@@ -4,6 +4,7 @@ This release brings a number of breaking changes, all hopefully considered to be
 
 * repo labels are now optional [#102](https://github.com/softprops/shiplift/pull/102)
 * interlacing tty [#101](https://github.com/softprops/shiplift/pull/101)
+* migrate to serde and update struct field names to line up with rust's snake_case conventions [#100](https://github.com/softprops/shiplift/pull/100)
 * update `byteorder` and `flate2` dependencies [#99](https://github.com/softprops/shiplift/pull/99)
 * add `Type`, `Action`, `Actor` [#98](https://github.com/softprops/shiplift/pull/98)
 * add representations of `NetworkSettings#Networks` [#97](https://github.com/softprops/shiplift/pull/97)
