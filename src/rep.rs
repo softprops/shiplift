@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SearchResult {
     pub description: String,
     pub is_official: bool,
@@ -11,172 +11,184 @@ pub struct SearchResult {
     pub star_count: u64,
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
-#[allow(non_snake_case)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct Image {
-    pub Created: u64,
-    pub Id: String,
-    pub ParentId: String,
-    pub Labels: Option<HashMap<String, String>>,
-    pub RepoTags: Option<Vec<String>>,
-    pub RepoDigests: Option<Vec<String>>,
-    pub VirtualSize: u64,
+    pub created: u64,
+    pub id: String,
+    pub parent_id: String,
+    pub labels: Option<HashMap<String, String>>,
+    pub repo_tags: Option<Vec<String>>,
+    pub repo_digests: Option<Vec<String>>,
+    pub virtual_size: u64,
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
-#[allow(non_snake_case)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct ImageDetails {
-    pub Architecture: String,
-    pub Author: String,
-    pub Comment: String,
-    pub Config: Config,
-    pub Created: String,
-    pub DockerVersion: String,
-    pub Id: String,
-    pub Os: String,
-    pub Parent: String,
-    pub Size: u64,
-    pub VirtualSize: u64,
+    pub architecture: String,
+    pub author: String,
+    pub comment: String,
+    pub config: Config,
+    pub created: String,
+    pub docker_version: String,
+    pub id: String,
+    pub os: String,
+    pub parent: String,
+    pub size: u64,
+    pub virtual_size: u64,
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
-#[allow(non_snake_case)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct Container {
-    pub Created: u64,
-    pub Command: String,
-    pub Id: String,
-    pub Image: String,
-    pub Labels: HashMap<String, String>,
-    pub Names: Vec<String>,
-    pub Ports: Vec<Port>,
-    pub Status: String,
-    pub SizeRw: Option<u64>,
-    pub SizeRootFs: Option<u64>,
+    pub created: u64,
+    pub command: String,
+    pub id: String,
+    pub image: String,
+    pub labels: HashMap<String, String>,
+    pub names: Vec<String>,
+    pub ports: Vec<Port>,
+    pub status: String,
+    pub size_rw: Option<u64>,
+    pub size_root_fs: Option<u64>,
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable, Serialize, Deserialize)]
-#[allow(non_snake_case)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct ContainerDetails {
-    pub AppArmorProfile: String,
-    pub Args: Vec<String>,
-    pub Config: Config,
-    pub Created: String,
-    pub Driver: String,
+    pub app_armor_profile: String,
+    pub args: Vec<String>,
+    pub config: Config,
+    pub created: String,
+    pub driver: String,
     // pub ExecIDs: ??
-    pub HostConfig: HostConfig,
-    pub HostnamePath: String,
-    pub HostsPath: String,
-    pub LogPath: String,
-    pub Id: String,
-    pub Image: String,
-    pub MountLabel: String,
-    pub Name: String,
-    pub NetworkSettings: NetworkSettings,
-    pub Path: String,
-    pub ProcessLabel: String,
-    pub ResolvConfPath: String,
-    pub RestartCount: u64,
-    pub State: State,
-    pub Mounts: Vec<Mount>,
+    pub host_config: HostConfig,
+    pub hostname_path: String,
+    pub hosts_path: String,
+    pub log_path: String,
+    pub id: String,
+    pub image: String,
+    pub mount_label: String,
+    pub name: String,
+    pub network_settings: NetworkSettings,
+    pub path: String,
+    pub process_label: String,
+    pub resolv_conf_path: String,
+    pub restart_count: u64,
+    pub state: State,
+    pub mounts: Vec<Mount>,
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable, Serialize, Deserialize)]
-#[allow(non_snake_case)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct Mount {
-    pub Source: String,
-    pub Destination: String,
-    pub Mode: String,
-    pub RW: bool,
+    pub source: String,
+    pub destination: String,
+    pub mode: String,
+    #[serde(rename = "RW")]
+    pub rw: bool,
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable, Serialize, Deserialize)]
-#[allow(non_snake_case)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct State {
-    pub Error: String,
-    pub ExitCode: u64,
-    pub FinishedAt: String,
-    pub OOMKilled: bool,
-    pub Paused: bool,
-    pub Pid: u64,
-    pub Restarting: bool,
-    pub Running: bool,
-    pub StartedAt: String,
+    pub error: String,
+    pub exit_code: u64,
+    pub finished_at: String,
+    #[serde(rename = "OOMKilled")]
+    pub oom_killed: bool,
+    pub paused: bool,
+    pub pid: u64,
+    pub restarting: bool,
+    pub running: bool,
+    pub started_at: String,
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable, Serialize, Deserialize)]
-#[allow(non_snake_case)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct NetworkSettings {
-    pub Bridge: String,
-    pub Gateway: String,
-    pub IPAddress: String,
-    pub IPPrefixLen: u64,
-    pub MacAddress: String, /*    pub PortMapping: Option<???>,
+    pub bridge: String,
+    pub gateway: String,
+    #[serde(rename = "IPAddress")]
+    pub ip_address: String,
+    #[serde(rename = "IPPrefixLen")]
+    pub ip_prefix_len: u64,
+    pub mac_address: String, /*    pub PortMapping: Option<???>,
                              *   pub Ports: Option<???> */
-    pub Networks: HashMap<String, NetworkEntry>
+    pub networks: HashMap<String, NetworkEntry>
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable, Serialize, Deserialize)]
-#[allow(non_snake_case)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct NetworkEntry {
-    pub NetworkID: String,
-    pub EndpointID: String,
-    pub Gateway: String,
-    pub IPAddress: String,
-    pub IPPrefixLen: u64,
-    pub IPv6Gateway: String,
-    pub GlobalIPv6Address: String,
-    pub GlobalIPv6PrefixLen: u64,
-    pub MacAddress: String,
+    #[serde(rename = "NetworkID")]
+    pub network_id: String,
+    #[serde(rename = "EndpointID")]
+    pub endpoint_id: String,
+    pub gateway: String,
+    #[serde(rename = "IPAddress")]
+    pub ip_address: String,
+    #[serde(rename = "IPPrefixLen")]
+    pub ip_prefix_len: u64,
+    #[serde(rename = "IPv6Gateway")]
+    pub ipv6_gateway: String,
+    #[serde(rename = "GlobalIPv6Address")]
+    pub global_ipv6_address: String,
+    #[serde(rename = "GlobalIPv6PrefixLen")]
+    pub global_ipv6_prefix_len: u64,
+    pub mac_address: String,
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable, Serialize, Deserialize)]
-#[allow(non_snake_case)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct HostConfig {
-    pub CgroupParent: Option<String>,
-    pub ContainerIDFile: String,
-    pub CpuShares: Option<u64>,
-    pub CpusetCpus: Option<String>,
-    pub Memory: Option<u64>,
-    pub MemorySwap: Option<i64>,
-    pub NetworkMode: String,
-    pub PidMode: Option<String>,
+    pub cgroup_parent: Option<String>,
+    #[serde(rename = "ContainerIDFile")]
+    pub container_id_file: String,
+    pub cpu_shares: Option<u64>,
+    pub cpuset_cpus: Option<String>,
+    pub memory: Option<u64>,
+    pub memory_swap: Option<i64>,
+    pub network_mode: String,
+    pub pid_mode: Option<String>,
     // pub PortBindings: ???
-    pub Privileged: bool,
-    pub PublishAllPorts: bool,
-    pub ReadonlyRootfs: Option<bool>, /* pub RestartPolicy: ???
+    pub privileged: bool,
+    pub publish_all_ports: bool,
+    pub readonly_rootfs: Option<bool>, /* pub RestartPolicy: ???
                                        * pub SecurityOpt: Option<???>,
                                        * pub Ulimits: Option<???>
                                        * pub VolumesFrom: Option<??/> */
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable, Serialize, Deserialize)]
-#[allow(non_snake_case)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct Config {
-    pub AttachStderr: bool,
-    pub AttachStdin: bool,
-    pub AttachStdout: bool,
-    pub Cmd: Option<Vec<String>>,
-    pub Domainname: String,
-    pub Entrypoint: Option<Vec<String>>,
-    pub Env: Option<Vec<String>>,
+    pub attach_stderr: bool,
+    pub attach_stdin: bool,
+    pub attach_stdout: bool,
+    pub cmd: Option<Vec<String>>,
+    pub domainname: String,
+    pub entrypoint: Option<Vec<String>>,
+    pub env: Option<Vec<String>>,
     // ExposedPorts
-    pub Hostname: String,
-    pub Image: String,
-    pub Labels: Option<HashMap<String, String>>,
+    pub hostname: String,
+    pub image: String,
+    pub labels: Option<HashMap<String, String>>,
     // pub MacAddress: String,
-    pub OnBuild: Option<Vec<String>>,
+    pub on_build: Option<Vec<String>>,
     // pub NetworkDisabled: bool,
-    pub OpenStdin: bool,
-    pub StdinOnce: bool,
-    pub Tty: bool,
-    pub User: String,
-    pub WorkingDir: String,
+    pub open_stdin: bool,
+    pub stdin_once: bool,
+    pub tty: bool,
+    pub user: String,
+    pub working_dir: String,
 }
 
 impl Config {
     pub fn env(&self) -> HashMap<String, String> {
         let mut map = HashMap::new();
-        match self.Env {
+        match self.env {
             Some(ref vars) => {
                 for e in vars {
                     let pair: Vec<&str> = e.split("=").collect();
@@ -189,16 +201,17 @@ impl Config {
     }
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
-#[allow(non_snake_case)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct Port {
-    pub IP: Option<String>,
-    pub PrivatePort: u64,
-    pub PublicPort: Option<u64>,
-    pub Type: String,
+    pub ip: Option<String>,
+    pub private_port: u64,
+    pub public_port: Option<u64>,
+    #[serde(rename = "Type")]
+    pub typ: String,
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Stats {
     pub read: String,
     pub networks: HashMap<String, Network>,
@@ -207,7 +220,7 @@ pub struct Stats {
     pub cpu_stats: CpuStats,
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Network {
     pub rx_dropped: u64,
     pub rx_bytes: u64,
@@ -219,47 +232,51 @@ pub struct Network {
     pub tx_bytes: u64,
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
-#[allow(non_snake_case)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct IPAM {
-    pub Driver: String,
-    pub Config: Vec<HashMap<String, String>>,
-    pub Options: Option<HashMap<String, String>>,
+    pub driver: String,
+    pub config: Vec<HashMap<String, String>>,
+    pub options: Option<HashMap<String, String>>,
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
-#[allow(non_snake_case)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct NetworkDetails {
-    pub Name: String,
-    pub Id: String,
-    pub Scope: String,
-    pub Driver: String,
-    pub EnableIPv6: bool,
-    pub IPAM: IPAM,
-    pub Internal: bool,
-    pub Attachable: bool,
-    pub Containers: HashMap<String, NetworkContainerDetails>,
-    pub Options: Option<HashMap<String, String>>,
-    pub Labels: Option<HashMap<String, String>>,
+    pub name: String,
+    pub id: String,
+    pub scope: String,
+    pub driver: String,
+    #[serde(rename = "EnableIPv6")]
+    pub enable_ipv6: bool,
+    #[serde(rename = "IPAM")]
+    pub ipam: IPAM,
+    pub internal: bool,
+    pub attachable: bool,
+    pub containers: HashMap<String, NetworkContainerDetails>,
+    pub options: Option<HashMap<String, String>>,
+    pub labels: Option<HashMap<String, String>>,
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
-#[allow(non_snake_case)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct NetworkContainerDetails {
-    pub EndpointID: String,
-    pub MacAddress: String,
-    pub IPv4Address: String,
-    pub IPv6Address: String,
+    pub endpoint_id: String,
+    pub mac_address: String,
+    #[serde(rename = "IPv4Address")]
+    pub ipv4_address: String,
+    #[serde(rename = "IPv6Address")]
+    pub ipv6_address: String,
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
-#[allow(non_snake_case)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct NetworkCreateInfo {
-    pub Id: String,
-    pub Warning: String,
+    pub id: String,
+    pub warning: String,
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MemoryStats {
     pub max_usage: u64,
     pub usage: u64,
@@ -268,7 +285,7 @@ pub struct MemoryStats {
     pub stats: MemoryStat,
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MemoryStat {
     pub total_pgmajfault: u64,
     pub cache: u64,
@@ -302,14 +319,14 @@ pub struct MemoryStat {
     pub total_pgpgin: u64,
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct CpuStats {
     pub cpu_usage: CpuUsage,
     pub system_cpu_usage: u64,
     pub throttling_data: ThrottlingData,
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct CpuUsage {
     pub percpu_usage: Vec<u64>,
     pub usage_in_usermode: u64,
@@ -317,14 +334,14 @@ pub struct CpuUsage {
     pub usage_in_kernelmode: u64,
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ThrottlingData {
     pub periods: u64,
     pub throttled_periods: u64,
     pub throttled_time: u64,
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BlkioStats {
     pub io_service_bytes_recursive: Vec<BlkioStat>,
     pub io_serviced_recursive: Vec<BlkioStat>,
@@ -336,7 +353,7 @@ pub struct BlkioStats {
     pub sectors_recursive: Vec<BlkioStat>,
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BlkioStat {
     pub major: u64,
     pub minor: u64,
@@ -344,92 +361,95 @@ pub struct BlkioStat {
     pub value: u64,
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
-#[allow(non_snake_case)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct Change {
-    pub Kind: u64,
-    pub Path: String,
+    pub kind: u64,
+    pub path: String,
 }
 
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
-#[allow(non_snake_case)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct Top {
-    pub Titles: Vec<String>,
-    pub Processes: Vec<Vec<String>>,
+    pub titles: Vec<String>,
+    pub processes: Vec<Vec<String>>,
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
-#[allow(non_snake_case)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct Version {
-    pub ApiVersion: String,
-    pub Version: String,
-    pub GitCommit: String,
-    pub GoVersion: String,
+    pub api_version: String,
+    pub version: String,
+    pub git_commit: String,
+    pub go_version: String,
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
-#[allow(non_snake_case)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct Info {
-    pub Containers: u64,
-    pub Images: u64,
-    pub Driver: String,
-    pub DockerRootDir: String,
-    pub DriverStatus: Vec<Vec<String>>,
-    pub ID: String,
-    pub KernelVersion: String,
+    pub containers: u64,
+    pub images: u64,
+    pub driver: String,
+    pub docker_root_dir: String,
+    pub driver_status: Vec<Vec<String>>,
+    #[serde(rename = "ID")]
+    pub id: String,
+    pub kernel_version: String,
     // pub Labels: Option<???>,
-    pub MemTotal: u64,
-    pub MemoryLimit: bool,
-    pub NCPU: u64,
-    pub NEventsListener: u64,
-    pub NGoroutines: u64,
-    pub Name: String,
-    pub OperatingSystem: String,
+    pub mem_total: u64,
+    pub memory_limit: bool,
+    #[serde(rename = "NCPU")]
+    pub n_cpu: u64,
+    pub n_events_listener: u64,
+    pub n_goroutines: u64,
+    pub name: String,
+    pub operating_system: String,
     // pub RegistryConfig:???
-    pub SwapLimit: bool,
-    pub SystemTime: Option<String>,
+    pub swap_limit: bool,
+    pub system_time: Option<String>,
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
-#[allow(non_snake_case)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct ContainerCreateInfo {
-    pub Id: String,
-    pub Warnings: Option<Vec<String>>,
+    pub id: String,
+    pub warnings: Option<Vec<String>>,
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
-#[allow(non_snake_case)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct History {
-    pub Id: String,
-    pub Created: u64,
-    pub CreatedBy: String,
+    pub id: String,
+    pub created: u64,
+    pub created_by: String,
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
-#[allow(non_snake_case)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct Exit {
-    pub StatusCode: u64,
+    pub status_code: u64,
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
-#[allow(non_snake_case)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct Event {
-    pub Type: String,
-    pub Action: String,
-    pub Actor: Actor,
+    #[serde(rename = "Type")]
+    pub typ: String,
+    pub action: String,
+    pub actor: Actor,
     pub status: Option<String>,
     pub id: Option<String>,
     pub from: Option<String>,
     pub time: u64,
-    pub timeNano: u64,
+    pub time_nano: u64,
 }
 
-#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
-#[allow(non_snake_case)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct Actor {
-    pub ID: String,
-    pub Attributes: HashMap<String, String>,
+    pub id: String,
+    pub attributes: HashMap<String, String>,
 }
 
 #[derive(Clone, Debug)]

@@ -5,6 +5,6 @@ fn main() {
     let images = docker.images().list(&Default::default()).unwrap();
     println!("docker images in stock");
     for i in images {
-        println!("{:?}", i.RepoTags);
+        println!("{:?}", i.repo_tags);
     }
 }
