@@ -52,12 +52,13 @@ pub enum Transport {
 }
 
 impl fmt::Debug for Transport {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(
+        &self,
+        f: &mut fmt::Formatter,
+    ) -> fmt::Result {
         match *self {
             Transport::Tcp { ref host, .. } => write!(f, "Tcp({})", host),
-            Transport::EncryptedTcp { ref host, .. } => {
-                write!(f, "EncryptedTcp({})", host)
-            }
+            Transport::EncryptedTcp { ref host, .. } => write!(f, "EncryptedTcp({})", host),
             #[cfg(feature = "unix-socket")]
             Transport::Unix { ref path, .. } => write!(f, "Unix({})", path),
         }
@@ -128,18 +129,13 @@ impl Transport {
         let res = self.send_request(req)?;
 
         match res.status() {
-            StatusCode::OK
-            | StatusCode::CREATED
-            | StatusCode::SWITCHING_PROTOCOLS => {
-                let chunk =
-                    self.runtime().block_on(res.into_body().concat2())?;
+            StatusCode::OK | StatusCode::CREATED | StatusCode::SWITCHING_PROTOCOLS => {
+                let chunk = self.runtime().block_on(res.into_body().concat2())?;
                 Ok(Box::new(Cursor::new(
                     chunk.into_iter().collect::<Vec<u8>>(),
                 )))
             }
-            StatusCode::NO_CONTENT => {
-                Ok(Box::new(BufReader::new("".as_bytes())))
-            }
+            StatusCode::NO_CONTENT => Ok(Box::new(BufReader::new("".as_bytes()))),
             // todo: constantize these
             StatusCode::BAD_REQUEST => Err(Error::Fault {
                 code: res.status(),
@@ -206,7 +202,10 @@ impl Transport {
 
     /// Extract the error message content from an HTTP response that
     /// contains a Docker JSON error structure.
-    fn get_error_message(&self, res: Response<Body>) -> Option<String> {
+    fn get_error_message(
+        &self,
+        res: Response<Body>,
+    ) -> Option<String> {
         let chunk = match self.runtime().block_on(res.into_body().concat2()) {
             Ok(c) => c,
             Err(..) => return None,

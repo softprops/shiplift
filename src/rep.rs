@@ -115,8 +115,8 @@ pub struct NetworkSettings {
     #[serde(rename = "IPPrefixLen")]
     pub ip_prefix_len: u64,
     pub mac_address: String, /*    pub PortMapping: Option<???>,
-                             *   pub Ports: Option<???> */
-    pub networks: HashMap<String, NetworkEntry>
+                              *   pub Ports: Option<???> */
+    pub networks: HashMap<String, NetworkEntry>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -156,9 +156,9 @@ pub struct HostConfig {
     pub privileged: bool,
     pub publish_all_ports: bool,
     pub readonly_rootfs: Option<bool>, /* pub RestartPolicy: ???
-                                       * pub SecurityOpt: Option<???>,
-                                       * pub Ulimits: Option<???>
-                                       * pub VolumesFrom: Option<??/> */
+                                        * pub SecurityOpt: Option<???>,
+                                        * pub Ulimits: Option<???>
+                                        * pub VolumesFrom: Option<??/> */
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -367,7 +367,6 @@ pub struct Change {
     pub kind: u64,
     pub path: String,
 }
-
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
