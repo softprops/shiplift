@@ -37,7 +37,7 @@ nightly toolchain, it can be done using the following steps:
 
 **1. Use of the Nightly Toolchain**
 
-Install the nightly tookchain. This will only be necessary as long as rustfmt
+Install the nightly toolchain. This will only be necessary as long as rustfmt
 produces different results on stable and nightly.
 
 ```sh
