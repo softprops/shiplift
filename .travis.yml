@@ -12,7 +12,7 @@ matrix:
   - rust: nightly
 
 install: |
-  # should only be nessessary until rustfmt produces consistent results in stable/nightly
+  # should only be necessary until rustfmt produces consistent results in stable/nightly
   rustup toolchain install nightly
   rustup component add rustfmt-preview --toolchain nightly
 
