@@ -29,7 +29,7 @@ install: |
 
 script:
 - cargo +nightly fmt --all -- --check
-- RUSTFLAGS="$RUSTFLAGS -C link-dead-code" cargo test
+- cargo test
 
 # Cache `cargo install`ed tools, but don't cache the project's `target`
 # directory (which ends up over-caching and filling all disk space!)
