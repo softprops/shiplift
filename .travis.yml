@@ -20,8 +20,12 @@ matrix:
 
 install: |
   # should only be necessary until rustfmt produces consistent results in stable/nightly
+  # see also https://github.com/xd009642/tarpaulin/issues/150 for tarpaulin nightly dependency
   rustup toolchain install nightly
   rustup component add rustfmt-preview --toolchain nightly
+  if [[ "$TRAVIS_RUST_VERSION" == stable ]]; then
+    `RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo +nightly install --force cargo-tarpaulin`
+  fi
 
 script:
 - cargo +nightly fmt --all -- --check
@@ -41,30 +45,17 @@ before_cache:
 addons:
   apt:
     packages:
-      - libcurl4-openssl-dev
-      - libelf-dev
-      - libdw-dev
-      - binutils-dev
-      - libiberty-dev
+      # required by tarpaulin code coverage tool
+      - libssl-dev
 
 after_success:
-  - '[ $TRAVIS_RUST_VERSION = stable ] &&
+  # report coverage to coveralls
+  # see https://github.com/xd009642/tarpaulin for more information
+  - '[ $TRAVIS_EVENT_TYPE != "cron" ] &&
+    [ $TRAVIS_RUST_VERSION = stable ] &&
     [ $TRAVIS_BRANCH = master ] &&
     [ $TRAVIS_PULL_REQUEST = false ] &&
-    (LOCAL="~/.local" && export PATH=$LOCAL/bin:$PATH &&
-    wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz &&
-    tar xzf master.tar.gz && mkdir kcov-master/build && cd kcov-master/build &&
-    cmake -DCMAKE_INSTALL_PREFIX:PATH=$LOCAL .. && make && make install && cd ../.. &&
-    ls target/debug &&
-    RUSTFLAGS="-C link-dead-code" cargo test --no-run &&
-    for file in target/debug/shiplift-*; do
-       if [[ "${file: -2}" != ".d" ]]; then
-         mkdir -p "target/cov/$(basename $file)";
-         kcov --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file";
-       fi;
-    done &&
-    kcov --coveralls-id=$TRAVIS_JOB_ID --merge target/cov target/cov/* &&
-    echo "covered") || true'
+    cargo +nightly tarpaulin --ciserver travis-ci --coveralls $TRAVIS_JOB_ID || true'
   - '[ $TRAVIS_RUST_VERSION = stable ] &&
     [ $TRAVIS_BRANCH = master ] &&
     [ $TRAVIS_PULL_REQUEST = false ]
