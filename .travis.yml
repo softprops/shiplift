@@ -11,7 +11,13 @@ matrix:
   allow_failures:
   - rust: nightly
 
+install: |
+  # should only be necessary until rustfmt produces consistent results in stable/nightly
+  rustup toolchain install nightly
+  rustup component add rustfmt-preview --toolchain nightly
+
 script:
+- cargo +nightly fmt --all -- --check
 - RUSTFLAGS="$RUSTFLAGS -C link-dead-code" cargo test
 
 cache:

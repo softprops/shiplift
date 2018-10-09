@@ -41,10 +41,9 @@ pub mod tty;
 mod tarball;
 
 pub use builder::{
-    BuildOptions, ContainerConnectionOptions, ContainerFilter,
-    ContainerListOptions, ContainerOptions, EventsOptions,
-    ExecContainerOptions, ImageFilter, ImageListOptions, LogsOptions,
-    NetworkCreateOptions, NetworkListOptions, PullOptions, RmContainerOptions,
+    BuildOptions, ContainerConnectionOptions, ContainerFilter, ContainerListOptions,
+    ContainerOptions, EventsOptions, ExecContainerOptions, ImageFilter, ImageListOptions,
+    LogsOptions, NetworkCreateOptions, NetworkListOptions, PullOptions, RmContainerOptions,
 };
 pub use errors::Error;
 use hyper::client::HttpConnector;
@@ -57,9 +56,8 @@ use mime::Mime;
 use openssl::ssl::{SslConnector, SslFiletype, SslMethod};
 use rep::Image as ImageRep;
 use rep::{
-    Change, Container as ContainerRep, ContainerCreateInfo, ContainerDetails,
-    Event, Exit, History, ImageDetails, Info, SearchResult, Stats, Status, Top,
-    Version,
+    Change, Container as ContainerRep, ContainerCreateInfo, ContainerDetails, Event, Exit, History,
+    ImageDetails, Info, SearchResult, Stats, Status, Top, Version,
 };
 use rep::{NetworkCreateInfo, NetworkDetails as NetworkInfo};
 use serde_json::Value;
@@ -89,7 +87,10 @@ pub struct Image<'a, 'b> {
 
 impl<'a, 'b> Image<'a, 'b> {
     /// Exports an interface for operations that may be performed against a named image
-    pub fn new<S>(docker: &'a Docker, name: S) -> Image<'a, 'b>
+    pub fn new<S>(
+        docker: &'a Docker,
+        name: S,
+    ) -> Image<'a, 'b>
     where
         S: Into<Cow<'b, str>>,
     {
@@ -128,16 +129,19 @@ impl<'a, 'b> Image<'a, 'b> {
                                 .expect("expected Untagged to be a string")
                                 .to_owned(),
                         )
-                    }).or(obj.get("Deleted").map(|sha| {
+                    })
+                    .or(obj.get("Deleted").map(|sha| {
                         Status::Deleted(
                             sha.as_str()
                                 .expect("expected Deleted to be a string")
                                 .to_owned(),
                         )
-                    })).expect("expected Untagged or Deleted")
+                    }))
+                    .expect("expected Untagged or Deleted")
             }),
             _ => unreachable!(),
-        }.collect())
+        }
+        .collect())
     }
 
     /// Export this image to a tarball
@@ -172,16 +176,16 @@ impl<'a> Images<'a> {
 
         tarball::dir(&mut bytes, &opts.path[..])?;
 
-        self
-            .docker
+        self.docker
             .stream_post(&path.join("?"), Some((Body::from(bytes), tar())))
-            .and_then(|r| {
-                serde_json::from_reader::<_, Vec<Value>>(r).map_err(Error::from)
-            })
+            .and_then(|r| serde_json::from_reader::<_, Vec<Value>>(r).map_err(Error::from))
     }
 
     /// Lists the docker images on the current docker host
-    pub fn list(&self, opts: &ImageListOptions) -> Result<Vec<ImageRep>> {
+    pub fn list(
+        &self,
+        opts: &ImageListOptions,
+    ) -> Result<Vec<ImageRep>> {
         let mut path = vec!["/images/json".to_owned()];
         if let Some(query) = opts.serialize() {
             path.push(query);
@@ -191,12 +195,18 @@ impl<'a> Images<'a> {
     }
 
     /// Returns a reference to a set of operations available for a named image
-    pub fn get<'b>(&self, name: &'b str) -> Image<'a, 'b> {
+    pub fn get<'b>(
+        &self,
+        name: &'b str,
+    ) -> Image<'a, 'b> {
         Image::new(self.docker, name)
     }
 
     /// Search for docker images by term
-    pub fn search(&self, term: &str) -> Result<Vec<SearchResult>> {
+    pub fn search(
+        &self,
+        term: &str,
+    ) -> Result<Vec<SearchResult>> {
         let query = form_urlencoded::Serializer::new(String::new())
             .append_pair("term", term)
             .finish();
@@ -215,14 +225,15 @@ impl<'a> Images<'a> {
         }
         self.docker
             .stream_post::<Body>(&path.join("?"), None)
-            .and_then(|r| {
-                serde_json::from_reader::<_, Vec<Value>>(r).map_err(Error::from)
-            })
+            .and_then(|r| serde_json::from_reader::<_, Vec<Value>>(r).map_err(Error::from))
     }
 
     /// exports a collection of named images,
     /// either by name, name:tag, or image id, into a tarball
-    pub fn export(&self, names: Vec<&str>) -> Result<Box<Read>> {
+    pub fn export(
+        &self,
+        names: Vec<&str>,
+    ) -> Result<Box<Read>> {
         let params = names.iter().map(|n| ("names", *n));
         let query = form_urlencoded::Serializer::new(String::new())
             .extend_pairs(params)
@@ -244,7 +255,10 @@ pub struct Container<'a, 'b> {
 
 impl<'a, 'b> Container<'a, 'b> {
     /// Exports an interface exposing operations against a container instance
-    pub fn new<S>(docker: &'a Docker, id: S) -> Container<'a, 'b>
+    pub fn new<S>(
+        docker: &'a Docker,
+        id: S,
+    ) -> Container<'a, 'b>
     where
         S: Into<Cow<'b, str>>,
     {
@@ -268,7 +282,10 @@ impl<'a, 'b> Container<'a, 'b> {
     }
 
     /// Returns a `top` view of information about the container process
-    pub fn top(&self, psargs: Option<&str>) -> Result<Top> {
+    pub fn top(
+        &self,
+        psargs: Option<&str>,
+    ) -> Result<Top> {
         let mut path = vec![format!("/containers/{}/top", self.id)];
         if let Some(ref args) = psargs {
             let encoded = form_urlencoded::Serializer::new(String::new())
@@ -282,7 +299,10 @@ impl<'a, 'b> Container<'a, 'b> {
     }
 
     /// Returns a stream of logs emitted but the container instance
-    pub fn logs(&self, opts: &LogsOptions) -> Result<Box<Read>> {
+    pub fn logs(
+        &self,
+        opts: &LogsOptions,
+    ) -> Result<Box<Read>> {
         let mut path = vec![format!("/containers/{}/logs", self.id)];
         if let Some(query) = opts.serialize() {
             path.push(query)
@@ -306,12 +326,9 @@ impl<'a, 'b> Container<'a, 'b> {
 
     /// Returns a stream of stats specific to this container instance
     pub fn stats(&self) -> Result<Vec<Stats>> {
-        self
-            .docker
+        self.docker
             .stream_get(&format!("/containers/{}/stats", self.id)[..])
-            .and_then(|r|{
-                serde_json::from_reader::<_, Vec<Stats>>(r).map_err(Error::from)
-            })
+            .and_then(|r| serde_json::from_reader::<_, Vec<Stats>>(r).map_err(Error::from))
     }
 
     /// Start the container instance
@@ -322,7 +339,10 @@ impl<'a, 'b> Container<'a, 'b> {
     }
 
     /// Stop the container instance
-    pub fn stop(&self, wait: Option<Duration>) -> Result<()> {
+    pub fn stop(
+        &self,
+        wait: Option<Duration>,
+    ) -> Result<()> {
         let mut path = vec![format!("/containers/{}/stop", self.id)];
         if let Some(w) = wait {
             let encoded = form_urlencoded::Serializer::new(String::new())
@@ -335,7 +355,10 @@ impl<'a, 'b> Container<'a, 'b> {
     }
 
     /// Restart the container instance
-    pub fn restart(&self, wait: Option<Duration>) -> Result<()> {
+    pub fn restart(
+        &self,
+        wait: Option<Duration>,
+    ) -> Result<()> {
         let mut path = vec![format!("/containers/{}/restart", self.id)];
         if let Some(w) = wait {
             let encoded = form_urlencoded::Serializer::new(String::new())
@@ -347,7 +370,10 @@ impl<'a, 'b> Container<'a, 'b> {
     }
 
     /// Kill the container instance
-    pub fn kill(&self, signal: Option<&str>) -> Result<()> {
+    pub fn kill(
+        &self,
+        signal: Option<&str>,
+    ) -> Result<()> {
         let mut path = vec![format!("/containers/{}/kill", self.id)];
         if let Some(sig) = signal {
             let encoded = form_urlencoded::Serializer::new(String::new())
@@ -359,7 +385,10 @@ impl<'a, 'b> Container<'a, 'b> {
     }
 
     /// Rename the container instance
-    pub fn rename(&self, name: &str) -> Result<()> {
+    pub fn rename(
+        &self,
+        name: &str,
+    ) -> Result<()> {
         let query = form_urlencoded::Serializer::new(String::new())
             .append_pair("name", name)
             .finish();
@@ -367,7 +396,8 @@ impl<'a, 'b> Container<'a, 'b> {
             .post::<Body>(
                 &format!("/containers/{}/rename?{}", self.id, query)[..],
                 None,
-            ).map(|_| ())
+            )
+            .map(|_| ())
     }
 
     /// Pause the container instance
@@ -402,7 +432,10 @@ impl<'a, 'b> Container<'a, 'b> {
     }
 
     /// Delete the container instance (todo: force/v)
-    pub fn remove(&self, opts: RmContainerOptions) -> Result<()> {
+    pub fn remove(
+        &self,
+        opts: RmContainerOptions,
+    ) -> Result<()> {
         let mut path = vec![format!("/containers/{}", self.id)];
         if let Some(query) = opts.serialize() {
             path.push(query)
@@ -412,7 +445,10 @@ impl<'a, 'b> Container<'a, 'b> {
     }
 
     /// Exec the specified command in the container
-    pub fn exec(&self, opts: &ExecContainerOptions) -> Result<Tty> {
+    pub fn exec(
+        &self,
+        opts: &ExecContainerOptions,
+    ) -> Result<Tty> {
         let data = opts.serialize()?;
         let bytes = data.into_bytes();
         match self.docker.post(
@@ -439,7 +475,7 @@ impl<'a, 'b> Container<'a, 'b> {
                             Some((bytes, mime::APPLICATION_JSON)),
                         ).map(|stream| Tty::new(stream))
                 } else {
-                    // TODO 
+                    // TODO
                     panic!()
                 }
             }
@@ -474,7 +510,10 @@ impl<'a> Containers<'a> {
     }
 
     /// Returns a reference to a set of operations available to a specific container instance
-    pub fn get<'b>(&self, name: &'b str) -> Container<'a, 'b> {
+    pub fn get<'b>(
+        &self,
+        name: &'b str,
+    ) -> Container<'a, 'b> {
         Container::new(self.docker, name)
     }
 
@@ -514,7 +553,10 @@ impl<'a> Networks<'a> {
     }
 
     /// List the docker networks on the current docker host
-    pub fn list(&self, opts: &NetworkListOptions) -> Result<Vec<NetworkInfo>> {
+    pub fn list(
+        &self,
+        opts: &NetworkListOptions,
+    ) -> Result<Vec<NetworkInfo>> {
         let mut path = vec!["/networks".to_owned()];
         if let Some(query) = opts.serialize() {
             path.push(query);
@@ -524,7 +566,10 @@ impl<'a> Networks<'a> {
     }
 
     /// Returns a reference to a set of operations available to a specific network instance
-    pub fn get<'b>(&self, id: &'b str) -> Network<'a, 'b> {
+    pub fn get<'b>(
+        &self,
+        id: &'b str,
+    ) -> Network<'a, 'b> {
         Network::new(self.docker, id)
     }
 
@@ -551,7 +596,10 @@ pub struct Network<'a, 'b> {
 
 impl<'a, 'b> Network<'a, 'b> {
     /// Exports an interface exposing operations against a network instance
-    pub fn new<S>(docker: &'a Docker, id: S) -> Network<'a, 'b>
+    pub fn new<S>(
+        docker: &'a Docker,
+        id: S,
+    ) -> Network<'a, 'b>
     where
         S: Into<Cow<'b, str>>,
     {
@@ -580,12 +628,18 @@ impl<'a, 'b> Network<'a, 'b> {
     }
 
     /// Connect container to network
-    pub fn connect(&self, opts: &ContainerConnectionOptions) -> Result<()> {
+    pub fn connect(
+        &self,
+        opts: &ContainerConnectionOptions,
+    ) -> Result<()> {
         self.do_connection("connect", opts)
     }
 
     /// Disconnect container to network
-    pub fn disconnect(&self, opts: &ContainerConnectionOptions) -> Result<()> {
+    pub fn disconnect(
+        &self,
+        opts: &ContainerConnectionOptions,
+    ) -> Result<()> {
         self.do_connection("disconnect", opts)
     }
 
@@ -601,7 +655,8 @@ impl<'a, 'b> Network<'a, 'b> {
             .post(
                 &format!("/networks/{}/{}", self.id, segment)[..],
                 Some((bytes, mime::APPLICATION_JSON)),
-            ).map(|_| ())
+            )
+            .map(|_| ())
     }
 }
 
@@ -631,9 +686,7 @@ impl Docker {
     {
         Docker {
             transport: Transport::Unix {
-                client: Client::builder()
-                    .keep_alive(false)
-                    .build(UnixConnector),
+                client: Client::builder().keep_alive(false).build(UnixConnector),
                 runtime: RefCell::new(tokio::runtime::Runtime::new().unwrap()),
                 path: socket_path.into(),
             },
@@ -654,9 +707,7 @@ impl Docker {
             Some("unix") => Docker {
                 transport: Transport::Unix {
                     client: Client::builder().build(UnixConnector),
-                    runtime: RefCell::new(
-                        tokio::runtime::Runtime::new().unwrap(),
-                    ),
+                    runtime: RefCell::new(tokio::runtime::Runtime::new().unwrap()),
                     path: host.path().to_owned(),
                 },
             },
@@ -668,16 +719,13 @@ impl Docker {
                 if let Some(ref certs) = env::var("DOCKER_CERT_PATH").ok() {
                     // fixme: don't unwrap before you know what's in the box
                     // https://github.com/hyperium/hyper/blob/master/src/net.rs#L427-L428
-                    let mut connector =
-                        SslConnector::builder(SslMethod::tls()).unwrap();
+                    let mut connector = SslConnector::builder(SslMethod::tls()).unwrap();
                     connector.set_cipher_list("DEFAULT").unwrap();
                     let cert = &format!("{}/cert.pem", certs);
                     let key = &format!("{}/key.pem", certs);
                     connector
-                        .set_certificate_file(
-                            &Path::new(cert),
-                            SslFiletype::PEM,
-                        ).unwrap();
+                        .set_certificate_file(&Path::new(cert), SslFiletype::PEM)
+                        .unwrap();
                     connector
                         .set_private_key_file(&Path::new(key), SslFiletype::PEM)
                         .unwrap();
@@ -687,16 +735,12 @@ impl Docker {
                     }
 
                     let http = HttpConnector::new(1);
-                    let connector =
-                        HttpsConnector::with_connector(http, connector)
-                            .unwrap();
+                    let connector = HttpsConnector::with_connector(http, connector).unwrap();
 
                     Docker {
                         transport: Transport::EncryptedTcp {
                             client: Client::builder().build(connector),
-                            runtime: RefCell::new(
-                                tokio::runtime::Runtime::new().unwrap(),
-                            ),
+                            runtime: RefCell::new(tokio::runtime::Runtime::new().unwrap()),
                             host: tcp_host_str,
                         },
                     }
@@ -704,9 +748,7 @@ impl Docker {
                     Docker {
                         transport: Transport::Tcp {
                             client: Client::new(),
-                            runtime: RefCell::new(
-                                tokio::runtime::Runtime::new().unwrap(),
-                            ),
+                            runtime: RefCell::new(tokio::runtime::Runtime::new().unwrap()),
                             host: tcp_host_str,
                         },
                     }
@@ -759,18 +801,28 @@ impl Docker {
             .and_then(|r| serde_json::from_reader::<_, Vec<Event>>(r).map_err(Error::from))
     }
 
-    fn get(&self, endpoint: &str) -> Result<String> {
+    fn get(
+        &self,
+        endpoint: &str,
+    ) -> Result<String> {
         self.transport.request::<Body>(Method::GET, endpoint, None)
     }
 
-    fn post<B>(&self, endpoint: &str, body: Option<(B, Mime)>) -> Result<String>
+    fn post<B>(
+        &self,
+        endpoint: &str,
+        body: Option<(B, Mime)>,
+    ) -> Result<String>
     where
         B: Into<Body>,
     {
         self.transport.request(Method::POST, endpoint, body)
     }
 
-    fn delete(&self, endpoint: &str) -> Result<String> {
+    fn delete(
+        &self,
+        endpoint: &str,
+    ) -> Result<String> {
         self.transport
             .request::<Body>(Method::DELETE, endpoint, None)
     }
@@ -786,7 +838,10 @@ impl Docker {
         self.transport.stream(Method::POST, endpoint, body)
     }
 
-    fn stream_get(&self, endpoint: &str) -> Result<Box<Read>> {
+    fn stream_get(
+        &self,
+        endpoint: &str,
+    ) -> Result<Box<Read>> {
         self.transport.stream::<Body>(Method::GET, endpoint, None)
     }
 }

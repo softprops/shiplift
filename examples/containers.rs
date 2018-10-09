@@ -1,5 +1,5 @@
-extern crate shiplift;
 extern crate env_logger;
+extern crate shiplift;
 
 use shiplift::Docker;
 

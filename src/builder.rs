@@ -1,15 +1,15 @@
 //! Interfaces for building various structures
 
 use self::super::Result;
+use errors::Error;
 use serde::Serialize;
-use serde_json::{self, Value, Number, map::Map};
+use serde_json::{self, map::Map, Number, Value};
 use std::cmp::Eq;
 use std::collections::{BTreeMap, HashMap};
 use std::hash::Hash;
 use std::iter::IntoIterator;
 use std::iter::Peekable;
 use url::form_urlencoded;
-use errors::Error;
 
 #[derive(Default)]
 pub struct PullOptions {
@@ -27,8 +27,11 @@ impl PullOptions {
         if self.params.is_empty() {
             None
         } else {
-            Some(form_urlencoded::Serializer::new(String::new())
-                 .extend_pairs(&self.params).finish())
+            Some(
+                form_urlencoded::Serializer::new(String::new())
+                    .extend_pairs(&self.params)
+                    .finish(),
+            )
         }
     }
 }
@@ -40,10 +43,15 @@ pub struct PullOptionsBuilder {
 
 impl PullOptionsBuilder {
     pub fn new() -> PullOptionsBuilder {
-        PullOptionsBuilder { ..Default::default() }
+        PullOptionsBuilder {
+            ..Default::default()
+        }
     }
 
-    pub fn image<I>(&mut self, img: I) -> &mut PullOptionsBuilder
+    pub fn image<I>(
+        &mut self,
+        img: I,
+    ) -> &mut PullOptionsBuilder
     where
         I: Into<String>,
     {
@@ -51,7 +59,10 @@ impl PullOptionsBuilder {
         self
     }
 
-    pub fn src<S>(&mut self, s: S) -> &mut PullOptionsBuilder
+    pub fn src<S>(
+        &mut self,
+        s: S,
+    ) -> &mut PullOptionsBuilder
     where
         S: Into<String>,
     {
@@ -59,7 +70,10 @@ impl PullOptionsBuilder {
         self
     }
 
-    pub fn repo<R>(&mut self, r: R) -> &mut PullOptionsBuilder
+    pub fn repo<R>(
+        &mut self,
+        r: R,
+    ) -> &mut PullOptionsBuilder
     where
         R: Into<String>,
     {
@@ -67,7 +81,10 @@ impl PullOptionsBuilder {
         self
     }
 
-    pub fn tag<T>(&mut self, t: T) -> &mut PullOptionsBuilder
+    pub fn tag<T>(
+        &mut self,
+        t: T,
+    ) -> &mut PullOptionsBuilder
     where
         T: Into<String>,
     {
@@ -76,7 +93,9 @@ impl PullOptionsBuilder {
     }
 
     pub fn build(&self) -> PullOptions {
-        PullOptions { params: self.params.clone() }
+        PullOptions {
+            params: self.params.clone(),
+        }
     }
 }
 
@@ -102,8 +121,11 @@ impl BuildOptions {
         if self.params.is_empty() {
             None
         } else {
-            Some(form_urlencoded::Serializer::new(String::new())
-                 .extend_pairs(&self.params).finish())
+            Some(
+                form_urlencoded::Serializer::new(String::new())
+                    .extend_pairs(&self.params)
+                    .finish(),
+            )
         }
     }
 }
@@ -128,7 +150,10 @@ impl BuildOptionsBuilder {
     }
 
     /// set the name of the docker file. defaults to "DockerFile"
-    pub fn dockerfile<P>(&mut self, path: P) -> &mut BuildOptionsBuilder
+    pub fn dockerfile<P>(
+        &mut self,
+        path: P,
+    ) -> &mut BuildOptionsBuilder
     where
         P: Into<String>,
     {
@@ -137,7 +162,10 @@ impl BuildOptionsBuilder {
     }
 
     /// tag this image with a name after building it
-    pub fn tag<T>(&mut self, t: T) -> &mut BuildOptionsBuilder
+    pub fn tag<T>(
+        &mut self,
+        t: T,
+    ) -> &mut BuildOptionsBuilder
     where
         T: Into<String>,
     {
@@ -145,7 +173,10 @@ impl BuildOptionsBuilder {
         self
     }
 
-    pub fn remote<R>(&mut self, r: R) -> &mut BuildOptionsBuilder
+    pub fn remote<R>(
+        &mut self,
+        r: R,
+    ) -> &mut BuildOptionsBuilder
     where
         R: Into<String>,
     {
@@ -154,25 +185,37 @@ impl BuildOptionsBuilder {
     }
 
     /// don't use the image cache when building image
-    pub fn nocache<R>(&mut self, nc: bool) -> &mut BuildOptionsBuilder {
+    pub fn nocache<R>(
+        &mut self,
+        nc: bool,
+    ) -> &mut BuildOptionsBuilder {
         self.params.insert("nocache", nc.to_string());
         self
     }
 
-    pub fn rm(&mut self, r: bool) -> &mut BuildOptionsBuilder {
+    pub fn rm(
+        &mut self,
+        r: bool,
+    ) -> &mut BuildOptionsBuilder {
         self.params.insert("rm", r.to_string());
         self
     }
 
-    pub fn forcerm(&mut self, fr: bool) -> &mut BuildOptionsBuilder {
+    pub fn forcerm(
+        &mut self,
+        fr: bool,
+    ) -> &mut BuildOptionsBuilder {
         self.params.insert("forcerm", fr.to_string());
         self
     }
 
     /// `bridge`, `host`, `none`, `container:<name|id>`, or a custom network name.
-    pub fn network_mode<T>(&mut self, t: T) -> &mut BuildOptionsBuilder
-        where
-            T: Into<String>,
+    pub fn network_mode<T>(
+        &mut self,
+        t: T,
+    ) -> &mut BuildOptionsBuilder
+    where
+        T: Into<String>,
     {
         self.params.insert("networkmode", t.into());
         self
@@ -211,8 +254,11 @@ impl ContainerListOptions {
         if self.params.is_empty() {
             None
         } else {
-            Some(form_urlencoded::Serializer::new(String::new())
-                 .extend_pairs(&self.params).finish())
+            Some(
+                form_urlencoded::Serializer::new(String::new())
+                    .extend_pairs(&self.params)
+                    .finish(),
+            )
         }
     }
 }
@@ -233,7 +279,9 @@ pub struct ContainerListOptionsBuilder {
 
 impl ContainerListOptionsBuilder {
     pub fn new() -> ContainerListOptionsBuilder {
-        ContainerListOptionsBuilder { ..Default::default() }
+        ContainerListOptionsBuilder {
+            ..Default::default()
+        }
     }
 
     pub fn filter(
@@ -243,20 +291,16 @@ impl ContainerListOptionsBuilder {
         let mut param = HashMap::new();
         for f in filters {
             match f {
-                ContainerFilter::ExitCode(c) => {
-                    param.insert("exit", vec![c.to_string()])
-                }
+                ContainerFilter::ExitCode(c) => param.insert("exit", vec![c.to_string()]),
                 ContainerFilter::Status(s) => param.insert("status", vec![s]),
                 ContainerFilter::LabelName(n) => param.insert("label", vec![n]),
-                ContainerFilter::Label(n, v) => {
-                    param.insert("label", vec![format!("{}={}", n, v)])
-                }
+                ContainerFilter::Label(n, v) => param.insert("label", vec![format!("{}={}", n, v)]),
             };
-
         }
         // structure is a a json encoded object mapping string keys to a list
         // of string values
-        self.params.insert("filters", serde_json::to_string(&param).unwrap());
+        self.params
+            .insert("filters", serde_json::to_string(&param).unwrap());
         self
     }
 
@@ -265,12 +309,18 @@ impl ContainerListOptionsBuilder {
         self
     }
 
-    pub fn since(&mut self, since: &str) -> &mut ContainerListOptionsBuilder {
+    pub fn since(
+        &mut self,
+        since: &str,
+    ) -> &mut ContainerListOptionsBuilder {
         self.params.insert("since", since.to_owned());
         self
     }
 
-    pub fn before(&mut self, before: &str) -> &mut ContainerListOptionsBuilder {
+    pub fn before(
+        &mut self,
+        before: &str,
+    ) -> &mut ContainerListOptionsBuilder {
         self.params.insert("before", before.to_owned());
         self
     }
@@ -281,7 +331,9 @@ impl ContainerListOptionsBuilder {
     }
 
     pub fn build(&self) -> ContainerListOptions {
-        ContainerListOptions { params: self.params.clone() }
+        ContainerListOptions {
+            params: self.params.clone(),
+        }
     }
 }
 
@@ -315,10 +367,10 @@ fn insert<'a, I, V>(
 
         insert(key_path, value, node);
     } else {
-        parent_node.as_object_mut().unwrap().insert(
-            local_key.to_string(),
-            serde_json::to_value(value).unwrap(),
-        );
+        parent_node
+            .as_object_mut()
+            .unwrap()
+            .insert(local_key.to_string(), serde_json::to_value(value).unwrap());
     }
 }
 
@@ -337,10 +389,7 @@ impl ContainerOptions {
         let mut body_members = Map::new();
         // The HostConfig element gets initialized to an empty object,
         // for backward compatibility.
-        body_members.insert(
-            "HostConfig".to_string(),
-            Value::Object(Map::new()),
-        );
+        body_members.insert("HostConfig".to_string(), Value::Object(Map::new()));
         let mut body = Value::Object(body_members);
         self.parse_from(&self.params, &mut body);
         self.parse_from(&self.params_list, &mut body);
@@ -387,7 +436,10 @@ impl ContainerOptionsBuilder {
         }
     }
 
-    pub fn name(&mut self, name: &str) -> &mut ContainerOptionsBuilder {
+    pub fn name(
+        &mut self,
+        name: &str,
+    ) -> &mut ContainerOptionsBuilder {
         self.name = Some(name.to_owned());
         self
     }
@@ -405,7 +457,10 @@ impl ContainerOptionsBuilder {
         self
     }
 
-    pub fn links(&mut self, links: Vec<&str>) -> &mut ContainerOptionsBuilder {
+    pub fn links(
+        &mut self,
+        links: Vec<&str>,
+    ) -> &mut ContainerOptionsBuilder {
         for link in links {
             self.params_list
                 .entry("HostConfig.Links")
@@ -415,24 +470,27 @@ impl ContainerOptionsBuilder {
         self
     }
 
-    pub fn memory(&mut self, memory: u64) -> &mut ContainerOptionsBuilder {
-        self.params.insert("HostConfig.Memory", Value::Number(Number::from(memory)));
+    pub fn memory(
+        &mut self,
+        memory: u64,
+    ) -> &mut ContainerOptionsBuilder {
+        self.params
+            .insert("HostConfig.Memory", Value::Number(Number::from(memory)));
         self
     }
 
-    pub fn labels(&mut self, labels: &HashMap<&str, &str>) -> &mut ContainerOptionsBuilder {
-
+    pub fn labels(
+        &mut self,
+        labels: &HashMap<&str, &str>,
+    ) -> &mut ContainerOptionsBuilder {
         let mut json_labels = Map::new();
         for (k, v) in labels {
-            let key : &str = k.as_ref();
-            let value : &str = v.as_ref();
-            json_labels.insert(key  .to_owned(), Value::String(value.to_string()));
+            let key: &str = k.as_ref();
+            let value: &str = v.as_ref();
+            json_labels.insert(key.to_owned(), Value::String(value.to_string()));
         }
 
-        self.params.insert(
-            "Labels",
-            Value::Object(json_labels),
-        );
+        self.params.insert("Labels", Value::Object(json_labels));
 
         self
     }
@@ -469,28 +527,34 @@ impl ContainerOptionsBuilder {
         network: &str,
     ) -> &mut ContainerOptionsBuilder {
         if !network.is_empty() {
-            self.params.insert(
-                "HostConfig.NetworkMode",
-                Value::String(network.to_owned()),
-            );
+            self.params
+                .insert("HostConfig.NetworkMode", Value::String(network.to_owned()));
         }
         self
     }
 
-    pub fn env(&mut self, envs: Vec<&str>) -> &mut ContainerOptionsBuilder {
+    pub fn env(
+        &mut self,
+        envs: Vec<&str>,
+    ) -> &mut ContainerOptionsBuilder {
         for env in envs {
-            self.params_list.entry("Env").or_insert(Vec::new()).push(
-                env.to_owned(),
-            );
+            self.params_list
+                .entry("Env")
+                .or_insert(Vec::new())
+                .push(env.to_owned());
         }
         self
     }
 
-    pub fn cmd(&mut self, cmds: Vec<&str>) -> &mut ContainerOptionsBuilder {
+    pub fn cmd(
+        &mut self,
+        cmds: Vec<&str>,
+    ) -> &mut ContainerOptionsBuilder {
         for cmd in cmds {
-            self.params_list.entry("Cmd").or_insert(Vec::new()).push(
-                cmd.to_owned(),
-            );
+            self.params_list
+                .entry("Cmd")
+                .or_insert(Vec::new())
+                .push(cmd.to_owned());
         }
         self
     }
@@ -500,10 +564,8 @@ impl ContainerOptionsBuilder {
         entrypoint: &str,
     ) -> &mut ContainerOptionsBuilder {
         if !entrypoint.is_empty() {
-            self.params.insert(
-                "Entrypoint",
-                Value::String(entrypoint.to_owned()),
-            );
+            self.params
+                .insert("Entrypoint", Value::String(entrypoint.to_owned()));
         }
         self
     }
@@ -610,21 +672,29 @@ impl ExecContainerOptionsBuilder {
     }
 
     /// Command to run, as an array of strings
-    pub fn cmd(&mut self, cmds: Vec<&str>) -> &mut ExecContainerOptionsBuilder {
+    pub fn cmd(
+        &mut self,
+        cmds: Vec<&str>,
+    ) -> &mut ExecContainerOptionsBuilder {
         for cmd in cmds {
-            self.params.entry("Cmd").or_insert(Vec::new()).push(
-                cmd.to_owned(),
-            );
+            self.params
+                .entry("Cmd")
+                .or_insert(Vec::new())
+                .push(cmd.to_owned());
         }
         self
     }
 
     /// A list of environment variables in the form "VAR=value"
-    pub fn env(&mut self, envs: Vec<&str>) -> &mut ExecContainerOptionsBuilder {
+    pub fn env(
+        &mut self,
+        envs: Vec<&str>,
+    ) -> &mut ExecContainerOptionsBuilder {
         for env in envs {
-            self.params.entry("Env").or_insert(Vec::new()).push(
-                env.to_owned(),
-            );
+            self.params
+                .entry("Env")
+                .or_insert(Vec::new())
+                .push(env.to_owned());
         }
         self
     }
@@ -671,12 +741,14 @@ impl EventsOptions {
         if self.params.is_empty() {
             None
         } else {
-            Some(form_urlencoded::Serializer::new(String::new())
-                 .extend_pairs(&self.params).finish())
+            Some(
+                form_urlencoded::Serializer::new(String::new())
+                    .extend_pairs(&self.params)
+                    .finish(),
+            )
         }
     }
 }
-
 
 pub enum EventFilterType {
     Container,
@@ -724,17 +796,25 @@ pub struct EventsOptionsBuilder {
 
 impl EventsOptionsBuilder {
     pub fn new() -> EventsOptionsBuilder {
-        EventsOptionsBuilder { ..Default::default() }
+        EventsOptionsBuilder {
+            ..Default::default()
+        }
     }
 
     /// Filter events since a given timestamp
-    pub fn since(&mut self, ts: &u64) -> &mut EventsOptionsBuilder {
+    pub fn since(
+        &mut self,
+        ts: &u64,
+    ) -> &mut EventsOptionsBuilder {
         self.params.insert("since", ts.to_string());
         self
     }
 
     /// Filter events until a given timestamp
-    pub fn until(&mut self, ts: &u64) -> &mut EventsOptionsBuilder {
+    pub fn until(
+        &mut self,
+        ts: &u64,
+    ) -> &mut EventsOptionsBuilder {
         self.params.insert("until", ts.to_string());
         self
     }
@@ -749,48 +829,49 @@ impl EventsOptionsBuilder {
                 EventFilter::Container(n) => {
                     self.containers.push(n);
                     params.insert("container", self.containers.clone())
-                },
+                }
                 EventFilter::Event(n) => {
                     self.events.push(n);
                     params.insert("event", self.events.clone())
-                },
+                }
                 EventFilter::Image(n) => {
                     self.images.push(n);
                     params.insert("image", self.images.clone())
-                },
+                }
                 EventFilter::Label(n) => {
                     self.labels.push(n);
                     params.insert("label", self.labels.clone())
-                },
+                }
                 EventFilter::Volume(n) => {
                     self.volumes.push(n);
                     params.insert("volume", self.volumes.clone())
-                },
+                }
                 EventFilter::Network(n) => {
                     self.networks.push(n);
                     params.insert("network", self.networks.clone())
-                },
+                }
                 EventFilter::Daemon(n) => {
                     self.daemons.push(n);
                     params.insert("daemon", self.daemons.clone())
-                },
+                }
                 EventFilter::Type(n) => {
                     let event_type = event_filter_type_to_string(n).to_string();
                     self.types.push(event_type);
                     params.insert("type", self.types.clone())
                 }
             };
-
         }
-        self.params.insert("filters", serde_json::to_string(&params).unwrap());
+        self.params
+            .insert("filters", serde_json::to_string(&params).unwrap());
         self
     }
 
     pub fn build(&self) -> EventsOptions {
-        EventsOptions { params: self.params.clone() }
+        EventsOptions {
+            params: self.params.clone(),
+        }
     }
 }
-
 
 /// Options for controlling log request results
 #[derive(Default)]
@@ -809,8 +890,11 @@ impl LogsOptions {
         if self.params.is_empty() {
             None
         } else {
-            Some(form_urlencoded::Serializer::new(String::new())
-                 .extend_pairs(&self.params).finish())
+            Some(
+                form_urlencoded::Serializer::new(String::new())
+                    .extend_pairs(&self.params)
+                    .finish(),
+            )
         }
     }
 }
@@ -823,40 +907,58 @@ pub struct LogsOptionsBuilder {
 
 impl LogsOptionsBuilder {
     pub fn new() -> LogsOptionsBuilder {
-        LogsOptionsBuilder { ..Default::default() }
+        LogsOptionsBuilder {
+            ..Default::default()
+        }
     }
 
-    pub fn follow(&mut self, f: bool) -> &mut LogsOptionsBuilder {
+    pub fn follow(
+        &mut self,
+        f: bool,
+    ) -> &mut LogsOptionsBuilder {
         self.params.insert("follow", f.to_string());
         self
     }
 
-    pub fn stdout(&mut self, s: bool) -> &mut LogsOptionsBuilder {
+    pub fn stdout(
+        &mut self,
+        s: bool,
+    ) -> &mut LogsOptionsBuilder {
         self.params.insert("stdout", s.to_string());
         self
     }
 
-    pub fn stderr(&mut self, s: bool) -> &mut LogsOptionsBuilder {
+    pub fn stderr(
+        &mut self,
+        s: bool,
+    ) -> &mut LogsOptionsBuilder {
         self.params.insert("stderr", s.to_string());
         self
     }
 
-    pub fn timestamps(&mut self, t: bool) -> &mut LogsOptionsBuilder {
+    pub fn timestamps(
+        &mut self,
+        t: bool,
+    ) -> &mut LogsOptionsBuilder {
         self.params.insert("timestamps", t.to_string());
         self
     }
 
     /// how_many can either by "all" or a to_string() of the number
-    pub fn tail(&mut self, how_many: &str) -> &mut LogsOptionsBuilder {
+    pub fn tail(
+        &mut self,
+        how_many: &str,
+    ) -> &mut LogsOptionsBuilder {
         self.params.insert("tail", how_many.to_owned());
         self
     }
 
     pub fn build(&self) -> LogsOptions {
-        LogsOptions { params: self.params.clone() }
+        LogsOptions {
+            params: self.params.clone(),
+        }
     }
 }
-
 
 /// Filter options for image listings
 pub enum ImageFilter {
@@ -879,8 +981,11 @@ impl ImageListOptions {
         if self.params.is_empty() {
             None
         } else {
-            Some(form_urlencoded::Serializer::new(String::new())
-                 .extend_pairs(&self.params).finish())
+            Some(
+                form_urlencoded::Serializer::new(String::new())
+                    .extend_pairs(&self.params)
+                    .finish(),
+            )
         }
     }
 }
@@ -893,20 +998,31 @@ pub struct ImageListOptionsBuilder {
 
 impl ImageListOptionsBuilder {
     pub fn new() -> ImageListOptionsBuilder {
-        ImageListOptionsBuilder { ..Default::default() }
+        ImageListOptionsBuilder {
+            ..Default::default()
+        }
     }
 
-    pub fn digests(&mut self, d: bool) -> &mut ImageListOptionsBuilder {
+    pub fn digests(
+        &mut self,
+        d: bool,
+    ) -> &mut ImageListOptionsBuilder {
         self.params.insert("digests", d.to_string());
         self
     }
 
-    pub fn all(&mut self, a: bool) -> &mut ImageListOptionsBuilder {
+    pub fn all(
+        &mut self,
+        a: bool,
+    ) -> &mut ImageListOptionsBuilder {
         self.params.insert("all", a.to_string());
         self
     }
 
-    pub fn filter_name(&mut self, name: &str) -> &mut ImageListOptionsBuilder {
+    pub fn filter_name(
+        &mut self,
+        name: &str,
+    ) -> &mut ImageListOptionsBuilder {
         self.params.insert("filter", name.to_owned());
         self
     }
@@ -918,27 +1034,24 @@ impl ImageListOptionsBuilder {
         let mut param = HashMap::new();
         for f in filters {
             match f {
-                ImageFilter::Dangling => {
-                    param.insert("dangling", vec![true.to_string()])
-                }
+                ImageFilter::Dangling => param.insert("dangling", vec![true.to_string()]),
                 ImageFilter::LabelName(n) => param.insert("label", vec![n]),
-                ImageFilter::Label(n, v) => {
-                    param.insert("label", vec![format!("{}={}", n, v)])
-                }
+                ImageFilter::Label(n, v) => param.insert("label", vec![format!("{}={}", n, v)]),
             };
-
         }
         // structure is a a json encoded object mapping string keys to a list
         // of string values
-        self.params.insert("filters", serde_json::to_string(&param).unwrap());
+        self.params
+            .insert("filters", serde_json::to_string(&param).unwrap());
         self
     }
 
     pub fn build(&self) -> ImageListOptions {
-        ImageListOptions { params: self.params.clone() }
+        ImageListOptions {
+            params: self.params.clone(),
+        }
     }
 }
-
 
 /// Options for controlling log request results
 #[derive(Default)]
@@ -957,8 +1070,11 @@ impl RmContainerOptions {
         if self.params.is_empty() {
             None
         } else {
-            Some(form_urlencoded::Serializer::new(String::new())
-                 .extend_pairs(&self.params).finish())
+            Some(
+                form_urlencoded::Serializer::new(String::new())
+                    .extend_pairs(&self.params)
+                    .finish(),
+            )
         }
     }
 }
@@ -971,21 +1087,31 @@ pub struct RmContainerOptionsBuilder {
 
 impl RmContainerOptionsBuilder {
     pub fn new() -> RmContainerOptionsBuilder {
-        RmContainerOptionsBuilder { ..Default::default() }
+        RmContainerOptionsBuilder {
+            ..Default::default()
+        }
     }
 
-    pub fn force(&mut self, f: bool) -> &mut RmContainerOptionsBuilder {
+    pub fn force(
+        &mut self,
+        f: bool,
+    ) -> &mut RmContainerOptionsBuilder {
         self.params.insert("force", f.to_string());
         self
     }
 
-    pub fn volumes(&mut self, s: bool) -> &mut RmContainerOptionsBuilder {
+    pub fn volumes(
+        &mut self,
+        s: bool,
+    ) -> &mut RmContainerOptionsBuilder {
         self.params.insert("v", s.to_string());
         self
     }
 
     pub fn build(&self) -> RmContainerOptions {
-        RmContainerOptions { params: self.params.clone() }
+        RmContainerOptions {
+            params: self.params.clone(),
+        }
     }
 }
 
@@ -1001,8 +1127,11 @@ impl NetworkListOptions {
         if self.params.is_empty() {
             None
         } else {
-            Some(form_urlencoded::Serializer::new(String::new())
-                 .extend_pairs(&self.params).finish())
+            Some(
+                form_urlencoded::Serializer::new(String::new())
+                    .extend_pairs(&self.params)
+                    .finish(),
+            )
         }
     }
 }
@@ -1064,7 +1193,10 @@ impl NetworkCreateOptionsBuilder {
         }
     }
 
-    pub fn driver(&mut self, name: &str) -> &mut NetworkCreateOptionsBuilder {
+    pub fn driver(
+        &mut self,
+        name: &str,
+    ) -> &mut NetworkCreateOptionsBuilder {
         if !name.is_empty() {
             self.params.insert("Driver", name.to_owned());
         }
@@ -1213,6 +1345,5 @@ mod tests {
             r#"{"HostConfig":{"RestartPolicy":{"Name":"always"}},"Image":"test_image"}"#,
             options.serialize().unwrap()
         );
-
     }
 }

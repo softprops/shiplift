@@ -1,17 +1,24 @@
-use flate2::Compression;
 use flate2::write::GzEncoder;
+use flate2::Compression;
 use std::fs::{self, File};
 use std::io::{self, Write};
-use std::path::{MAIN_SEPARATOR, Path};
+use std::path::{Path, MAIN_SEPARATOR};
 use tar::Builder;
 
 // todo: this is pretty involved. (re)factor this into its own crate
-pub fn dir<W>(buf: W, path: &str) -> io::Result<()>
+pub fn dir<W>(
+    buf: W,
+    path: &str,
+) -> io::Result<()>
 where
     W: Write,
 {
     let mut archive = Builder::new(GzEncoder::new(buf, Compression::best()));
-    fn bundle<F>(dir: &Path, f: &mut F, bundle_dir: bool) -> io::Result<()>
+    fn bundle<F>(
+        dir: &Path,
+        f: &mut F,
+        bundle_dir: bool,
+    ) -> io::Result<()>
     where
         F: FnMut(&Path) -> io::Result<()>,
     {
@@ -44,16 +51,14 @@ where
         let mut append = |path: &Path| {
             let canonical = path.canonicalize()?;
             // todo: don't unwrap
-            let relativized = canonical.to_str().unwrap().trim_left_matches(
-                &base_path_str[..],
-            );
+            let relativized = canonical
+                .to_str()
+                .unwrap()
+                .trim_left_matches(&base_path_str[..]);
             if path.is_dir() {
                 archive.append_dir(Path::new(relativized), &canonical)?
             } else {
-                archive.append_file(
-                    Path::new(relativized),
-                    &mut File::open(&canonical)?,
-                )?
+                archive.append_file(Path::new(relativized), &mut File::open(&canonical)?)?
             }
             Ok(())
         };
