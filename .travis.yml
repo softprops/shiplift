@@ -27,12 +27,16 @@ script:
 - cargo +nightly fmt --all -- --check
 - RUSTFLAGS="$RUSTFLAGS -C link-dead-code" cargo test
 
+# Cache `cargo install`ed tools, but don't cache the project's `target`
+# directory (which ends up over-caching and filling all disk space!)
+# https://levans.fr/rust_travis_cache.html
 cache:
-  cargo: true
-  apt: true
   directories:
-  - target/debug/deps
-  - target/debug/build
+    - /home/travis/.cargo
+
+before_cache:
+  # But don't cache the cargo registry
+  - rm -rf /home/travis/.cargo/registry
 
 addons:
   apt:
