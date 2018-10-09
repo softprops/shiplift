@@ -2,6 +2,13 @@ sudo: false
 
 language: rust
 
+# only build pushes to master
+# prs are build separately
+# https://docs.travis-ci.com/user/pull-requests/#how-pull-requests-are-built
+branches:
+  only:
+  - master
+
 matrix:
   fast_finish: true
   include:
@@ -24,12 +31,16 @@ script:
 - cargo +nightly fmt --all -- --check
 - cargo test
 
+# Cache `cargo install`ed tools, but don't cache the project's `target`
+# directory (which ends up over-caching and filling all disk space!)
+# https://levans.fr/rust_travis_cache.html
 cache:
-  cargo: true
-  apt: true
   directories:
-  - target/debug/deps
-  - target/debug/build
+    - /home/travis/.cargo
+
+before_cache:
+  # But don't cache the cargo registry
+  - rm -rf /home/travis/.cargo/registry
 
 addons:
   apt:
