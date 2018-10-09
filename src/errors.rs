@@ -41,7 +41,10 @@ impl From<IoError> for Error {
 }
 
 impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(
+        &self,
+        f: &mut fmt::Formatter,
+    ) -> fmt::Result {
         write!(f, "Docker Error: ")?;
         match self {
             &Error::SerdeJsonError(ref err) => return err.fmt(f),

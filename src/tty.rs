@@ -1,4 +1,3 @@
-
 use byteorder::{BigEndian, ReadBytesExt};
 use std::io::Cursor;
 use std::io::Read;
@@ -58,11 +57,8 @@ fn demux(mut stream: impl Read) -> Vec<TtyLine> {
         match stream.read_exact(&mut header) {
             Ok(_) => {
                 let payload_size: Vec<u8> = header[4..8].to_vec();
-                let mut buffer = vec![
-                    0;
-                    Cursor::new(&payload_size).read_u32::<BigEndian>().unwrap()
-                        as usize
-                ];
+                let mut buffer =
+                    vec![0; Cursor::new(&payload_size).read_u32::<BigEndian>().unwrap() as usize];
                 match stream.read_exact(&mut buffer) {
                     Ok(_) => {
                         match header[0] {
