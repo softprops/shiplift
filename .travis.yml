@@ -1,4 +1,5 @@
-sudo: false
+# true because of tarpaulin dependency
+sudo: true
 
 language: rust
 
