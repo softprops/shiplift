@@ -53,8 +53,6 @@ after_success:
   # see https://github.com/xd009642/tarpaulin for more information
   - '[ $TRAVIS_EVENT_TYPE != "cron" ] &&
     [ $TRAVIS_RUST_VERSION = stable ] &&
-    [ $TRAVIS_BRANCH = master ] &&
-    [ $TRAVIS_PULL_REQUEST = false ] &&
     cargo +nightly tarpaulin --ciserver travis-ci --coveralls $TRAVIS_JOB_ID || true'
   - '[ $TRAVIS_RUST_VERSION = stable ] &&
     [ $TRAVIS_BRANCH = master ] &&
