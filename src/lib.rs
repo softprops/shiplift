@@ -95,7 +95,7 @@ impl<'a, 'b> Image<'a, 'b> {
         S: Into<Cow<'b, str>>,
     {
         Image {
-            docker: docker,
+            docker,
             name: name.into(),
         }
     }
@@ -130,13 +130,15 @@ impl<'a, 'b> Image<'a, 'b> {
                                 .to_owned(),
                         )
                     })
-                    .or(obj.get("Deleted").map(|sha| {
-                        Status::Deleted(
-                            sha.as_str()
-                                .expect("expected Deleted to be a string")
-                                .to_owned(),
-                        )
-                    }))
+                    .or_else(|| {
+                        obj.get("Deleted").map(|sha| {
+                            Status::Deleted(
+                                sha.as_str()
+                                    .expect("expected Deleted to be a string")
+                                    .to_owned(),
+                            )
+                        })
+                    })
                     .expect("expected Untagged or Deleted")
             }),
             _ => unreachable!(),
@@ -159,7 +161,7 @@ pub struct Images<'a> {
 impl<'a> Images<'a> {
     /// Exports an interface for interacting with docker images
     pub fn new(docker: &'a Docker) -> Images<'a> {
-        Images { docker: docker }
+        Images { docker }
     }
 
     /// Builds a new image build by reading a Dockerfile in a target directory
@@ -263,7 +265,7 @@ impl<'a, 'b> Container<'a, 'b> {
         S: Into<Cow<'b, str>>,
     {
         Container {
-            docker: docker,
+            docker,
             id: id.into(),
         }
     }
@@ -473,7 +475,7 @@ impl<'a, 'b> Container<'a, 'b> {
                                     .unwrap()
                             )[..],
                             Some((bytes, mime::APPLICATION_JSON)),
-                        ).map(|stream| Tty::new(stream))
+                        ).map(Tty::new)
                 } else {
                     // TODO
                     panic!()
@@ -493,7 +495,7 @@ pub struct Containers<'a> {
 impl<'a> Containers<'a> {
     /// Exports an interface for interacting with docker containers
     pub fn new(docker: &'a Docker) -> Containers<'a> {
-        Containers { docker: docker }
+        Containers { docker }
     }
 
     /// Lists the container instances on the docker host
@@ -549,7 +551,7 @@ pub struct Networks<'a> {
 impl<'a> Networks<'a> {
     /// Exports an interface for interacting with docker Networks
     pub fn new(docker: &'a Docker) -> Networks<'a> {
-        Networks { docker: docker }
+        Networks { docker }
     }
 
     /// List the docker networks on the current docker host
@@ -604,7 +606,7 @@ impl<'a, 'b> Network<'a, 'b> {
         S: Into<Cow<'b, str>>,
     {
         Network {
-            docker: docker,
+            docker,
             id: id.into(),
         }
     }
@@ -716,7 +718,7 @@ impl Docker {
             Some("unix") => panic!("Unix socket support is disabled"),
 
             _ => {
-                if let Some(ref certs) = env::var("DOCKER_CERT_PATH").ok() {
+                if let Ok(ref certs) = env::var("DOCKER_CERT_PATH") {
                     // fixme: don't unwrap before you know what's in the box
                     // https://github.com/hyperium/hyper/blob/master/src/net.rs#L427-L428
                     let mut connector = SslConnector::builder(SslMethod::tls()).unwrap();
@@ -729,7 +731,7 @@ impl Docker {
                     connector
                         .set_private_key_file(&Path::new(key), SslFiletype::PEM)
                         .unwrap();
-                    if let Some(_) = env::var("DOCKER_TLS_VERIFY").ok() {
+                    if env::var("DOCKER_TLS_VERIFY").is_ok() {
                         let ca = &format!("{}/ca.pem", certs);
                         connector.set_ca_file(&Path::new(ca)).unwrap();
                     }
