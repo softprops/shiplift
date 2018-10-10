@@ -141,37 +141,37 @@ impl Transport {
                 code: res.status(),
                 message: self
                     .get_error_message(res)
-                    .unwrap_or("bad parameter".to_owned()),
+                    .unwrap_or_else(|| "bad parameter".to_owned()),
             }),
             StatusCode::NOT_FOUND => Err(Error::Fault {
                 code: res.status(),
                 message: self
                     .get_error_message(res)
-                    .unwrap_or("not found".to_owned()),
+                    .unwrap_or_else(|| "not found".to_owned()),
             }),
             StatusCode::NOT_MODIFIED => Err(Error::Fault {
                 code: res.status(),
                 message: self
                     .get_error_message(res)
-                    .unwrap_or("not modified".to_owned()),
+                    .unwrap_or_else(|| "not modified".to_owned()),
             }),
             StatusCode::NOT_ACCEPTABLE => Err(Error::Fault {
                 code: res.status(),
                 message: self
                     .get_error_message(res)
-                    .unwrap_or("not acceptable".to_owned()),
+                    .unwrap_or_else(|| "not acceptable".to_owned()),
             }),
             StatusCode::CONFLICT => Err(Error::Fault {
                 code: res.status(),
                 message: self
                     .get_error_message(res)
-                    .unwrap_or("conflict found".to_owned()),
+                    .unwrap_or_else(|| "conflict found".to_owned()),
             }),
             StatusCode::INTERNAL_SERVER_ERROR => Err(Error::Fault {
                 code: res.status(),
                 message: self
                     .get_error_message(res)
-                    .unwrap_or("internal server error".to_owned()),
+                    .unwrap_or_else(|| "internal server error".to_owned()),
             }),
             _ => unreachable!(),
         }
@@ -214,14 +214,12 @@ impl Transport {
         match String::from_utf8(chunk.into_iter().collect()) {
             Ok(output) => {
                 let json_response = serde_json::from_str::<Value>(output.as_str()).ok();
-                let message = json_response
+                json_response
                     .as_ref()
                     .and_then(|x| x.as_object())
                     .and_then(|x| x.get("message"))
                     .and_then(|x| x.as_str())
-                    .map(|x| x.to_owned());
-
-                message
+                    .map(|x| x.to_owned())
             }
             Err(..) => None,
         }

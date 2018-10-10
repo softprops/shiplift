@@ -188,15 +188,12 @@ pub struct Config {
 impl Config {
     pub fn env(&self) -> HashMap<String, String> {
         let mut map = HashMap::new();
-        match self.env {
-            Some(ref vars) => {
-                for e in vars {
-                    let pair: Vec<&str> = e.split("=").collect();
-                    map.insert(pair[0].to_owned(), pair[1].to_owned());
-                }
+        if let Some(ref vars) = self.env {
+            for e in vars {
+                let pair: Vec<&str> = e.split('=').collect();
+                map.insert(pair[0].to_owned(), pair[1].to_owned());
             }
-            _ => (),
-        };
+        }
         map
     }
 }

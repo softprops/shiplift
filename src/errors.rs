@@ -3,7 +3,7 @@
 use http;
 use hyper::{self, StatusCode};
 use serde_json::Error as SerdeError;
-use std::error::Error as ErrorTrait;
+use std::error::Error as StdError;
 use std::fmt;
 use std::io::Error as IoError;
 
@@ -47,25 +47,25 @@ impl fmt::Display for Error {
     ) -> fmt::Result {
         write!(f, "Docker Error: ")?;
         match self {
-            &Error::SerdeJsonError(ref err) => return err.fmt(f),
-            &Error::Http(ref err) => return err.fmt(f),
-            &Error::Hyper(ref err) => return err.fmt(f),
-            &Error::IO(ref err) => return err.fmt(f),
-            &Error::Fault { code, .. } => return write!(f, "{}", code),
-        };
+            Error::SerdeJsonError(ref err) => err.fmt(f),
+            Error::Http(ref err) => err.fmt(f),
+            Error::Hyper(ref err) => err.fmt(f),
+            Error::IO(ref err) => err.fmt(f),
+            Error::Fault { code, .. } => write!(f, "{}", code),
+        }
     }
 }
 
-impl ErrorTrait for Error {
+impl StdError for Error {
     fn description(&self) -> &str {
         "Shiplift Error"
     }
 
-    fn cause(&self) -> Option<&ErrorTrait> {
+    fn cause(&self) -> Option<&StdError> {
         match self {
-            &Error::SerdeJsonError(ref err) => Some(err),
-            &Error::Http(ref err) => Some(err),
-            &Error::IO(ref err) => Some(err),
+            Error::SerdeJsonError(ref err) => Some(err),
+            Error::Http(ref err) => Some(err),
+            Error::IO(ref err) => Some(err),
             _ => None,
         }
     }

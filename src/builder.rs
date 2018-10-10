@@ -408,7 +408,7 @@ impl ContainerOptions {
     {
         for (k, v) in params.iter() {
             let key_string = k.to_string();
-            insert(&mut key_string.split(".").peekable(), v, body)
+            insert(&mut key_string.split('.').peekable(), v, body)
         }
     }
 }
@@ -430,9 +430,9 @@ impl ContainerOptionsBuilder {
         params.insert("Image", Value::String(image.to_owned()));
         ContainerOptionsBuilder {
             name: None,
-            params: params,
-            params_list: params_list,
-            params_hash: params_hash,
+            params,
+            params_list,
+            params_hash,
         }
     }
 
@@ -451,7 +451,7 @@ impl ContainerOptionsBuilder {
         for v in volumes {
             self.params_list
                 .entry("HostConfig.Binds")
-                .or_insert(Vec::new())
+                .or_insert_with(Vec::new)
                 .push(v.to_owned());
         }
         self
@@ -464,7 +464,7 @@ impl ContainerOptionsBuilder {
         for link in links {
             self.params_list
                 .entry("HostConfig.Links")
-                .or_insert(Vec::new())
+                .or_insert_with(Vec::new)
                 .push(link.to_owned());
         }
         self
@@ -485,9 +485,7 @@ impl ContainerOptionsBuilder {
     ) -> &mut ContainerOptionsBuilder {
         let mut json_labels = Map::new();
         for (k, v) in labels {
-            let key: &str = k.as_ref();
-            let value: &str = v.as_ref();
-            json_labels.insert(key.to_owned(), Value::String(value.to_string()));
+            json_labels.insert(k.to_string(), Value::String(v.to_string()));
         }
 
         self.params.insert("Labels", Value::Object(json_labels));
@@ -502,7 +500,7 @@ impl ContainerOptionsBuilder {
         for host in hosts {
             self.params_list
                 .entry("HostConfig.ExtraHosts")
-                .or_insert(Vec::new())
+                .or_insert_with(Vec::new)
                 .push(host.to_owned());
         }
 
@@ -516,7 +514,7 @@ impl ContainerOptionsBuilder {
         for volume in volumes {
             self.params_list
                 .entry("HostConfig.VolumesFrom")
-                .or_insert(Vec::new())
+                .or_insert_with(Vec::new)
                 .push(volume.to_owned());
         }
         self
@@ -540,7 +538,7 @@ impl ContainerOptionsBuilder {
         for env in envs {
             self.params_list
                 .entry("Env")
-                .or_insert(Vec::new())
+                .or_insert_with(Vec::new)
                 .push(env.to_owned());
         }
         self
@@ -553,7 +551,7 @@ impl ContainerOptionsBuilder {
         for cmd in cmds {
             self.params_list
                 .entry("Cmd")
-                .or_insert(Vec::new())
+                .or_insert_with(Vec::new)
                 .push(cmd.to_owned());
         }
         self
@@ -577,7 +575,7 @@ impl ContainerOptionsBuilder {
         for c in capabilities {
             self.params_list
                 .entry("HostConfig.CapAdd")
-                .or_insert(Vec::new())
+                .or_insert_with(Vec::new)
                 .push(c.to_owned());
         }
         self
@@ -590,7 +588,7 @@ impl ContainerOptionsBuilder {
         for d in devices {
             self.params_hash
                 .entry("HostConfig.Devices".to_string())
-                .or_insert(Vec::new())
+                .or_insert_with(Vec::new)
                 .push(d);
         }
         self
@@ -679,7 +677,7 @@ impl ExecContainerOptionsBuilder {
         for cmd in cmds {
             self.params
                 .entry("Cmd")
-                .or_insert(Vec::new())
+                .or_insert_with(Vec::new)
                 .push(cmd.to_owned());
         }
         self
@@ -693,7 +691,7 @@ impl ExecContainerOptionsBuilder {
         for env in envs {
             self.params
                 .entry("Env")
-                .or_insert(Vec::new())
+                .or_insert_with(Vec::new)
                 .push(env.to_owned());
         }
         self
@@ -750,6 +748,7 @@ impl EventsOptions {
     }
 }
 
+#[derive(Copy, Clone)]
 pub enum EventFilterType {
     Container,
     Image,
@@ -1188,8 +1187,8 @@ impl NetworkCreateOptionsBuilder {
         params.insert("Name", name.to_owned());
         NetworkCreateOptionsBuilder {
             name: None,
-            params: params,
-            params_hash: params_hash,
+            params,
+            params_hash,
         }
     }
 
@@ -1210,7 +1209,7 @@ impl NetworkCreateOptionsBuilder {
         for l in labels {
             self.params_hash
                 .entry("Labels".to_string())
-                .or_insert(Vec::new())
+                .or_insert_with(Vec::new)
                 .push(l)
         }
         self
