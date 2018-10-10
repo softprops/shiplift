@@ -17,6 +17,7 @@
 extern crate log;
 extern crate byteorder;
 extern crate flate2;
+extern crate futures;
 extern crate http;
 extern crate hyper;
 extern crate hyper_openssl;
@@ -62,10 +63,10 @@ use rep::{
 use rep::{NetworkCreateInfo, NetworkDetails as NetworkInfo};
 use serde_json::Value;
 use std::borrow::Cow;
-use std::cell::RefCell;
 use std::env;
 use std::io::prelude::*;
 use std::path::Path;
+use std::sync::{Arc, Mutex, MutexGuard};
 use std::time::Duration;
 use transport::{tar, Transport};
 use tty::Tty;
@@ -147,7 +148,7 @@ impl<'a, 'b> Image<'a, 'b> {
     }
 
     /// Export this image to a tarball
-    pub fn export(&self) -> Result<Box<Read>> {
+    pub fn export(&self) -> Result<Box<Read + Send>> {
         self.docker
             .stream_get(&format!("/images/{}/get", self.name)[..])
     }
@@ -235,7 +236,7 @@ impl<'a> Images<'a> {
     pub fn export(
         &self,
         names: Vec<&str>,
-    ) -> Result<Box<Read>> {
+    ) -> Result<Box<Read + Send>> {
         let params = names.iter().map(|n| ("names", *n));
         let query = form_urlencoded::Serializer::new(String::new())
             .extend_pairs(params)
@@ -304,7 +305,7 @@ impl<'a, 'b> Container<'a, 'b> {
     pub fn logs(
         &self,
         opts: &LogsOptions,
-    ) -> Result<Box<Read>> {
+    ) -> Result<Box<Read + Send>> {
         let mut path = vec![format!("/containers/{}/logs", self.id)];
         if let Some(query) = opts.serialize() {
             path.push(query)
@@ -321,7 +322,7 @@ impl<'a, 'b> Container<'a, 'b> {
     }
 
     /// Exports the current docker container into a tarball
-    pub fn export(&self) -> Result<Box<Read>> {
+    pub fn export(&self) -> Result<Box<Read + Send>> {
         self.docker
             .stream_get(&format!("/containers/{}/export", self.id)[..])
     }
@@ -689,7 +690,7 @@ impl Docker {
         Docker {
             transport: Transport::Unix {
                 client: Client::builder().keep_alive(false).build(UnixConnector),
-                runtime: RefCell::new(tokio::runtime::Runtime::new().unwrap()),
+                runtime: Arc::new(Mutex::new(tokio::runtime::Runtime::new().unwrap())),
                 path: socket_path.into(),
             },
         }
@@ -709,7 +710,7 @@ impl Docker {
             Some("unix") => Docker {
                 transport: Transport::Unix {
                     client: Client::builder().build(UnixConnector),
-                    runtime: RefCell::new(tokio::runtime::Runtime::new().unwrap()),
+                    runtime: Arc::new(Mutex::new(tokio::runtime::Runtime::new().unwrap())),
                     path: host.path().to_owned(),
                 },
             },
@@ -742,7 +743,7 @@ impl Docker {
                     Docker {
                         transport: Transport::EncryptedTcp {
                             client: Client::builder().build(connector),
-                            runtime: RefCell::new(tokio::runtime::Runtime::new().unwrap()),
+                            runtime: Arc::new(Mutex::new(tokio::runtime::Runtime::new().unwrap())),
                             host: tcp_host_str,
                         },
                     }
@@ -750,7 +751,7 @@ impl Docker {
                     Docker {
                         transport: Transport::Tcp {
                             client: Client::new(),
-                            runtime: RefCell::new(tokio::runtime::Runtime::new().unwrap()),
+                            runtime: Arc::new(Mutex::new(tokio::runtime::Runtime::new().unwrap())),
                             host: tcp_host_str,
                         },
                     }
@@ -833,7 +834,7 @@ impl Docker {
         &self,
         endpoint: &str,
         body: Option<(B, Mime)>,
-    ) -> Result<Box<Read>>
+    ) -> Result<Box<Read + Send>>
     where
         B: Into<Body>,
     {
@@ -843,7 +844,7 @@ impl Docker {
     fn stream_get(
         &self,
         endpoint: &str,
-    ) -> Result<Box<Read>> {
+    ) -> Result<Box<Read + Send>> {
         self.transport.stream::<Body>(Method::GET, endpoint, None)
     }
 }

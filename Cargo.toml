@@ -13,6 +13,7 @@ license = "MIT"
 [dependencies]
 byteorder = "1"
 flate2 = "1"
+futures = "0.1"
 http = "0.1"
 hyper = "0.12"
 hyper-openssl = "0.6"
