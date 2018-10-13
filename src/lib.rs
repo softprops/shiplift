@@ -524,7 +524,7 @@ impl<'a> Containers<'a> {
         &self,
         opts: &ContainerOptions,
     ) -> Result<ContainerCreateInfo> {
-        let data = serde_json::to_string(opts)?;
+        let data = opts.serialize()?;
         let bytes = data.into_bytes();
         let mut path = vec!["/containers/create".to_owned()];
 
