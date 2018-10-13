@@ -1,15 +1,20 @@
 //! Interfaces for building various structures
 
-use self::super::Result;
-use errors::Error;
-use serde::Serialize;
-use serde_json::{self, map::Map, Number, Value};
+// Std lib
 use std::cmp::Eq;
 use std::collections::{BTreeMap, HashMap};
 use std::hash::Hash;
 use std::iter::IntoIterator;
 use std::iter::Peekable;
+
+// Third party
+use serde::Serialize;
+use serde_json::{self, map::Map, Number, Value};
 use url::form_urlencoded;
+
+// Ours
+use errors::Error;
+use Result;
 
 #[derive(Default)]
 pub struct PullOptions {
