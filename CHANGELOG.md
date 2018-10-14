@@ -2,7 +2,7 @@
 
 This release brings a number of breaking changes, all hopefully considered to be *good* :), and some new process to help track future changes. Some notable changes are listed below. The best source of truth will be the updated rustdocs.
 
-* removed public {Entity}Builder.new() constructors. Use `{Entity}.builder()` interfaces to construct these instead
+* removed public {Entity}Builder.new() constructors. Use `{Entity}.builder()` interfaces to construct these instead [#125](https://github.com/softprops/shiplift/pull/125)
 * repo labels are now optional [#102](https://github.com/softprops/shiplift/pull/102)
 * interlacing tty [#101](https://github.com/softprops/shiplift/pull/101)
 * migrate to serde and update struct field names to line up with rust's snake_case conventions [#100](https://github.com/softprops/shiplift/pull/100)
