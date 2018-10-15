@@ -1,15 +1,20 @@
 //! Interfaces for building various structures
 
-use self::super::Result;
-use errors::Error;
-use serde::Serialize;
-use serde_json::{self, map::Map, Value};
+// Std lib
 use std::cmp::Eq;
 use std::collections::{BTreeMap, HashMap};
 use std::hash::Hash;
 use std::iter::IntoIterator;
 use std::iter::Peekable;
+
+// Third party
+use serde::Serialize;
+use serde_json::{self, map::Map, Value};
 use url::form_urlencoded;
+
+// Ours
+use errors::Error;
+use Result;
 
 #[derive(Default)]
 pub struct PullOptions {
@@ -19,7 +24,7 @@ pub struct PullOptions {
 impl PullOptions {
     /// return a new instance of a builder for options
     pub fn builder() -> PullOptionsBuilder {
-        PullOptionsBuilder::new()
+        PullOptionsBuilder::default()
     }
 
     /// serialize options as a string. returns None if no options are defined
@@ -42,16 +47,10 @@ pub struct PullOptionsBuilder {
 }
 
 impl PullOptionsBuilder {
-    pub fn new() -> PullOptionsBuilder {
-        PullOptionsBuilder {
-            ..Default::default()
-        }
-    }
-
     pub fn image<I>(
         &mut self,
         img: I,
-    ) -> &mut PullOptionsBuilder
+    ) -> &mut Self
     where
         I: Into<String>,
     {
@@ -62,7 +61,7 @@ impl PullOptionsBuilder {
     pub fn src<S>(
         &mut self,
         s: S,
-    ) -> &mut PullOptionsBuilder
+    ) -> &mut Self
     where
         S: Into<String>,
     {
@@ -73,7 +72,7 @@ impl PullOptionsBuilder {
     pub fn repo<R>(
         &mut self,
         r: R,
-    ) -> &mut PullOptionsBuilder
+    ) -> &mut Self
     where
         R: Into<String>,
     {
@@ -84,7 +83,7 @@ impl PullOptionsBuilder {
     pub fn tag<T>(
         &mut self,
         t: T,
-    ) -> &mut PullOptionsBuilder
+    ) -> &mut Self
     where
         T: Into<String>,
     {
@@ -139,7 +138,7 @@ pub struct BuildOptionsBuilder {
 impl BuildOptionsBuilder {
     /// path is expected to be a file path to a directory containing a Dockerfile
     /// describing how to build a Docker image
-    pub fn new<S>(path: S) -> BuildOptionsBuilder
+    pub(crate) fn new<S>(path: S) -> Self
     where
         S: Into<String>,
     {
@@ -153,7 +152,7 @@ impl BuildOptionsBuilder {
     pub fn dockerfile<P>(
         &mut self,
         path: P,
-    ) -> &mut BuildOptionsBuilder
+    ) -> &mut Self
     where
         P: Into<String>,
     {
@@ -165,7 +164,7 @@ impl BuildOptionsBuilder {
     pub fn tag<T>(
         &mut self,
         t: T,
-    ) -> &mut BuildOptionsBuilder
+    ) -> &mut Self
     where
         T: Into<String>,
     {
@@ -176,7 +175,7 @@ impl BuildOptionsBuilder {
     pub fn remote<R>(
         &mut self,
         r: R,
-    ) -> &mut BuildOptionsBuilder
+    ) -> &mut Self
     where
         R: Into<String>,
     {
@@ -188,7 +187,7 @@ impl BuildOptionsBuilder {
     pub fn nocache<R>(
         &mut self,
         nc: bool,
-    ) -> &mut BuildOptionsBuilder {
+    ) -> &mut Self {
         self.params.insert("nocache", nc.to_string());
         self
     }
@@ -196,7 +195,7 @@ impl BuildOptionsBuilder {
     pub fn rm(
         &mut self,
         r: bool,
-    ) -> &mut BuildOptionsBuilder {
+    ) -> &mut Self {
         self.params.insert("rm", r.to_string());
         self
     }
@@ -204,7 +203,7 @@ impl BuildOptionsBuilder {
     pub fn forcerm(
         &mut self,
         fr: bool,
-    ) -> &mut BuildOptionsBuilder {
+    ) -> &mut Self {
         self.params.insert("forcerm", fr.to_string());
         self
     }
@@ -213,7 +212,7 @@ impl BuildOptionsBuilder {
     pub fn network_mode<T>(
         &mut self,
         t: T,
-    ) -> &mut BuildOptionsBuilder
+    ) -> &mut Self
     where
         T: Into<String>,
     {
@@ -246,7 +245,7 @@ pub struct ContainerListOptions {
 impl ContainerListOptions {
     /// return a new instance of a builder for options
     pub fn builder() -> ContainerListOptionsBuilder {
-        ContainerListOptionsBuilder::new()
+        ContainerListOptionsBuilder::default()
     }
 
     /// serialize options as a string. returns None if no options are defined
@@ -278,16 +277,10 @@ pub struct ContainerListOptionsBuilder {
 }
 
 impl ContainerListOptionsBuilder {
-    pub fn new() -> ContainerListOptionsBuilder {
-        ContainerListOptionsBuilder {
-            ..Default::default()
-        }
-    }
-
     pub fn filter(
         &mut self,
         filters: Vec<ContainerFilter>,
-    ) -> &mut ContainerListOptionsBuilder {
+    ) -> &mut Self {
         let mut param = HashMap::new();
         for f in filters {
             match f {
@@ -304,7 +297,7 @@ impl ContainerListOptionsBuilder {
         self
     }
 
-    pub fn all(&mut self) -> &mut ContainerListOptionsBuilder {
+    pub fn all(&mut self) -> &mut Self {
         self.params.insert("all", "true".to_owned());
         self
     }
@@ -312,7 +305,7 @@ impl ContainerListOptionsBuilder {
     pub fn since(
         &mut self,
         since: &str,
-    ) -> &mut ContainerListOptionsBuilder {
+    ) -> &mut Self {
         self.params.insert("since", since.to_owned());
         self
     }
@@ -320,12 +313,12 @@ impl ContainerListOptionsBuilder {
     pub fn before(
         &mut self,
         before: &str,
-    ) -> &mut ContainerListOptionsBuilder {
+    ) -> &mut Self {
         self.params.insert("before", before.to_owned());
         self
     }
 
-    pub fn sized(&mut self) -> &mut ContainerListOptionsBuilder {
+    pub fn sized(&mut self) -> &mut Self {
         self.params.insert("size", "true".to_owned());
         self
     }
@@ -416,7 +409,7 @@ pub struct ContainerOptionsBuilder {
 }
 
 impl ContainerOptionsBuilder {
-    pub fn new(image: &str) -> ContainerOptionsBuilder {
+    pub(crate) fn new(image: &str) -> Self {
         let mut params = HashMap::new();
 
         params.insert("Image", Value::String(image.to_owned()));
@@ -429,7 +422,7 @@ impl ContainerOptionsBuilder {
     pub fn name(
         &mut self,
         name: &str,
-    ) -> &mut ContainerOptionsBuilder {
+    ) -> &mut Self {
         self.name = Some(name.to_owned());
         self
     }
@@ -437,7 +430,7 @@ impl ContainerOptionsBuilder {
     pub fn volumes(
         &mut self,
         volumes: Vec<&str>,
-    ) -> &mut ContainerOptionsBuilder {
+    ) -> &mut Self {
         self.params
             .insert("HostConfig.Binds", json!(volumes));
         self
@@ -448,7 +441,7 @@ impl ContainerOptionsBuilder {
         srcport: u32,
         protocol: &str,
         hostport: u32,
-    ) -> &mut ContainerOptionsBuilder {
+    ) -> &mut Self {
         let mut exposedport: HashMap<String, String> = HashMap::new();
         exposedport.insert("HostPort".to_string(), hostport.to_string());
 
@@ -474,7 +467,7 @@ impl ContainerOptionsBuilder {
     pub fn links(
         &mut self,
         links: Vec<&str>,
-    ) -> &mut ContainerOptionsBuilder {
+    ) -> &mut Self {
         self.params
             .insert("HostConfig.Links", json!(links));
         self
@@ -483,7 +476,7 @@ impl ContainerOptionsBuilder {
     pub fn memory(
         &mut self,
         memory: u64,
-    ) -> &mut ContainerOptionsBuilder {
+    ) -> &mut Self {
         self.params
             .insert("HostConfig.Memory", json!(memory));
         self
@@ -492,7 +485,7 @@ impl ContainerOptionsBuilder {
     pub fn labels(
         &mut self,
         labels: &HashMap<&str, &str>,
-    ) -> &mut ContainerOptionsBuilder {
+    ) -> &mut Self {
         self.params
             .insert("Labels", json!(labels));
         self
@@ -501,7 +494,7 @@ impl ContainerOptionsBuilder {
     pub fn extra_hosts(
         &mut self,
         hosts: Vec<&str>,
-    ) -> &mut ContainerOptionsBuilder {
+    ) -> &mut Self {
         self.params
             .insert("HostConfig.ExtraHosts", json!(hosts));
         self
@@ -510,7 +503,7 @@ impl ContainerOptionsBuilder {
     pub fn volumes_from(
         &mut self,
         volumes: Vec<&str>,
-    ) -> &mut ContainerOptionsBuilder {
+    ) -> &mut Self {
         self.params
             .insert("HostConfig.VolumesFrom", json!(volumes));
         self
@@ -519,7 +512,7 @@ impl ContainerOptionsBuilder {
     pub fn network_mode(
         &mut self,
         network: &str,
-    ) -> &mut ContainerOptionsBuilder {
+    ) -> &mut Self {
         self.params
             .insert("HostConfig.NetworkMode", json!(network));
         self
@@ -528,7 +521,7 @@ impl ContainerOptionsBuilder {
     pub fn env(
         &mut self,
         envs: Vec<&str>,
-    ) -> &mut ContainerOptionsBuilder {
+    ) -> &mut Self {
         self.params
             .insert("Env", json!(envs));
         self
@@ -537,7 +530,7 @@ impl ContainerOptionsBuilder {
     pub fn cmd(
         &mut self,
         cmds: Vec<&str>,
-    ) -> &mut ContainerOptionsBuilder {
+    ) -> &mut Self {
         self.params
             .insert("Cmd", json!(cmds));
         self
@@ -546,7 +539,7 @@ impl ContainerOptionsBuilder {
     pub fn entrypoint(
         &mut self,
         entrypoint: &str,
-    ) -> &mut ContainerOptionsBuilder {
+    ) -> &mut Self {
         self.params
             .insert("Entrypoint", json!(entrypoint));
         self
@@ -555,7 +548,7 @@ impl ContainerOptionsBuilder {
     pub fn capabilities(
         &mut self,
         capabilities: Vec<&str>,
-    ) -> &mut ContainerOptionsBuilder {
+    ) -> &mut Self {
         self.params
             .insert("HostConfig.CapAdd", json!(capabilities));
         self
@@ -564,7 +557,7 @@ impl ContainerOptionsBuilder {
     pub fn devices(
         &mut self,
         devices: Vec<HashMap<String, String>>,
-    ) -> &mut ContainerOptionsBuilder {
+    ) -> &mut Self {
         self.params
             .insert("HostConfig.Devices", json!(devices));
         self
@@ -573,7 +566,7 @@ impl ContainerOptionsBuilder {
     pub fn log_driver(
         &mut self,
         log_driver: &str,
-    ) -> &mut ContainerOptionsBuilder {
+    ) -> &mut Self {
         self.params
             .insert("HostConfig.LogConfig.Type", json!(log_driver));
         self
@@ -583,7 +576,7 @@ impl ContainerOptionsBuilder {
         &mut self,
         name: &str,
         maximum_retry_count: u64,
-    ) -> &mut ContainerOptionsBuilder {
+    ) -> &mut Self {
         self.params
             .insert("HostConfig.RestartPolicy.Name", json!(name));
         if name == "on-failure" {
@@ -613,7 +606,7 @@ pub struct ExecContainerOptions {
 impl ExecContainerOptions {
     /// return a new instance of a builder for options
     pub fn builder() -> ExecContainerOptionsBuilder {
-        ExecContainerOptionsBuilder::new()
+        ExecContainerOptionsBuilder::default()
     }
 
     /// serialize options as a string. returns None if no options are defined
@@ -629,18 +622,11 @@ pub struct ExecContainerOptionsBuilder {
 }
 
 impl ExecContainerOptionsBuilder {
-    pub fn new() -> ExecContainerOptionsBuilder {
-        ExecContainerOptionsBuilder {
-            params: HashMap::new(),
-            params_bool: HashMap::new(),
-        }
-    }
-
     /// Command to run, as an array of strings
     pub fn cmd(
         &mut self,
         cmds: Vec<&str>,
-    ) -> &mut ExecContainerOptionsBuilder {
+    ) -> &mut Self {
         for cmd in cmds {
             self.params
                 .entry("Cmd")
@@ -654,7 +640,7 @@ impl ExecContainerOptionsBuilder {
     pub fn env(
         &mut self,
         envs: Vec<&str>,
-    ) -> &mut ExecContainerOptionsBuilder {
+    ) -> &mut Self {
         for env in envs {
             self.params
                 .entry("Env")
@@ -668,7 +654,7 @@ impl ExecContainerOptionsBuilder {
     pub fn attach_stdout(
         &mut self,
         stdout: bool,
-    ) -> &mut ExecContainerOptionsBuilder {
+    ) -> &mut Self {
         self.params_bool.insert("AttachStdout", stdout);
         self
     }
@@ -677,7 +663,7 @@ impl ExecContainerOptionsBuilder {
     pub fn attach_stderr(
         &mut self,
         stderr: bool,
-    ) -> &mut ExecContainerOptionsBuilder {
+    ) -> &mut Self {
         self.params_bool.insert("AttachStderr", stderr);
         self
     }
@@ -698,7 +684,7 @@ pub struct EventsOptions {
 
 impl EventsOptions {
     pub fn builder() -> EventsOptionsBuilder {
-        EventsOptionsBuilder::new()
+        EventsOptionsBuilder::default()
     }
 
     /// serialize options as a string. returns None if no options are defined
@@ -761,17 +747,11 @@ pub struct EventsOptionsBuilder {
 }
 
 impl EventsOptionsBuilder {
-    pub fn new() -> EventsOptionsBuilder {
-        EventsOptionsBuilder {
-            ..Default::default()
-        }
-    }
-
     /// Filter events since a given timestamp
     pub fn since(
         &mut self,
         ts: &u64,
-    ) -> &mut EventsOptionsBuilder {
+    ) -> &mut Self {
         self.params.insert("since", ts.to_string());
         self
     }
@@ -780,7 +760,7 @@ impl EventsOptionsBuilder {
     pub fn until(
         &mut self,
         ts: &u64,
-    ) -> &mut EventsOptionsBuilder {
+    ) -> &mut Self {
         self.params.insert("until", ts.to_string());
         self
     }
@@ -788,7 +768,7 @@ impl EventsOptionsBuilder {
     pub fn filter(
         &mut self,
         filters: Vec<EventFilter>,
-    ) -> &mut EventsOptionsBuilder {
+    ) -> &mut Self {
         let mut params = HashMap::new();
         for f in filters {
             match f {
@@ -848,7 +828,7 @@ pub struct LogsOptions {
 impl LogsOptions {
     /// return a new instance of a builder for options
     pub fn builder() -> LogsOptionsBuilder {
-        LogsOptionsBuilder::new()
+        LogsOptionsBuilder::default()
     }
 
     /// serialize options as a string. returns None if no options are defined
@@ -872,16 +852,10 @@ pub struct LogsOptionsBuilder {
 }
 
 impl LogsOptionsBuilder {
-    pub fn new() -> LogsOptionsBuilder {
-        LogsOptionsBuilder {
-            ..Default::default()
-        }
-    }
-
     pub fn follow(
         &mut self,
         f: bool,
-    ) -> &mut LogsOptionsBuilder {
+    ) -> &mut Self {
         self.params.insert("follow", f.to_string());
         self
     }
@@ -889,7 +863,7 @@ impl LogsOptionsBuilder {
     pub fn stdout(
         &mut self,
         s: bool,
-    ) -> &mut LogsOptionsBuilder {
+    ) -> &mut Self {
         self.params.insert("stdout", s.to_string());
         self
     }
@@ -897,7 +871,7 @@ impl LogsOptionsBuilder {
     pub fn stderr(
         &mut self,
         s: bool,
-    ) -> &mut LogsOptionsBuilder {
+    ) -> &mut Self {
         self.params.insert("stderr", s.to_string());
         self
     }
@@ -905,7 +879,7 @@ impl LogsOptionsBuilder {
     pub fn timestamps(
         &mut self,
         t: bool,
-    ) -> &mut LogsOptionsBuilder {
+    ) -> &mut Self {
         self.params.insert("timestamps", t.to_string());
         self
     }
@@ -914,7 +888,7 @@ impl LogsOptionsBuilder {
     pub fn tail(
         &mut self,
         how_many: &str,
-    ) -> &mut LogsOptionsBuilder {
+    ) -> &mut Self {
         self.params.insert("tail", how_many.to_owned());
         self
     }
@@ -941,7 +915,7 @@ pub struct ImageListOptions {
 
 impl ImageListOptions {
     pub fn builder() -> ImageListOptionsBuilder {
-        ImageListOptionsBuilder::new()
+        ImageListOptionsBuilder::default()
     }
     pub fn serialize(&self) -> Option<String> {
         if self.params.is_empty() {
@@ -963,16 +937,10 @@ pub struct ImageListOptionsBuilder {
 }
 
 impl ImageListOptionsBuilder {
-    pub fn new() -> ImageListOptionsBuilder {
-        ImageListOptionsBuilder {
-            ..Default::default()
-        }
-    }
-
     pub fn digests(
         &mut self,
         d: bool,
-    ) -> &mut ImageListOptionsBuilder {
+    ) -> &mut Self {
         self.params.insert("digests", d.to_string());
         self
     }
@@ -980,7 +948,7 @@ impl ImageListOptionsBuilder {
     pub fn all(
         &mut self,
         a: bool,
-    ) -> &mut ImageListOptionsBuilder {
+    ) -> &mut Self {
         self.params.insert("all", a.to_string());
         self
     }
@@ -988,7 +956,7 @@ impl ImageListOptionsBuilder {
     pub fn filter_name(
         &mut self,
         name: &str,
-    ) -> &mut ImageListOptionsBuilder {
+    ) -> &mut Self {
         self.params.insert("filter", name.to_owned());
         self
     }
@@ -996,7 +964,7 @@ impl ImageListOptionsBuilder {
     pub fn filter(
         &mut self,
         filters: Vec<ImageFilter>,
-    ) -> &mut ImageListOptionsBuilder {
+    ) -> &mut Self {
         let mut param = HashMap::new();
         for f in filters {
             match f {
@@ -1028,7 +996,7 @@ pub struct RmContainerOptions {
 impl RmContainerOptions {
     /// return a new instance of a builder for options
     pub fn builder() -> RmContainerOptionsBuilder {
-        RmContainerOptionsBuilder::new()
+        RmContainerOptionsBuilder::default()
     }
 
     /// serialize options as a string. returns None if no options are defined
@@ -1052,16 +1020,10 @@ pub struct RmContainerOptionsBuilder {
 }
 
 impl RmContainerOptionsBuilder {
-    pub fn new() -> RmContainerOptionsBuilder {
-        RmContainerOptionsBuilder {
-            ..Default::default()
-        }
-    }
-
     pub fn force(
         &mut self,
         f: bool,
-    ) -> &mut RmContainerOptionsBuilder {
+    ) -> &mut Self {
         self.params.insert("force", f.to_string());
         self
     }
@@ -1069,7 +1031,7 @@ impl RmContainerOptionsBuilder {
     pub fn volumes(
         &mut self,
         s: bool,
-    ) -> &mut RmContainerOptionsBuilder {
+    ) -> &mut Self {
         self.params.insert("v", s.to_string());
         self
     }
@@ -1147,7 +1109,7 @@ pub struct NetworkCreateOptionsBuilder {
 }
 
 impl NetworkCreateOptionsBuilder {
-    pub fn new(name: &str) -> NetworkCreateOptionsBuilder {
+    pub(crate) fn new(name: &str) -> Self {
         let mut params = HashMap::new();
         let params_hash = HashMap::new();
 
@@ -1162,7 +1124,7 @@ impl NetworkCreateOptionsBuilder {
     pub fn driver(
         &mut self,
         name: &str,
-    ) -> &mut NetworkCreateOptionsBuilder {
+    ) -> &mut Self {
         if !name.is_empty() {
             self.params.insert("Driver", name.to_owned());
         }
@@ -1172,7 +1134,7 @@ impl NetworkCreateOptionsBuilder {
     pub fn label(
         &mut self,
         labels: Vec<HashMap<String, String>>,
-    ) -> &mut NetworkCreateOptionsBuilder {
+    ) -> &mut Self {
         for l in labels {
             self.params_hash
                 .entry("Labels".to_string())
