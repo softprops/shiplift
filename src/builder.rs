@@ -3,7 +3,7 @@
 use self::super::Result;
 use errors::Error;
 use serde::Serialize;
-use serde_json::{self, map::Map, Number, Value};
+use serde_json::{self, map::Map, Value};
 use std::cmp::Eq;
 use std::collections::{BTreeMap, HashMap};
 use std::hash::Hash;
@@ -342,8 +342,6 @@ impl ContainerListOptionsBuilder {
 pub struct ContainerOptions {
     pub name: Option<String>,
     params: HashMap<&'static str, Value>,
-    params_list: HashMap<&'static str, Vec<String>>,
-    params_hash: HashMap<String, Vec<HashMap<String, String>>>,
 }
 
 /// Function to insert a JSON value into a tree where the desired
@@ -392,8 +390,6 @@ impl ContainerOptions {
         body_members.insert("HostConfig".to_string(), Value::Object(Map::new()));
         let mut body = Value::Object(body_members);
         self.parse_from(&self.params, &mut body);
-        self.parse_from(&self.params_list, &mut body);
-        self.parse_from(&self.params_hash, &mut body);
         body
     }
 
@@ -417,22 +413,16 @@ impl ContainerOptions {
 pub struct ContainerOptionsBuilder {
     name: Option<String>,
     params: HashMap<&'static str, Value>,
-    params_list: HashMap<&'static str, Vec<String>>,
-    params_hash: HashMap<String, Vec<HashMap<String, String>>>,
 }
 
 impl ContainerOptionsBuilder {
     pub fn new(image: &str) -> ContainerOptionsBuilder {
         let mut params = HashMap::new();
-        let params_list = HashMap::new();
-        let params_hash = HashMap::new();
 
         params.insert("Image", Value::String(image.to_owned()));
         ContainerOptionsBuilder {
             name: None,
             params,
-            params_list,
-            params_hash,
         }
     }
 
@@ -448,12 +438,36 @@ impl ContainerOptionsBuilder {
         &mut self,
         volumes: Vec<&str>,
     ) -> &mut ContainerOptionsBuilder {
-        for v in volumes {
-            self.params_list
-                .entry("HostConfig.Binds")
-                .or_insert_with(Vec::new)
-                .push(v.to_owned());
+        self.params
+            .insert("HostConfig.Binds", json!(volumes));
+        self
+    }
+
+    pub fn expose(
+        &mut self,
+        srcport: u32,
+        protocol: &str,
+        hostport: u32,
+    ) -> &mut ContainerOptionsBuilder {
+        let mut exposedport: HashMap<String, String> = HashMap::new();
+        exposedport.insert("HostPort".to_string(), hostport.to_string());
+
+        /* The idea here is to go thought the 'old' port binds
+         * and to apply them to the local 'binding' variable,
+         * add the bind we want and replace the 'old' value */
+        let mut binding: HashMap<String, Value> = HashMap::new();
+        for (key, val) in self.params
+            .get("HostConfig.PortBindings")
+                .unwrap_or(&mut json!(null))
+            .as_object()
+                .unwrap_or(&mut Map::new())
+            .iter() {
+            binding.insert(key.to_string(), json!(val));
         }
+        binding.insert(format!("{}/{}", srcport, protocol), json!(vec![exposedport]));
+
+        self.params
+            .insert("HostConfig.PortBindings", json!(binding));
         self
     }
 
@@ -461,12 +475,8 @@ impl ContainerOptionsBuilder {
         &mut self,
         links: Vec<&str>,
     ) -> &mut ContainerOptionsBuilder {
-        for link in links {
-            self.params_list
-                .entry("HostConfig.Links")
-                .or_insert_with(Vec::new)
-                .push(link.to_owned());
-        }
+        self.params
+            .insert("HostConfig.Links", json!(links));
         self
     }
 
@@ -475,7 +485,7 @@ impl ContainerOptionsBuilder {
         memory: u64,
     ) -> &mut ContainerOptionsBuilder {
         self.params
-            .insert("HostConfig.Memory", Value::Number(Number::from(memory)));
+            .insert("HostConfig.Memory", json!(memory));
         self
     }
 
@@ -483,13 +493,8 @@ impl ContainerOptionsBuilder {
         &mut self,
         labels: &HashMap<&str, &str>,
     ) -> &mut ContainerOptionsBuilder {
-        let mut json_labels = Map::new();
-        for (k, v) in labels {
-            json_labels.insert(k.to_string(), Value::String(v.to_string()));
-        }
-
-        self.params.insert("Labels", Value::Object(json_labels));
-
+        self.params
+            .insert("Labels", json!(labels));
         self
     }
 
@@ -497,13 +502,8 @@ impl ContainerOptionsBuilder {
         &mut self,
         hosts: Vec<&str>,
     ) -> &mut ContainerOptionsBuilder {
-        for host in hosts {
-            self.params_list
-                .entry("HostConfig.ExtraHosts")
-                .or_insert_with(Vec::new)
-                .push(host.to_owned());
-        }
-
+        self.params
+            .insert("HostConfig.ExtraHosts", json!(hosts));
         self
     }
 
@@ -511,12 +511,8 @@ impl ContainerOptionsBuilder {
         &mut self,
         volumes: Vec<&str>,
     ) -> &mut ContainerOptionsBuilder {
-        for volume in volumes {
-            self.params_list
-                .entry("HostConfig.VolumesFrom")
-                .or_insert_with(Vec::new)
-                .push(volume.to_owned());
-        }
+        self.params
+            .insert("HostConfig.VolumesFrom", json!(volumes));
         self
     }
 
@@ -524,10 +520,8 @@ impl ContainerOptionsBuilder {
         &mut self,
         network: &str,
     ) -> &mut ContainerOptionsBuilder {
-        if !network.is_empty() {
-            self.params
-                .insert("HostConfig.NetworkMode", Value::String(network.to_owned()));
-        }
+        self.params
+            .insert("HostConfig.NetworkMode", json!(network));
         self
     }
 
@@ -535,12 +529,8 @@ impl ContainerOptionsBuilder {
         &mut self,
         envs: Vec<&str>,
     ) -> &mut ContainerOptionsBuilder {
-        for env in envs {
-            self.params_list
-                .entry("Env")
-                .or_insert_with(Vec::new)
-                .push(env.to_owned());
-        }
+        self.params
+            .insert("Env", json!(envs));
         self
     }
 
@@ -548,12 +538,8 @@ impl ContainerOptionsBuilder {
         &mut self,
         cmds: Vec<&str>,
     ) -> &mut ContainerOptionsBuilder {
-        for cmd in cmds {
-            self.params_list
-                .entry("Cmd")
-                .or_insert_with(Vec::new)
-                .push(cmd.to_owned());
-        }
+        self.params
+            .insert("Cmd", json!(cmds));
         self
     }
 
@@ -561,10 +547,8 @@ impl ContainerOptionsBuilder {
         &mut self,
         entrypoint: &str,
     ) -> &mut ContainerOptionsBuilder {
-        if !entrypoint.is_empty() {
-            self.params
-                .insert("Entrypoint", Value::String(entrypoint.to_owned()));
-        }
+        self.params
+            .insert("Entrypoint", json!(entrypoint));
         self
     }
 
@@ -572,12 +556,8 @@ impl ContainerOptionsBuilder {
         &mut self,
         capabilities: Vec<&str>,
     ) -> &mut ContainerOptionsBuilder {
-        for c in capabilities {
-            self.params_list
-                .entry("HostConfig.CapAdd")
-                .or_insert_with(Vec::new)
-                .push(c.to_owned());
-        }
+        self.params
+            .insert("HostConfig.CapAdd", json!(capabilities));
         self
     }
 
@@ -585,12 +565,8 @@ impl ContainerOptionsBuilder {
         &mut self,
         devices: Vec<HashMap<String, String>>,
     ) -> &mut ContainerOptionsBuilder {
-        for d in devices {
-            self.params_hash
-                .entry("HostConfig.Devices".to_string())
-                .or_insert_with(Vec::new)
-                .push(d);
-        }
+        self.params
+            .insert("HostConfig.Devices", json!(devices));
         self
     }
 
@@ -598,12 +574,8 @@ impl ContainerOptionsBuilder {
         &mut self,
         log_driver: &str,
     ) -> &mut ContainerOptionsBuilder {
-        if !log_driver.is_empty() {
-            self.params.insert(
-                "HostConfig.LogConfig.Type",
-                Value::String(log_driver.to_owned()),
-            );
-        }
+        self.params
+            .insert("HostConfig.LogConfig.Type", json!(log_driver));
         self
     }
 
@@ -612,16 +584,13 @@ impl ContainerOptionsBuilder {
         name: &str,
         maximum_retry_count: u64,
     ) -> &mut ContainerOptionsBuilder {
-        if !name.is_empty() {
-            self.params.insert(
-                "HostConfig.RestartPolicy.Name",
-                Value::String(name.to_owned()),
-            );
-        }
+        self.params
+            .insert("HostConfig.RestartPolicy.Name", json!(name));
         if name == "on-failure" {
-            self.params.insert(
+            self.params
+                .insert(
                 "HostConfig.RestartPolicy.MaximumRetryCount",
-                Value::Number(Number::from(maximum_retry_count)),
+                json!(maximum_retry_count)
             );
         }
         self
@@ -631,8 +600,6 @@ impl ContainerOptionsBuilder {
         ContainerOptions {
             name: self.name.clone(),
             params: self.params.clone(),
-            params_list: self.params_list.clone(),
-            params_hash: self.params_hash.clone(),
         }
     }
 }
@@ -1307,6 +1274,26 @@ mod tests {
 
         assert_eq!(
             r#"{"HostConfig":{"NetworkMode":"host"},"Image":"test_image"}"#,
+            options.serialize().unwrap()
+        );
+    }
+
+    #[test]
+    fn container_options_expose() {
+        let options = ContainerOptionsBuilder::new("test_image")
+            .expose(80, "tcp", 8080)
+            .build();
+        assert_eq!(
+            r#"{"HostConfig":{"PortBindings":{"80/tcp":[{"HostPort":"8080"}]}},"Image":"test_image"}"#,
+            options.serialize().unwrap()
+        );
+        // try exposing two
+        let options = ContainerOptionsBuilder::new("test_image")
+            .expose(80, "tcp", 8080)
+            .expose(81, "tcp", 8081)
+            .build();
+        assert_eq!(
+            r#"{"HostConfig":{"PortBindings":{"80/tcp":[{"HostPort":"8080"}],"81/tcp":[{"HostPort":"8081"}]}},"Image":"test_image"}"#,
             options.serialize().unwrap()
         );
     }
