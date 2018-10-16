@@ -413,10 +413,7 @@ impl ContainerOptionsBuilder {
         let mut params = HashMap::new();
 
         params.insert("Image", Value::String(image.to_owned()));
-        ContainerOptionsBuilder {
-            name: None,
-            params,
-        }
+        ContainerOptionsBuilder { name: None, params }
     }
 
     pub fn name(
@@ -431,8 +428,7 @@ impl ContainerOptionsBuilder {
         &mut self,
         volumes: Vec<&str>,
     ) -> &mut Self {
-        self.params
-            .insert("HostConfig.Binds", json!(volumes));
+        self.params.insert("HostConfig.Binds", json!(volumes));
         self
     }
 
@@ -449,15 +445,20 @@ impl ContainerOptionsBuilder {
          * and to apply them to the local 'binding' variable,
          * add the bind we want and replace the 'old' value */
         let mut binding: HashMap<String, Value> = HashMap::new();
-        for (key, val) in self.params
+        for (key, val) in self
+            .params
             .get("HostConfig.PortBindings")
-                .unwrap_or(&mut json!(null))
+            .unwrap_or(&mut json!(null))
             .as_object()
-                .unwrap_or(&mut Map::new())
-            .iter() {
+            .unwrap_or(&mut Map::new())
+            .iter()
+        {
             binding.insert(key.to_string(), json!(val));
         }
-        binding.insert(format!("{}/{}", srcport, protocol), json!(vec![exposedport]));
+        binding.insert(
+            format!("{}/{}", srcport, protocol),
+            json!(vec![exposedport]),
+        );
 
         self.params
             .insert("HostConfig.PortBindings", json!(binding));
@@ -468,8 +469,7 @@ impl ContainerOptionsBuilder {
         &mut self,
         links: Vec<&str>,
     ) -> &mut Self {
-        self.params
-            .insert("HostConfig.Links", json!(links));
+        self.params.insert("HostConfig.Links", json!(links));
         self
     }
 
@@ -477,8 +477,7 @@ impl ContainerOptionsBuilder {
         &mut self,
         memory: u64,
     ) -> &mut Self {
-        self.params
-            .insert("HostConfig.Memory", json!(memory));
+        self.params.insert("HostConfig.Memory", json!(memory));
         self
     }
 
@@ -486,8 +485,7 @@ impl ContainerOptionsBuilder {
         &mut self,
         labels: &HashMap<&str, &str>,
     ) -> &mut Self {
-        self.params
-            .insert("Labels", json!(labels));
+        self.params.insert("Labels", json!(labels));
         self
     }
 
@@ -495,8 +493,7 @@ impl ContainerOptionsBuilder {
         &mut self,
         hosts: Vec<&str>,
     ) -> &mut Self {
-        self.params
-            .insert("HostConfig.ExtraHosts", json!(hosts));
+        self.params.insert("HostConfig.ExtraHosts", json!(hosts));
         self
     }
 
@@ -504,8 +501,7 @@ impl ContainerOptionsBuilder {
         &mut self,
         volumes: Vec<&str>,
     ) -> &mut Self {
-        self.params
-            .insert("HostConfig.VolumesFrom", json!(volumes));
+        self.params.insert("HostConfig.VolumesFrom", json!(volumes));
         self
     }
 
@@ -513,8 +509,7 @@ impl ContainerOptionsBuilder {
         &mut self,
         network: &str,
     ) -> &mut Self {
-        self.params
-            .insert("HostConfig.NetworkMode", json!(network));
+        self.params.insert("HostConfig.NetworkMode", json!(network));
         self
     }
 
@@ -522,8 +517,7 @@ impl ContainerOptionsBuilder {
         &mut self,
         envs: Vec<&str>,
     ) -> &mut Self {
-        self.params
-            .insert("Env", json!(envs));
+        self.params.insert("Env", json!(envs));
         self
     }
 
@@ -531,8 +525,7 @@ impl ContainerOptionsBuilder {
         &mut self,
         cmds: Vec<&str>,
     ) -> &mut Self {
-        self.params
-            .insert("Cmd", json!(cmds));
+        self.params.insert("Cmd", json!(cmds));
         self
     }
 
@@ -540,8 +533,7 @@ impl ContainerOptionsBuilder {
         &mut self,
         entrypoint: &str,
     ) -> &mut Self {
-        self.params
-            .insert("Entrypoint", json!(entrypoint));
+        self.params.insert("Entrypoint", json!(entrypoint));
         self
     }
 
@@ -549,8 +541,7 @@ impl ContainerOptionsBuilder {
         &mut self,
         capabilities: Vec<&str>,
     ) -> &mut Self {
-        self.params
-            .insert("HostConfig.CapAdd", json!(capabilities));
+        self.params.insert("HostConfig.CapAdd", json!(capabilities));
         self
     }
 
@@ -558,8 +549,7 @@ impl ContainerOptionsBuilder {
         &mut self,
         devices: Vec<HashMap<String, String>>,
     ) -> &mut Self {
-        self.params
-            .insert("HostConfig.Devices", json!(devices));
+        self.params.insert("HostConfig.Devices", json!(devices));
         self
     }
 
@@ -580,10 +570,9 @@ impl ContainerOptionsBuilder {
         self.params
             .insert("HostConfig.RestartPolicy.Name", json!(name));
         if name == "on-failure" {
-            self.params
-                .insert(
+            self.params.insert(
                 "HostConfig.RestartPolicy.MaximumRetryCount",
-                json!(maximum_retry_count)
+                json!(maximum_retry_count),
             );
         }
         self
