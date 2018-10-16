@@ -5,25 +5,18 @@ extern crate hyper;
 extern crate hyperlocal;
 
 use self::super::{Error, Result};
-use futures::{future, Future, IntoFuture};
+use futures::{future, Future, IntoFuture, Stream};
 use hyper::client::{Client, HttpConnector};
 use hyper::header;
-use hyper::rt::Stream;
 use hyper::Body;
-use hyper::{Method, Request, Response, StatusCode};
+use hyper::{Method, Request, StatusCode};
 use hyper_openssl::HttpsConnector;
 #[cfg(feature = "unix-socket")]
 use hyperlocal::UnixConnector;
 #[cfg(feature = "unix-socket")]
 use hyperlocal::Uri as DomainUri;
 use mime::Mime;
-use serde_json::{self, Value};
-use std::cell::{RefCell, RefMut};
 use std::fmt;
-use std::io::Read;
-use std::io::{BufReader, Cursor};
-use std::sync::{Arc, Mutex, MutexGuard};
-use tokio::runtime::Runtime;
 
 pub fn tar() -> Mime {
     "application/tar".parse().unwrap()
@@ -35,26 +28,26 @@ pub enum Transport {
     /// A network tcp interface
     Tcp {
         client: Client<HttpConnector>,
-        runtime: Arc<Mutex<Runtime>>,
         host: String,
     },
     /// TCP/TLS
     EncryptedTcp {
         client: Client<HttpsConnector<HttpConnector>>,
-        runtime: Arc<Mutex<Runtime>>,
         host: String,
     },
     /// A Unix domain socket
     #[cfg(feature = "unix-socket")]
     Unix {
         client: Client<UnixConnector>,
-        runtime: Arc<Mutex<Runtime>>,
         path: String,
     },
 }
 
 impl fmt::Debug for Transport {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(
+        &self,
+        f: &mut fmt::Formatter,
+    ) -> fmt::Result {
         match *self {
             Transport::Tcp { ref host, .. } => write!(f, "Tcp({})", host),
             Transport::EncryptedTcp { ref host, .. } => write!(f, "EncryptedTcp({})", host),
@@ -70,15 +63,14 @@ impl Transport {
         method: Method,
         endpoint: &str,
         body: Option<(B, Mime)>,
-    ) -> Result<String>
+    ) -> impl Future<Item = String, Error = Error>
     where
         B: Into<Body>,
     {
-        let mut res = self.stream(method, endpoint, body)?;
-        let mut body = String::new();
-        res.read_to_string(&mut body)?;
-        debug!("{} raw response: {}", endpoint, body);
-        Ok(body)
+        self.stream(method, endpoint, body)
+            .concat2()
+            .and_then(|v| String::from_utf8(v).map_err(Error::Encoding).into_future())
+        // debug!("{} raw response: {}", endpoint, body);
     }
 
     /// Builds an HTTP request.
@@ -120,41 +112,38 @@ impl Transport {
         method: Method,
         endpoint: &str,
         body: Option<(B, Mime)>,
-    ) -> Result<Box<Read + Send>>
+    ) -> impl Stream<Item = Vec<u8>, Error = Error>
     where
         B: Into<Body>,
     {
-        let req = self.build_request(method, endpoint, body)?;
+        let req = self
+            .build_request(method, endpoint, body)
+            .expect("Failed to build request!");
 
-        let fut = self
-            .send_request(req)
-            .and_then(|r| {
-                let status = r.status();
+        self.send_request(req)
+            .and_then(|res| {
+                let status = res.status();
+                match status {
+                    StatusCode::OK
+                    | StatusCode::CREATED
+                    | StatusCode::SWITCHING_PROTOCOLS
+                    | StatusCode::NO_CONTENT => future::ok(res),
+                    _ => future::err(Error::Fault {
+                        code: status,
+                        // TODO get_error_message
+                        message: status
+                            .canonical_reason()
+                            .unwrap_or("unknown error code")
+                            .to_owned(),
+                    }),
+                }
+            })
+            .map(|r| {
                 r.into_body()
-                    .concat2()
                     .map(|chunk| chunk.into_iter().collect::<Vec<u8>>())
                     .map_err(Error::Hyper)
-                    .map(move |b| (status, b))
-            }).and_then(|(status, body)| match status {
-                StatusCode::OK | StatusCode::CREATED | StatusCode::SWITCHING_PROTOCOLS => {
-                    String::from_utf8(body)
-                        .map(|s| Box::new(Cursor::new(s)) as Box<Read + Send>)
-                        .map_err(|_| Error::InvalidUTF8)
-                        .into_future()
-                }
-                StatusCode::NO_CONTENT => {
-                    future::ok(Box::new(BufReader::new("".as_bytes())) as Box<Read + Send>)
-                }
-                _ => future::err(Error::Fault {
-                    code: status,
-                    // TODO get_error_message
-                    message: status
-                        .canonical_reason()
-                        .unwrap_or("unknown error code")
-                        .to_owned(),
-                }),
-            });
-        self.runtime().block_on(fut)
+            })
+            .flatten_stream()
     }
 
     fn send_request(
@@ -171,26 +160,9 @@ impl Transport {
         req.map_err(Error::Hyper)
     }
 
-    fn runtime(&self) -> MutexGuard<Runtime> {
-        match self {
-            Transport::Tcp { ref runtime, .. } => runtime.lock().unwrap(),
-            Transport::EncryptedTcp { ref runtime, .. } => runtime.lock().unwrap(),
-            #[cfg(feature = "unix-socket")]
-            Transport::Unix { ref runtime, .. } => runtime.lock().unwrap(),
-        }
-    }
-
-    // /// Extract the error message content from an HTTP response that
-    // /// contains a Docker JSON error structure.
-    // fn get_error_message(
-    //     &self,
-    //     res: Response<Body>,
-    // ) -> Option<String> {
-    //     let chunk = match self.runtime().block_on(res.into_body().concat2()) {
-    //         Ok(c) => c,
-    //         Err(..) => return None,
-    //     };
-
+    // Extract the error message content from an HTTP response that
+    // contains a Docker JSON error structure.
+    // fn get_error_message(&self, body: &str) -> Option<String> {
     //     match String::from_utf8(chunk.into_iter().collect()) {
     //         Ok(output) => {
     //             let json_response = serde_json::from_str::<Value>(output.as_str()).ok();

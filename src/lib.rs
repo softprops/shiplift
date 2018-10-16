@@ -47,6 +47,7 @@ pub use builder::{
     LogsOptions, NetworkCreateOptions, NetworkListOptions, PullOptions, RmContainerOptions,
 };
 pub use errors::Error;
+use futures::{Future, IntoFuture, Stream};
 use hyper::client::HttpConnector;
 use hyper::Body;
 use hyper::{Client, Method, Uri};
@@ -66,7 +67,6 @@ use std::borrow::Cow;
 use std::env;
 use std::io::prelude::*;
 use std::path::Path;
-use std::sync::{Arc, Mutex, MutexGuard};
 use std::time::Duration;
 use transport::{tar, Transport};
 use tty::Tty;
@@ -102,53 +102,54 @@ impl<'a, 'b> Image<'a, 'b> {
     }
 
     /// Inspects a named image's details
-    pub fn inspect(&self) -> Result<ImageDetails> {
-        let raw = self
-            .docker
-            .get(&format!("/images/{}/json", self.name)[..])?;
-        Ok(serde_json::from_str::<ImageDetails>(&raw)?)
+    pub fn inspect(&self) -> impl Future<Item = ImageDetails, Error = Error> {
+        self.docker
+            .get_json(&format!("/images/{}/json", self.name)[..])
     }
 
     /// Lists the history of the images set of changes
-    pub fn history(&self) -> Result<Vec<History>> {
-        let raw = self
-            .docker
-            .get(&format!("/images/{}/history", self.name)[..])?;
-        Ok(serde_json::from_str::<Vec<History>>(&raw)?)
+    pub fn history(&self) -> impl Future<Item = Vec<History>, Error = Error> {
+        self.docker
+            .get_json(&format!("/images/{}/history", self.name)[..])
     }
 
-    /// Delete's an image
-    pub fn delete(&self) -> Result<Vec<Status>> {
-        let raw = self.docker.delete(&format!("/images/{}", self.name)[..])?;
-        Ok(match serde_json::from_str(&raw)? {
-            Value::Array(ref xs) => xs.iter().map(|j| {
-                let obj = j.as_object().expect("expected json object");
-                obj.get("Untagged")
-                    .map(|sha| {
-                        Status::Untagged(
-                            sha.as_str()
-                                .expect("expected Untagged to be a string")
-                                .to_owned(),
-                        )
+    /// Deletes an image
+    pub fn delete(&self) -> impl Future<Item = Vec<Status>, Error = Error> {
+        self.docker
+            .delete_json::<Value>(&format!("/images/{}", self.name)[..])
+            .and_then(|v| {
+                v.as_array()
+                    .ok_or(Error::InvalidResponse("Expected a JSON array".to_string()))
+                    .map(|array| {
+                        array
+                            .iter()
+                            .map(|j| {
+                                let obj = j.as_object().expect("expected json object");
+                                obj.get("Untagged")
+                                    .map(|sha| {
+                                        Status::Untagged(
+                                            sha.as_str()
+                                                .expect("expected Untagged to be a string")
+                                                .to_owned(),
+                                        )
+                                    })
+                                    .or(obj.get("Deleted").map(|sha| {
+                                        Status::Deleted(
+                                            sha.as_str()
+                                                .expect("expected Deleted to be a string")
+                                                .to_owned(),
+                                        )
+                                    }))
+                                    .expect("expected Untagged or Deleted")
+                            })
+                            .collect()
                     })
-                    .or_else(|| {
-                        obj.get("Deleted").map(|sha| {
-                            Status::Deleted(
-                                sha.as_str()
-                                    .expect("expected Deleted to be a string")
-                                    .to_owned(),
-                            )
-                        })
-                    })
-                    .expect("expected Untagged or Deleted")
-            }),
-            _ => unreachable!(),
-        }
-        .collect())
+                    .into_future()
+            })
     }
 
     /// Export this image to a tarball
-    pub fn export(&self) -> Result<Box<Read + Send>> {
+    pub fn export(&self) -> impl Stream<Item = Vec<u8>, Error = Error> {
         self.docker
             .stream_get(&format!("/images/{}/get", self.name)[..])
     }
@@ -169,7 +170,7 @@ impl<'a> Images<'a> {
     pub fn build(
         &self,
         opts: &BuildOptions,
-    ) -> Result<Vec<Value>> {
+    ) -> impl Stream<Item = Value, Error = Error> {
         let mut path = vec!["/build".to_owned()];
         if let Some(query) = opts.serialize() {
             path.push(query)
@@ -177,24 +178,28 @@ impl<'a> Images<'a> {
 
         let mut bytes = vec![];
 
-        tarball::dir(&mut bytes, &opts.path[..])?;
+        // TODO(abusch) fix error handling
+        tarball::dir(&mut bytes, &opts.path[..]).expect("Could not tar directory");
 
         self.docker
             .stream_post(&path.join("?"), Some((Body::from(bytes), tar())))
-            .and_then(|r| serde_json::from_reader::<_, Vec<Value>>(r).map_err(Error::from))
+            .and_then(|r| {
+                serde_json::from_slice::<'_, Value>(&r[..])
+                    .map_err(Error::from)
+                    .into_future()
+            })
     }
 
     /// Lists the docker images on the current docker host
     pub fn list(
         &self,
         opts: &ImageListOptions,
-    ) -> Result<Vec<ImageRep>> {
+    ) -> impl Future<Item = Vec<ImageRep>, Error = Error> {
         let mut path = vec!["/images/json".to_owned()];
         if let Some(query) = opts.serialize() {
             path.push(query);
         }
-        let raw = self.docker.get(&path.join("?"))?;
-        Ok(serde_json::from_str::<Vec<ImageRep>>(&raw)?)
+        self.docker.get_json::<Vec<ImageRep>>(&path.join("?"))
     }
 
     /// Returns a reference to a set of operations available for a named image
@@ -209,41 +214,37 @@ impl<'a> Images<'a> {
     pub fn search(
         &self,
         term: &str,
-    ) -> Result<Vec<SearchResult>> {
+    ) -> impl Future<Item = Vec<SearchResult>, Error = Error> {
         let query = form_urlencoded::Serializer::new(String::new())
             .append_pair("term", term)
             .finish();
-        let raw = self.docker.get(&format!("/images/search?{}", query)[..])?;
-        Ok(serde_json::from_str::<Vec<SearchResult>>(&raw)?)
+        self.docker
+            .get_json::<Vec<SearchResult>>(&format!("/images/search?{}", query)[..])
     }
 
-    /// Pull and create a new docker images from an existing image
-    pub fn pull(
-        &self,
-        opts: &PullOptions,
-    ) -> Result<Vec<Value>> {
-        let mut path = vec!["/images/create".to_owned()];
-        if let Some(query) = opts.serialize() {
-            path.push(query);
-        }
-        self.docker
-            .stream_post::<Body>(&path.join("?"), None)
-            .and_then(|r| serde_json::from_reader::<_, Vec<Value>>(r).map_err(Error::from))
-    }
+    // TODO(abusch) fix this
+    // /// Pull and create a new docker images from an existing image
+    // pub fn pull(&self, opts: &PullOptions) -> Result<Vec<Value>> {
+    //     let mut path = vec!["/images/create".to_owned()];
+    //     if let Some(query) = opts.serialize() {
+    //         path.push(query);
+    //     }
+    //     self.docker
+    //         .stream_post::<Body>(&path.join("?"), None)
+    //         .and_then(|r| serde_json::from_reader::<_, Vec<Value>>(r).map_err(Error::from))
+    // }
 
-    /// exports a collection of named images,
-    /// either by name, name:tag, or image id, into a tarball
-    pub fn export(
-        &self,
-        names: Vec<&str>,
-    ) -> Result<Box<Read + Send>> {
-        let params = names.iter().map(|n| ("names", *n));
-        let query = form_urlencoded::Serializer::new(String::new())
-            .extend_pairs(params)
-            .finish();
-        self.docker
-            .stream_get(&format!("/images/get?{}", query)[..])
-    }
+    // TODO(abusch) Fix this
+    // /// exports a collection of named images,
+    // /// either by name, name:tag, or image id, into a tarball
+    // pub fn export(&self, names: Vec<&str>) -> Result<Box<Read + Send>> {
+    //     let params = names.iter().map(|n| ("names", *n));
+    //     let query = form_urlencoded::Serializer::new(String::new())
+    //         .extend_pairs(params)
+    //         .finish();
+    //     self.docker
+    //         .stream_get(&format!("/images/get?{}", query)[..])
+    // }
 
     // pub fn import(self, tarball: Box<Read>) -> Result<()> {
     //  self.docker.post
@@ -277,18 +278,16 @@ impl<'a, 'b> Container<'a, 'b> {
     }
 
     /// Inspects the current docker container instance's details
-    pub fn inspect(&self) -> Result<ContainerDetails> {
-        let raw = self
-            .docker
-            .get(&format!("/containers/{}/json", self.id)[..])?;
-        Ok(serde_json::from_str::<ContainerDetails>(&raw)?)
+    pub fn inspect(&self) -> impl Future<Item = ContainerDetails, Error = Error> {
+        self.docker
+            .get_json::<ContainerDetails>(&format!("/containers/{}/json", self.id)[..])
     }
 
     /// Returns a `top` view of information about the container process
     pub fn top(
         &self,
         psargs: Option<&str>,
-    ) -> Result<Top> {
+    ) -> impl Future<Item = Top, Error = Error> {
         let mut path = vec![format!("/containers/{}/top", self.id)];
         if let Some(ref args) = psargs {
             let encoded = form_urlencoded::Serializer::new(String::new())
@@ -296,46 +295,46 @@ impl<'a, 'b> Container<'a, 'b> {
                 .finish();
             path.push(encoded)
         }
-        let raw = self.docker.get(&path.join("?"))?;
-
-        Ok(serde_json::from_str::<Top>(&raw)?)
+        self.docker.get_json(&path.join("?"))
     }
 
-    /// Returns a stream of logs emitted but the container instance
-    pub fn logs(
-        &self,
-        opts: &LogsOptions,
-    ) -> Result<Box<Read + Send>> {
-        let mut path = vec![format!("/containers/{}/logs", self.id)];
-        if let Some(query) = opts.serialize() {
-            path.push(query)
-        }
-        self.docker.stream_get(&path.join("?"))
-    }
+    // TODO(abusch) fix this
+    // /// Returns a stream of logs emitted but the container instance
+    // pub fn logs(&self, opts: &LogsOptions) -> Result<Box<Read + Send>> {
+    //     let mut path = vec![format!("/containers/{}/logs", self.id)];
+    //     if let Some(query) = opts.serialize() {
+    //         path.push(query)
+    //     }
+    //     self.docker.stream_get(&path.join("?"))
+    // }
 
     /// Returns a set of changes made to the container instance
-    pub fn changes(&self) -> Result<Vec<Change>> {
-        let raw = self
-            .docker
-            .get(&format!("/containers/{}/changes", self.id)[..])?;
-        Ok(serde_json::from_str::<Vec<Change>>(&raw)?)
-    }
-
-    /// Exports the current docker container into a tarball
-    pub fn export(&self) -> Result<Box<Read + Send>> {
+    pub fn changes(&self) -> impl Future<Item = Vec<Change>, Error = Error> {
         self.docker
-            .stream_get(&format!("/containers/{}/export", self.id)[..])
+            .get_json::<Vec<Change>>(&format!("/containers/{}/changes", self.id)[..])
     }
 
+    // TODO(abusch) fix this
+    // /// Exports the current docker container into a tarball
+    // pub fn export(&self) -> Result<Box<Read + Send>> {
+    //     self.docker
+    //         .stream_get(&format!("/containers/{}/export", self.id)[..])
+    // }
+
+    // TODO(abusch) add a streaming version of this by passing stream=true
     /// Returns a stream of stats specific to this container instance
-    pub fn stats(&self) -> Result<Vec<Stats>> {
+    pub fn stats(&self) -> impl Stream<Item = Stats, Error = Error> {
         self.docker
             .stream_get(&format!("/containers/{}/stats", self.id)[..])
-            .and_then(|r| serde_json::from_reader::<_, Vec<Stats>>(r).map_err(Error::from))
+            .and_then(|s| {
+                serde_json::from_slice::<Stats>(&s[..])
+                    .map_err(Error::SerdeJsonError)
+                    .into_future()
+            })
     }
 
     /// Start the container instance
-    pub fn start(&self) -> Result<()> {
+    pub fn start(&self) -> impl Future<Item = (), Error = Error> {
         self.docker
             .post::<Body>(&format!("/containers/{}/start", self.id)[..], None)
             .map(|_| ())
@@ -345,7 +344,7 @@ impl<'a, 'b> Container<'a, 'b> {
     pub fn stop(
         &self,
         wait: Option<Duration>,
-    ) -> Result<()> {
+    ) -> impl Future<Item = (), Error = Error> {
         let mut path = vec![format!("/containers/{}/stop", self.id)];
         if let Some(w) = wait {
             let encoded = form_urlencoded::Serializer::new(String::new())
@@ -361,7 +360,7 @@ impl<'a, 'b> Container<'a, 'b> {
     pub fn restart(
         &self,
         wait: Option<Duration>,
-    ) -> Result<()> {
+    ) -> impl Future<Item = (), Error = Error> {
         let mut path = vec![format!("/containers/{}/restart", self.id)];
         if let Some(w) = wait {
             let encoded = form_urlencoded::Serializer::new(String::new())
@@ -376,7 +375,7 @@ impl<'a, 'b> Container<'a, 'b> {
     pub fn kill(
         &self,
         signal: Option<&str>,
-    ) -> Result<()> {
+    ) -> impl Future<Item = (), Error = Error> {
         let mut path = vec![format!("/containers/{}/kill", self.id)];
         if let Some(sig) = signal {
             let encoded = form_urlencoded::Serializer::new(String::new())
@@ -391,7 +390,7 @@ impl<'a, 'b> Container<'a, 'b> {
     pub fn rename(
         &self,
         name: &str,
-    ) -> Result<()> {
+    ) -> impl Future<Item = (), Error = Error> {
         let query = form_urlencoded::Serializer::new(String::new())
             .append_pair("name", name)
             .finish();
@@ -404,31 +403,29 @@ impl<'a, 'b> Container<'a, 'b> {
     }
 
     /// Pause the container instance
-    pub fn pause(&self) -> Result<()> {
+    pub fn pause(&self) -> impl Future<Item = (), Error = Error> {
         self.docker
             .post::<Body>(&format!("/containers/{}/pause", self.id)[..], None)
             .map(|_| ())
     }
 
     /// Unpause the container instance
-    pub fn unpause(&self) -> Result<()> {
+    pub fn unpause(&self) -> impl Future<Item = (), Error = Error> {
         self.docker
             .post::<Body>(&format!("/containers/{}/unpause", self.id)[..], None)
             .map(|_| ())
     }
 
     /// Wait until the container stops
-    pub fn wait(&self) -> Result<Exit> {
-        let raw = self
-            .docker
-            .post::<Body>(&format!("/containers/{}/wait", self.id)[..], None)?;
-        Ok(serde_json::from_str::<Exit>(&raw)?)
+    pub fn wait(&self) -> impl Future<Item = Exit, Error = Error> {
+        self.docker
+            .post_json::<Body, Exit>(&format!("/containers/{}/wait", self.id)[..], None)
     }
 
     /// Delete the container instance
     ///
     /// Use remove instead to use the force/v options.
-    pub fn delete(&self) -> Result<()> {
+    pub fn delete(&self) -> impl Future<Item = (), Error = Error> {
         self.docker
             .delete(&format!("/containers/{}", self.id)[..])
             .map(|_| ())
@@ -438,52 +435,49 @@ impl<'a, 'b> Container<'a, 'b> {
     pub fn remove(
         &self,
         opts: RmContainerOptions,
-    ) -> Result<()> {
+    ) -> impl Future<Item = (), Error = Error> {
         let mut path = vec![format!("/containers/{}", self.id)];
         if let Some(query) = opts.serialize() {
             path.push(query)
         }
-        self.docker.delete(&path.join("?"))?;
-        Ok(())
+        self.docker.delete(&path.join("?")).map(|_| ())
     }
 
-    /// Exec the specified command in the container
-    pub fn exec(
-        &self,
-        opts: &ExecContainerOptions,
-    ) -> Result<Tty> {
-        let data = opts.serialize()?;
-        let bytes = data.into_bytes();
-        match self.docker.post(
-            &format!("/containers/{}/exec", self.id)[..],
-            Some((bytes, mime::APPLICATION_JSON)),
-        ) {
-            Err(e) => Err(e),
-            Ok(res) => {
-                let data = "{}";
-                let mut bytes = data.as_bytes();
-                let json: Value = serde_json::from_str(res.as_str())?;
+    // TODO(abusch) fix this
+    // /// Exec the specified command in the container
+    // pub fn exec(&self, opts: &ExecContainerOptions) -> Result<Tty> {
+    //     let data = opts.serialize()?;
+    //     let bytes = data.into_bytes();
+    //     match self.docker.post(
+    //         &format!("/containers/{}/exec", self.id)[..],
+    //         Some((bytes, mime::APPLICATION_JSON)),
+    //     ) {
+    //         Err(e) => Err(e),
+    //         Ok(res) => {
+    //             let data = "{}";
+    //             let mut bytes = data.as_bytes();
+    //             let json: Value = serde_json::from_str(res.as_str())?;
 
-                if let Value::Object(ref obj) = json {
-                    self.docker
-                        .stream_post(
-                            &format!(
-                                "/exec/{}/start",
-                                    obj
-                                    .get("Id")
-                                    .unwrap()
-                                    .as_str()
-                                    .unwrap()
-                            )[..],
-                            Some((bytes, mime::APPLICATION_JSON)),
-                        ).map(Tty::new)
-                } else {
-                    // TODO
-                    panic!()
-                }
-            }
-        }
-    }
+    //             if let Value::Object(ref obj) = json {
+    //                 self.docker
+    //                     .stream_post(
+    //                         &format!(
+    //                             "/exec/{}/start",
+    //                                 obj
+    //                                 .get("Id")
+    //                                 .unwrap()
+    //                                 .as_str()
+    //                                 .unwrap()
+    //                         )[..],
+    //                         Some((bytes, mime::APPLICATION_JSON)),
+    //                     ).map(|stream| Tty::new(stream))
+    //             } else {
+    //                 // TODO
+    //                 panic!()
+    //             }
+    //         }
+    //     }
+    // }
 
     // todo attach, attach/ws, copy, archive
 }
@@ -503,13 +497,12 @@ impl<'a> Containers<'a> {
     pub fn list(
         &self,
         opts: &ContainerListOptions,
-    ) -> Result<Vec<ContainerRep>> {
+    ) -> impl Future<Item = Vec<ContainerRep>, Error = Error> {
         let mut path = vec!["/containers/json".to_owned()];
         if let Some(query) = opts.serialize() {
             path.push(query)
         }
-        let raw = self.docker.get(&path.join("?"))?;
-        Ok(serde_json::from_str::<Vec<ContainerRep>>(&raw)?)
+        self.docker.get_json::<Vec<ContainerRep>>(&path.join("?"))
     }
 
     /// Returns a reference to a set of operations available to a specific container instance
@@ -524,8 +517,9 @@ impl<'a> Containers<'a> {
     pub fn create(
         &self,
         opts: &ContainerOptions,
-    ) -> Result<ContainerCreateInfo> {
-        let data = opts.serialize()?;
+    ) -> impl Future<Item = ContainerCreateInfo, Error = Error> {
+        // TODO(abusch) fix error handling
+        let data = serde_json::to_string(opts).unwrap();
         let bytes = data.into_bytes();
         let mut path = vec!["/containers/create".to_owned()];
 
@@ -537,10 +531,8 @@ impl<'a> Containers<'a> {
             );
         }
 
-        let raw = self
-            .docker
-            .post(&path.join("?"), Some((bytes, mime::APPLICATION_JSON)))?;
-        Ok(serde_json::from_str::<ContainerCreateInfo>(&raw)?)
+        self.docker
+            .post_json(&path.join("?"), Some((bytes, mime::APPLICATION_JSON)))
     }
 }
 
@@ -559,13 +551,12 @@ impl<'a> Networks<'a> {
     pub fn list(
         &self,
         opts: &NetworkListOptions,
-    ) -> Result<Vec<NetworkInfo>> {
+    ) -> impl Future<Item = Vec<NetworkInfo>, Error = Error> {
         let mut path = vec!["/networks".to_owned()];
         if let Some(query) = opts.serialize() {
             path.push(query);
         }
-        let raw = self.docker.get(&path.join("?"))?;
-        Ok(serde_json::from_str::<Vec<NetworkInfo>>(&raw)?)
+        self.docker.get_json(&path.join("?"))
     }
 
     /// Returns a reference to a set of operations available to a specific network instance
@@ -579,15 +570,14 @@ impl<'a> Networks<'a> {
     pub fn create(
         &self,
         opts: &NetworkCreateOptions,
-    ) -> Result<NetworkCreateInfo> {
-        let data = opts.serialize()?;
+    ) -> impl Future<Item = NetworkCreateInfo, Error = Error> {
+        // TODO(abusch) fix error handling
+        let data = opts.serialize().unwrap();
         let bytes = data.into_bytes();
         let path = vec!["/networks/create".to_owned()];
 
-        let raw = self
-            .docker
-            .post(&path.join("?"), Some((bytes, mime::APPLICATION_JSON)))?;
-        Ok(serde_json::from_str::<NetworkCreateInfo>(&raw)?)
+        self.docker
+            .post_json(&path.join("?"), Some((bytes, mime::APPLICATION_JSON)))
     }
 }
 
@@ -618,13 +608,12 @@ impl<'a, 'b> Network<'a, 'b> {
     }
 
     /// Inspects the current docker network instance's details
-    pub fn inspect(&self) -> Result<NetworkInfo> {
-        let raw = self.docker.get(&format!("/networks/{}", self.id)[..])?;
-        Ok(serde_json::from_str::<NetworkInfo>(&raw)?)
+    pub fn inspect(&self) -> impl Future<Item = NetworkInfo, Error = Error> {
+        self.docker.get_json(&format!("/networks/{}", self.id)[..])
     }
 
     /// Delete the network instance
-    pub fn delete(&self) -> Result<()> {
+    pub fn delete(&self) -> impl Future<Item = (), Error = Error> {
         self.docker
             .delete(&format!("/networks/{}", self.id)[..])
             .map(|_| ())
@@ -634,7 +623,7 @@ impl<'a, 'b> Network<'a, 'b> {
     pub fn connect(
         &self,
         opts: &ContainerConnectionOptions,
-    ) -> Result<()> {
+    ) -> impl Future<Item = (), Error = Error> {
         self.do_connection("connect", opts)
     }
 
@@ -642,7 +631,7 @@ impl<'a, 'b> Network<'a, 'b> {
     pub fn disconnect(
         &self,
         opts: &ContainerConnectionOptions,
-    ) -> Result<()> {
+    ) -> impl Future<Item = (), Error = Error> {
         self.do_connection("disconnect", opts)
     }
 
@@ -650,8 +639,9 @@ impl<'a, 'b> Network<'a, 'b> {
         &self,
         segment: &str,
         opts: &ContainerConnectionOptions,
-    ) -> Result<()> {
-        let data = opts.serialize()?;
+    ) -> impl Future<Item = (), Error = Error> {
+        // TODO(abusch) fix error handling
+        let data = opts.serialize().unwrap();
         let bytes = data.into_bytes();
 
         self.docker
@@ -690,7 +680,6 @@ impl Docker {
         Docker {
             transport: Transport::Unix {
                 client: Client::builder().keep_alive(false).build(UnixConnector),
-                runtime: Arc::new(Mutex::new(tokio::runtime::Runtime::new().unwrap())),
                 path: socket_path.into(),
             },
         }
@@ -710,7 +699,6 @@ impl Docker {
             Some("unix") => Docker {
                 transport: Transport::Unix {
                     client: Client::builder().build(UnixConnector),
-                    runtime: Arc::new(Mutex::new(tokio::runtime::Runtime::new().unwrap())),
                     path: host.path().to_owned(),
                 },
             },
@@ -743,7 +731,6 @@ impl Docker {
                     Docker {
                         transport: Transport::EncryptedTcp {
                             client: Client::builder().build(connector),
-                            runtime: Arc::new(Mutex::new(tokio::runtime::Runtime::new().unwrap())),
                             host: tcp_host_str,
                         },
                     }
@@ -751,7 +738,6 @@ impl Docker {
                     Docker {
                         transport: Transport::Tcp {
                             client: Client::new(),
-                            runtime: Arc::new(Mutex::new(tokio::runtime::Runtime::new().unwrap())),
                             host: tcp_host_str,
                         },
                     }
@@ -775,66 +761,106 @@ impl Docker {
     }
 
     /// Returns version information associated with the docker daemon
-    pub fn version(&self) -> Result<Version> {
-        let raw = self.get("/version")?;
-        Ok(serde_json::from_str::<Version>(&raw)?)
+    pub fn version(&self) -> impl Future<Item = Version, Error = Error> {
+        self.get_json("/version")
     }
 
     /// Returns information associated with the docker daemon
-    pub fn info(&self) -> Result<Info> {
-        let raw = self.get("/info")?;
-        Ok(serde_json::from_str::<Info>(&raw)?)
+    pub fn info(&self) -> impl Future<Item = Info, Error = Error> {
+        self.get_json("/info")
     }
 
     /// Returns a simple ping response indicating the docker daemon is accessible
-    pub fn ping(&self) -> Result<String> {
+    pub fn ping(&self) -> impl Future<Item = String, Error = Error> {
         self.get("/_ping")
     }
 
-    /// Returns an interator over streamed docker events
-    pub fn events(
-        &self,
-        opts: &EventsOptions,
-    ) -> Result<Vec<Event>> {
-        let mut path = vec!["/events".to_owned()];
-        if let Some(query) = opts.serialize() {
-            path.push(query);
-        }
-        self.stream_get(&path.join("?")[..])
-            .and_then(|r| serde_json::from_reader::<_, Vec<Event>>(r).map_err(Error::from))
-    }
+    // TODO(abusch) fix this
+    // /// Returns an interator over streamed docker events
+    // pub fn events(&self, opts: &EventsOptions) -> Result<Vec<Event>> {
+    //     let mut path = vec!["/events".to_owned()];
+    //     if let Some(query) = opts.serialize() {
+    //         path.push(query);
+    //     }
+    //     self.stream_get(&path.join("?")[..])
+    //         .and_then(|r| serde_json::from_reader::<_, Vec<Event>>(r).map_err(Error::from))
+    // }
 
     fn get(
         &self,
         endpoint: &str,
-    ) -> Result<String> {
+    ) -> impl Future<Item = String, Error = Error> {
         self.transport.request::<Body>(Method::GET, endpoint, None)
+    }
+
+    fn get_json<T: serde::de::DeserializeOwned>(
+        &self,
+        endpoint: &str,
+    ) -> impl Future<Item = T, Error = Error> {
+        self.transport
+            .request::<Body>(Method::GET, endpoint, None)
+            .and_then(|v| {
+                serde_json::from_str::<T>(&v)
+                    .map_err(Error::SerdeJsonError)
+                    .into_future()
+            })
     }
 
     fn post<B>(
         &self,
         endpoint: &str,
         body: Option<(B, Mime)>,
-    ) -> Result<String>
+    ) -> impl Future<Item = String, Error = Error>
     where
         B: Into<Body>,
     {
         self.transport.request(Method::POST, endpoint, body)
     }
 
+    fn post_json<B, T>(
+        &self,
+        endpoint: &str,
+        body: Option<(B, Mime)>,
+    ) -> impl Future<Item = T, Error = Error>
+    where
+        B: Into<Body>,
+        T: serde::de::DeserializeOwned,
+    {
+        self.transport
+            .request(Method::POST, endpoint, body)
+            .and_then(|v| {
+                serde_json::from_str::<T>(&v)
+                    .map_err(Error::SerdeJsonError)
+                    .into_future()
+            })
+    }
+
     fn delete(
         &self,
         endpoint: &str,
-    ) -> Result<String> {
+    ) -> impl Future<Item = String, Error = Error> {
         self.transport
             .request::<Body>(Method::DELETE, endpoint, None)
+    }
+
+    fn delete_json<T: serde::de::DeserializeOwned>(
+        &self,
+        endpoint: &str,
+    ) -> impl Future<Item = T, Error = Error> {
+        self.transport
+            .request::<Body>(Method::DELETE, endpoint, None)
+            .and_then(|v| {
+                serde_json::from_str::<T>(&v)
+                    .map_err(Error::SerdeJsonError)
+                    .into_future()
+            })
     }
 
     fn stream_post<B>(
         &self,
         endpoint: &str,
         body: Option<(B, Mime)>,
-    ) -> Result<Box<Read + Send>>
+    ) -> impl Stream<Item = Vec<u8>, Error = Error>
     where
         B: Into<Body>,
     {
@@ -844,7 +870,7 @@ impl Docker {
     fn stream_get(
         &self,
         endpoint: &str,
-    ) -> Result<Box<Read + Send>> {
+    ) -> impl Stream<Item = Vec<u8>, Error = Error> {
         self.transport.stream::<Body>(Method::GET, endpoint, None)
     }
 }
