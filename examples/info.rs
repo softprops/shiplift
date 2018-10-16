@@ -1,8 +1,15 @@
 extern crate shiplift;
+extern crate tokio;
 
 use shiplift::Docker;
+use tokio::prelude::*;
 
 fn main() {
     let docker = Docker::new();
-    println!("info {:?}", docker.info().unwrap());
+    tokio::run(
+        docker
+            .info()
+            .map(|info| println!("info {:?}", info))
+            .map_err(|e| eprintln!("Error: {}", e)),
+    );
 }

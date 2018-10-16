@@ -1,10 +1,20 @@
 extern crate shiplift;
+extern crate tokio;
+
+use shiplift::Docker;
+use tokio::prelude::*;
 
 fn main() {
-    let docker = shiplift::Docker::new();
-    let images = docker.images().list(&Default::default()).unwrap();
+    let docker = Docker::new();
     println!("docker images in stock");
-    for i in images {
-        println!("{:?}", i.repo_tags);
-    }
+    let fut = docker
+        .images()
+        .list(&Default::default())
+        .map(|images| {
+            for i in images {
+                println!("{:?}", i.repo_tags);
+            }
+        })
+        .map_err(|e| eprintln!("Error: {}", e));
+    tokio::run(fut);
 }

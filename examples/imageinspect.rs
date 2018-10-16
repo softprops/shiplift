@@ -1,12 +1,20 @@
 extern crate shiplift;
+extern crate tokio;
 
 use shiplift::Docker;
 use std::env;
+use tokio::prelude::*;
 
 fn main() {
     let docker = Docker::new();
-    if let Some(id) = env::args().nth(1) {
-        let image = docker.images().get(&id).inspect().unwrap();
-        println!("{:?}", image);
-    }
+    let id = env::args()
+        .nth(1)
+        .expect("Usage: cargo run --example imageinspect -- <image>");
+    let fut = docker
+        .images()
+        .get(&id)
+        .inspect()
+        .map(|image| println!("{:#?}", image))
+        .map_err(|e| eprintln!("Error: {}", e));
+    tokio::run(fut);
 }
