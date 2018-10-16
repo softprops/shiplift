@@ -775,16 +775,18 @@ impl Docker {
         self.get("/_ping")
     }
 
-    // TODO(abusch) fix this
-    // /// Returns an interator over streamed docker events
-    // pub fn events(&self, opts: &EventsOptions) -> Result<Vec<Event>> {
-    //     let mut path = vec!["/events".to_owned()];
-    //     if let Some(query) = opts.serialize() {
-    //         path.push(query);
-    //     }
-    //     self.stream_get(&path.join("?")[..])
-    //         .and_then(|r| serde_json::from_reader::<_, Vec<Event>>(r).map_err(Error::from))
-    // }
+    /// Returns an interator over streamed docker events
+    pub fn events(
+        &self,
+        opts: &EventsOptions,
+    ) -> impl Stream<Item = Event, Error = Error> {
+        let mut path = vec!["/events".to_owned()];
+        if let Some(query) = opts.serialize() {
+            path.push(query);
+        }
+        self.stream_get(&path.join("?")[..])
+            .and_then(|r| serde_json::from_slice::<Event>(&r[..]).map_err(Error::from))
+    }
 
     fn get(
         &self,

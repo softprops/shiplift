@@ -10,7 +10,7 @@ fn main() {
     let containers = docker.containers();
     let id = env::args()
         .nth(1)
-        .expect("Usage: cargo run --example -- <container>");
+        .expect("Usage: cargo run --example stats -- <container>");
     let fut = containers
         .get(&id)
         .stats()

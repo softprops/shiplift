@@ -428,23 +428,26 @@ pub struct Exit {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(rename_all = "PascalCase")]
 pub struct Event {
     #[serde(rename = "Type")]
     pub typ: String,
+    #[serde(rename = "Action")]
     pub action: String,
+    #[serde(rename = "Actor")]
     pub actor: Actor,
     pub status: Option<String>,
     pub id: Option<String>,
     pub from: Option<String>,
     pub time: u64,
+    #[serde(rename = "timeNano")]
     pub time_nano: u64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(rename_all = "PascalCase")]
 pub struct Actor {
+    #[serde(rename = "ID")]
     pub id: String,
+    #[serde(rename = "Attributes")]
     pub attributes: HashMap<String, String>,
 }
 
