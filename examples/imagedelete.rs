@@ -18,6 +18,7 @@ fn main() {
             for status in statuses {
                 println!("{:?}", status);
             }
-        }).map_err(|e| eprintln!("Error: {}", e));
+        })
+        .map_err(|e| eprintln!("Error: {}", e));
     tokio::run(fut);
 }

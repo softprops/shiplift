@@ -16,6 +16,7 @@ fn main() {
         .for_each(|output| {
             println!("{:?}", output);
             Ok(())
-        }).map_err(|e| eprintln!("Error: {}", e));
+        })
+        .map_err(|e| eprintln!("Error: {}", e));
     tokio::run(fut);
 }

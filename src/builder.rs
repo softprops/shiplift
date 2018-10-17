@@ -917,7 +917,7 @@ impl LogsOptionsBuilder {
         self
     }
 
-    /// how_many can either by "all" or a to_string() of the number
+    /// how_many can either be "all" or a to_string() of the number
     pub fn tail(
         &mut self,
         how_many: &str,
