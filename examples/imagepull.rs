@@ -3,7 +3,7 @@ extern crate tokio;
 
 use shiplift::{Docker, PullOptions};
 use std::env;
-use tokio::prelude::*;
+use tokio::prelude::{Future, Stream};
 
 fn main() {
     let docker = Docker::new();

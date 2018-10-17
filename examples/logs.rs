@@ -3,7 +3,7 @@ extern crate tokio;
 
 use shiplift::{errors::Error, Docker, LogsOptions};
 use std::env;
-use tokio::prelude::*;
+use tokio::prelude::{Future, Stream};
 
 fn main() {
     let docker = Docker::new();

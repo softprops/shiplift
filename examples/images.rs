@@ -2,7 +2,7 @@ extern crate shiplift;
 extern crate tokio;
 
 use shiplift::Docker;
-use tokio::prelude::*;
+use tokio::prelude::{Future, Stream};
 
 fn main() {
     let docker = Docker::new();
