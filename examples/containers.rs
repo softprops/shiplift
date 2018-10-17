@@ -3,7 +3,7 @@ extern crate shiplift;
 extern crate tokio;
 
 use shiplift::Docker;
-use tokio::prelude::{Future, Stream};
+use tokio::prelude::Future;
 
 fn main() {
     env_logger::init();
