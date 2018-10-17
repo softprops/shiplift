@@ -181,7 +181,12 @@ impl<'a> Images<'a> {
 
         self.docker
             .stream_post(&path.join("?"), Some((Body::from(bytes), tar())))
-            .and_then(|r| serde_json::from_reader::<_, Vec<Value>>(r).map_err(Error::from))
+            .and_then(|r| {
+                serde_json::Deserializer::from_reader(r)
+                    .into_iter::<Value>()
+                    .map(|res| res.map_err(Error::from))
+                    .collect()
+            })
     }
 
     /// Lists the docker images on the current docker host
@@ -228,7 +233,12 @@ impl<'a> Images<'a> {
         }
         self.docker
             .stream_post::<Body>(&path.join("?"), None)
-            .and_then(|r| serde_json::from_reader::<_, Vec<Value>>(r).map_err(Error::from))
+            .and_then(|r| {
+                serde_json::Deserializer::from_reader(r)
+                    .into_iter::<Value>()
+                    .map(|res| res.map_err(Error::from))
+                    .collect()
+            })
     }
 
     /// exports a collection of named images,
