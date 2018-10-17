@@ -67,10 +67,11 @@ impl Transport {
     where
         B: Into<Body>,
     {
-        self.stream(method, endpoint, body)
+        let endpoint = endpoint.to_string();
+        self.stream(method, &endpoint, body)
             .concat2()
             .and_then(|v| String::from_utf8(v).map_err(Error::Encoding).into_future())
-        // debug!("{} raw response: {}", endpoint, body);
+            .inspect(move |body| debug!("{} raw response: {}", endpoint, body))
     }
 
     /// Builds an HTTP request.
