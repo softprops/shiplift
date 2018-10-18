@@ -1111,15 +1111,22 @@ impl NetworkCreateOptions {
         NetworkCreateOptionsBuilder::new(name)
     }
 
+    fn to_json(&self) -> Value {
+        let mut body = serde_json::Map::new();
+        self.parse_from(&self.params, &mut body);
+        self.parse_from(&self.params_hash, &mut body);
+        Value::Object(body)
+    }
+
     /// serialize options as a string. returns None if no options are defined
     pub fn serialize(&self) -> Result<String> {
-        serde_json::to_string(self).map_err(Error::from)
+        serde_json::to_string(&self.to_json()).map_err(Error::from)
     }
 
     pub fn parse_from<'a, K, V>(
         &self,
         params: &'a HashMap<K, V>,
-        body: &mut BTreeMap<String, Value>,
+        body: &mut serde_json::Map<String, Value>,
     ) where
         &'a HashMap<K, V>: IntoIterator,
         K: ToString + Eq + Hash,
