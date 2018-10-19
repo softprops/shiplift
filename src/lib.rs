@@ -182,14 +182,14 @@ impl<'a> Images<'a> {
             Ok(_) => Box::new(
                 self.docker
                     .stream_post(&path.join("?"), Some((Body::from(bytes), tar())))
-                    .and_then(|r| {
-                        serde_json::from_slice::<'_, Value>(&r[..])
+                    .and_then(|bytes| {
+                        serde_json::from_slice::<'_, Value>(&bytes[..])
                             .map_err(Error::from)
                             .into_future()
                     }),
-            ) as Box<Stream<Item = Value, Error = Error>>,
+            ) as Box<Stream<Item = Value, Error = Error> + Send>,
             Err(e) => Box::new(futures::future::err(Error::IO(e)).into_stream())
-                as Box<Stream<Item = Value, Error = Error>>,
+                as Box<Stream<Item = Value, Error = Error> + Send>,
         }
     }
 
