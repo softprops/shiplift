@@ -239,17 +239,19 @@ impl<'a> Images<'a> {
             .and_then(|r| serde_json::from_slice::<Value>(&r[..]).map_err(Error::from))
     }
 
-    // TODO(abusch) Fix this
-    // /// exports a collection of named images,
-    // /// either by name, name:tag, or image id, into a tarball
-    // pub fn export(&self, names: Vec<&str>) -> Result<Box<Read + Send>> {
-    //     let params = names.iter().map(|n| ("names", *n));
-    //     let query = form_urlencoded::Serializer::new(String::new())
-    //         .extend_pairs(params)
-    //         .finish();
-    //     self.docker
-    //         .stream_get(&format!("/images/get?{}", query)[..])
-    // }
+    /// exports a collection of named images,
+    /// either by name, name:tag, or image id, into a tarball
+    pub fn export(
+        &self,
+        names: Vec<&str>,
+    ) -> impl Stream<Item = Vec<u8>, Error = Error> {
+        let params = names.iter().map(|n| ("names", *n));
+        let query = form_urlencoded::Serializer::new(String::new())
+            .extend_pairs(params)
+            .finish();
+        self.docker
+            .stream_get(&format!("/images/get?{}", query)[..])
+    }
 
     // pub fn import(self, tarball: Box<Read>) -> Result<()> {
     //  self.docker.post
