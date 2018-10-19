@@ -375,7 +375,7 @@ impl ContainerOptions {
 
     /// serialize options as a string. returns None if no options are defined
     pub fn serialize(&self) -> Result<String> {
-        Ok(serde_json::to_string(&self.to_json())?)
+        serde_json::to_string(&self.to_json()).map_err(Error::from)
     }
 
     fn to_json(&self) -> Value {
@@ -644,7 +644,7 @@ impl ExecContainerOptions {
 
     /// serialize options as a string. returns None if no options are defined
     pub fn serialize(&self) -> Result<String> {
-        Ok(serde_json::to_string(self)?)
+        serde_json::to_string(self).map_err(Error::from)
     }
 }
 
