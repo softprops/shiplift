@@ -5,7 +5,10 @@ extern crate hyper;
 extern crate hyperlocal;
 
 use self::super::{Error, Result};
-use futures::{future, Future, IntoFuture, Stream};
+use futures::{
+    future::{self, Either},
+    Future, IntoFuture, Stream,
+};
 use hyper::client::{Client, HttpConnector};
 use hyper::header;
 use hyper::Body;
@@ -16,6 +19,7 @@ use hyperlocal::UnixConnector;
 #[cfg(feature = "unix-socket")]
 use hyperlocal::Uri as DomainUri;
 use mime::Mime;
+use serde_json::{self, Value};
 use std::fmt;
 
 pub fn tar() -> Mime {
@@ -125,21 +129,36 @@ impl Transport {
             .and_then(|res| {
                 let status = res.status();
                 match status {
+                    // Success case: pass on the response
                     StatusCode::OK
                     | StatusCode::CREATED
                     | StatusCode::SWITCHING_PROTOCOLS
-                    | StatusCode::NO_CONTENT => future::ok(res),
-                    _ => future::err(Error::Fault {
-                        code: status,
-                        // TODO get_error_message
-                        message: status
-                            .canonical_reason()
-                            .unwrap_or("unknown error code")
-                            .to_owned(),
-                    }),
+                    | StatusCode::NO_CONTENT => Either::A(future::ok(res)),
+                    // Error case: parse the body to try to extract the error message
+                    _ => Either::B(
+                        res.into_body()
+                            .concat2()
+                            .map_err(Error::Hyper)
+                            .and_then(|v| {
+                                String::from_utf8(v.into_iter().collect::<Vec<u8>>())
+                                    .map_err(Error::Encoding)
+                            })
+                            .and_then(move |body| {
+                                future::err(Error::Fault {
+                                    code: status,
+                                    message: Self::get_error_message(&body).unwrap_or_else(|| {
+                                        status
+                                            .canonical_reason()
+                                            .unwrap_or_else(|| "unknown error code")
+                                            .to_owned()
+                                    }),
+                                })
+                            }),
+                    ),
                 }
             })
             .map(|r| {
+                // Convert the response body into a stream of bytes
                 r.into_body()
                     .map(|chunk| chunk.into_iter().collect::<Vec<u8>>())
                     .map_err(Error::Hyper)
@@ -163,18 +182,13 @@ impl Transport {
 
     // Extract the error message content from an HTTP response that
     // contains a Docker JSON error structure.
-    // fn get_error_message(&self, body: &str) -> Option<String> {
-    //     match String::from_utf8(chunk.into_iter().collect()) {
-    //         Ok(output) => {
-    //             let json_response = serde_json::from_str::<Value>(output.as_str()).ok();
-    //             json_response
-    //                 .as_ref()
-    //                 .and_then(|x| x.as_object())
-    //                 .and_then(|x| x.get("message"))
-    //                 .and_then(|x| x.as_str())
-    //                 .map(|x| x.to_owned())
-    //         }
-    //         Err(..) => None,
-    //     }
-    // }
+    fn get_error_message(body: &str) -> Option<String> {
+        serde_json::from_str::<Value>(body)
+            .ok()
+            .as_ref()
+            .and_then(|x| x.as_object())
+            .and_then(|x| x.get("message"))
+            .and_then(|x| x.as_str())
+            .map(|x| x.to_owned())
+    }
 }
