@@ -47,7 +47,7 @@ pub use builder::{
     LogsOptions, NetworkCreateOptions, NetworkListOptions, PullOptions, RmContainerOptions,
 };
 pub use errors::Error;
-use futures::{Future, IntoFuture, Stream};
+use futures::{future::Either, Future, IntoFuture, Stream};
 use hyper::client::HttpConnector;
 use hyper::Body;
 use hyper::{Client, Method, Uri};
@@ -178,16 +178,19 @@ impl<'a> Images<'a> {
 
         let mut bytes = vec![];
 
-        // TODO(abusch) fix error handling
-        tarball::dir(&mut bytes, &opts.path[..]).expect("Could not tar directory");
-
-        self.docker
-            .stream_post(&path.join("?"), Some((Body::from(bytes), tar())))
-            .and_then(|r| {
-                serde_json::from_slice::<'_, Value>(&r[..])
-                    .map_err(Error::from)
-                    .into_future()
-            })
+        match tarball::dir(&mut bytes, &opts.path[..]) {
+            Ok(_) => Box::new(
+                self.docker
+                    .stream_post(&path.join("?"), Some((Body::from(bytes), tar())))
+                    .and_then(|r| {
+                        serde_json::from_slice::<'_, Value>(&r[..])
+                            .map_err(Error::from)
+                            .into_future()
+                    }),
+            ) as Box<Stream<Item = Value, Error = Error>>,
+            Err(e) => Box::new(futures::future::err(Error::IO(e)).into_stream())
+                as Box<Stream<Item = Value, Error = Error>>,
+        }
     }
 
     /// Lists the docker images on the current docker host
@@ -325,7 +328,6 @@ impl<'a, 'b> Container<'a, 'b> {
     //         .stream_get(&format!("/containers/{}/export", self.id)[..])
     // }
 
-    // TODO(abusch) add a streaming version of this by passing stream=true
     /// Returns a stream of stats specific to this container instance
     pub fn stats(&self) -> impl Stream<Item = Stats, Error = Error> {
         self.docker
@@ -522,8 +524,11 @@ impl<'a> Containers<'a> {
         &self,
         opts: &ContainerOptions,
     ) -> impl Future<Item = ContainerCreateInfo, Error = Error> {
-        // TODO(abusch) fix error handling
-        let data = opts.serialize().unwrap();
+        let data = match opts.serialize() {
+            Ok(data) => data,
+            Err(e) => return Either::A(futures::future::err(e)),
+        };
+
         let bytes = data.into_bytes();
         let mut path = vec!["/containers/create".to_owned()];
 
@@ -535,8 +540,10 @@ impl<'a> Containers<'a> {
             );
         }
 
-        self.docker
-            .post_json(&path.join("?"), Some((bytes, mime::APPLICATION_JSON)))
+        Either::B(
+            self.docker
+                .post_json(&path.join("?"), Some((bytes, mime::APPLICATION_JSON))),
+        )
     }
 }
 
@@ -575,13 +582,17 @@ impl<'a> Networks<'a> {
         &self,
         opts: &NetworkCreateOptions,
     ) -> impl Future<Item = NetworkCreateInfo, Error = Error> {
-        // TODO(abusch) fix error handling
-        let data = opts.serialize().unwrap();
+        let data = match opts.serialize() {
+            Ok(data) => data,
+            Err(e) => return Either::A(futures::future::err(e)),
+        };
         let bytes = data.into_bytes();
         let path = vec!["/networks/create".to_owned()];
 
-        self.docker
-            .post_json(&path.join("?"), Some((bytes, mime::APPLICATION_JSON)))
+        Either::B(
+            self.docker
+                .post_json(&path.join("?"), Some((bytes, mime::APPLICATION_JSON))),
+        )
     }
 }
 
@@ -644,16 +655,20 @@ impl<'a, 'b> Network<'a, 'b> {
         segment: &str,
         opts: &ContainerConnectionOptions,
     ) -> impl Future<Item = (), Error = Error> {
-        // TODO(abusch) fix error handling
-        let data = opts.serialize().unwrap();
+        let data = match opts.serialize() {
+            Ok(data) => data,
+            Err(e) => return Either::A(futures::future::err(e)),
+        };
         let bytes = data.into_bytes();
 
-        self.docker
-            .post(
-                &format!("/networks/{}/{}", self.id, segment)[..],
-                Some((bytes, mime::APPLICATION_JSON)),
-            )
-            .map(|_| ())
+        Either::B(
+            self.docker
+                .post(
+                    &format!("/networks/{}/{}", self.id, segment)[..],
+                    Some((bytes, mime::APPLICATION_JSON)),
+                )
+                .map(|_| ()),
+        )
     }
 }
 
