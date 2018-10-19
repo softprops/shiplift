@@ -523,7 +523,7 @@ impl<'a> Containers<'a> {
         opts: &ContainerOptions,
     ) -> impl Future<Item = ContainerCreateInfo, Error = Error> {
         // TODO(abusch) fix error handling
-        let data = serde_json::to_string(opts).unwrap();
+        let data = opts.serialize().unwrap();
         let bytes = data.into_bytes();
         let mut path = vec!["/containers/create".to_owned()];
 
