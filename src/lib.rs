@@ -72,7 +72,7 @@ use std::borrow::Cow;
 use std::env;
 use std::path::Path;
 use std::time::Duration;
-use tokio_codec::FramedRead;
+use tokio_codec::{FramedRead, LinesCodec};
 use transport::{tar, Transport};
 use tty::{TtyDecoder, TtyLine};
 use url::form_urlencoded;
@@ -319,7 +319,11 @@ impl<'a, 'b> Container<'a, 'b> {
         if let Some(query) = opts.serialize() {
             path.push(query)
         }
-        self.docker.stream_get_chunks(&path.join("?"))
+
+        let decoder = TtyDecoder::new();
+        let chunk_stream = StreamReader::new(self.docker.stream_get_chunks(&path.join("?")));
+
+        FramedRead::new(chunk_stream, decoder)
     }
 
     /// Returns a set of changes made to the container instance
@@ -800,7 +804,7 @@ impl Docker {
         self.get("/_ping")
     }
 
-    /// Returns an interator over streamed docker events
+    /// Returns a stream of docker events
     pub fn events(
         &self,
         opts: &EventsOptions,
@@ -809,8 +813,11 @@ impl Docker {
         if let Some(query) = opts.serialize() {
             path.push(query);
         }
-        self.stream_get(&path.join("?")[..])
-            .and_then(|r| serde_json::from_slice::<Event>(&r[..]).map_err(Error::from))
+        let stream_of_chunks = self.stream_get_chunks(&path.join("?")[..]);
+        let reader = StreamReader::new(stream_of_chunks);
+        FramedRead::new(reader, LinesCodec::new())
+            .map_err(Error::IO)
+            .and_then(|line| serde_json::from_str::<Event>(&line).map_err(Error::from))
     }
 
     fn get(
@@ -904,14 +911,8 @@ impl Docker {
     fn stream_get_chunks(
         &self,
         endpoint: &str,
-    ) -> impl Stream<Item = tty::TtyLine, Error = Error> {
-        let decoder = TtyDecoder::new();
-        let chunk_stream = StreamReader::new(self.transport.stream_chunks::<Body>(
-            Method::GET,
-            endpoint,
-            None,
-        ));
-
-        FramedRead::new(chunk_stream, decoder)
+    ) -> impl Stream<Item = hyper::Chunk, Error = Error> {
+        self.transport
+            .stream_chunks::<Body>(Method::GET, endpoint, None)
     }
 }
