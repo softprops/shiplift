@@ -328,12 +328,11 @@ impl<'a, 'b> Container<'a, 'b> {
             .get_json::<Vec<Change>>(&format!("/containers/{}/changes", self.id)[..])
     }
 
-    // TODO(abusch) fix this
-    // /// Exports the current docker container into a tarball
-    // pub fn export(&self) -> Result<Box<Read + Send>> {
-    //     self.docker
-    //         .stream_get(&format!("/containers/{}/export", self.id)[..])
-    // }
+    /// Exports the current docker container into a tarball
+    pub fn export(&self) -> impl Stream<Item = Vec<u8>, Error = Error> {
+        self.docker
+            .stream_get(&format!("/containers/{}/export", self.id)[..])
+    }
 
     /// Returns a stream of stats specific to this container instance
     pub fn stats(&self) -> impl Stream<Item = Stats, Error = Error> {
