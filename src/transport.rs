@@ -9,10 +9,10 @@ use futures::{
     future::{self, Either},
     Future, IntoFuture, Stream,
 };
-use hyper::client::{Client, HttpConnector};
-use hyper::header;
-use hyper::Body;
-use hyper::{Method, Request, StatusCode};
+use hyper::{
+    client::{Client, HttpConnector},
+    header, Body, Chunk, Method, Request, StatusCode,
+};
 use hyper_openssl::HttpsConnector;
 #[cfg(feature = "unix-socket")]
 use hyperlocal::UnixConnector;
@@ -121,6 +121,19 @@ impl Transport {
     where
         B: Into<Body>,
     {
+        self.stream_chunks(method, endpoint, body)
+            .map(|chunk| chunk.into_iter().collect::<Vec<u8>>())
+    }
+
+    pub fn stream_chunks<B>(
+        &self,
+        method: Method,
+        endpoint: &str,
+        body: Option<(B, Mime)>,
+    ) -> impl Stream<Item = Chunk, Error = Error>
+    where
+        B: Into<Body>,
+    {
         let req = self
             .build_request(method, endpoint, body)
             .expect("Failed to build request!");
@@ -159,13 +172,10 @@ impl Transport {
             })
             .map(|r| {
                 // Convert the response body into a stream of bytes
-                r.into_body()
-                    .map(|chunk| chunk.into_iter().collect::<Vec<u8>>())
-                    .map_err(Error::Hyper)
+                r.into_body().map_err(Error::Hyper)
             })
             .flatten_stream()
     }
-
     fn send_request(
         &self,
         req: Request<hyper::Body>,

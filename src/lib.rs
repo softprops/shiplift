@@ -16,6 +16,7 @@
 #[macro_use]
 extern crate log;
 extern crate byteorder;
+extern crate bytes;
 extern crate flate2;
 extern crate futures;
 extern crate http;
@@ -32,9 +33,12 @@ extern crate serde_derive;
 extern crate serde;
 extern crate serde_json;
 extern crate tokio;
+extern crate tokio_codec;
+extern crate tokio_io;
 
 pub mod builder;
 pub mod errors;
+pub mod read;
 pub mod rep;
 pub mod transport;
 pub mod tty;
@@ -56,6 +60,7 @@ use hyper_openssl::HttpsConnector;
 use hyperlocal::UnixConnector;
 use mime::Mime;
 use openssl::ssl::{SslConnector, SslFiletype, SslMethod};
+use read::StreamReader;
 use rep::Image as ImageRep;
 use rep::{
     Change, Container as ContainerRep, ContainerCreateInfo, ContainerDetails, Event, Exit, History,
@@ -65,11 +70,11 @@ use rep::{NetworkCreateInfo, NetworkDetails as NetworkInfo};
 use serde_json::Value;
 use std::borrow::Cow;
 use std::env;
-use std::io::prelude::*;
 use std::path::Path;
 use std::time::Duration;
+use tokio_codec::FramedRead;
 use transport::{tar, Transport};
-use tty::Tty;
+use tty::{TtyDecoder, TtyLine};
 use url::form_urlencoded;
 
 /// Represents the result of all docker operations
@@ -309,12 +314,12 @@ impl<'a, 'b> Container<'a, 'b> {
     pub fn logs(
         &self,
         opts: &LogsOptions,
-    ) -> impl Stream<Item = Vec<u8>, Error = Error> {
+    ) -> impl Stream<Item = TtyLine, Error = Error> {
         let mut path = vec![format!("/containers/{}/logs", self.id)];
         if let Some(query) = opts.serialize() {
             path.push(query)
         }
-        self.docker.stream_get(&path.join("?"))
+        self.docker.stream_get_chunks(&path.join("?"))
     }
 
     /// Returns a set of changes made to the container instance
@@ -895,5 +900,19 @@ impl Docker {
         endpoint: &str,
     ) -> impl Stream<Item = Vec<u8>, Error = Error> {
         self.transport.stream::<Body>(Method::GET, endpoint, None)
+    }
+
+    fn stream_get_chunks(
+        &self,
+        endpoint: &str,
+    ) -> impl Stream<Item = tty::TtyLine, Error = Error> {
+        let decoder = TtyDecoder::new();
+        let chunk_stream = StreamReader::new(self.transport.stream_chunks::<Body>(
+            Method::GET,
+            endpoint,
+            None,
+        ));
+
+        FramedRead::new(chunk_stream, decoder)
     }
 }
