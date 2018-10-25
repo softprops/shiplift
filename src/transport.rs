@@ -28,6 +28,7 @@ pub fn tar() -> Mime {
 
 /// Transports are types which define the means of communication
 /// with the docker daemon
+#[derive(Clone)]
 pub enum Transport {
     /// A network tcp interface
     Tcp {

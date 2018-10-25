@@ -81,6 +81,7 @@ use url::form_urlencoded;
 pub type Result<T> = std::result::Result<T, Error>;
 
 /// Entrypoint interface for communicating with docker daemon
+#[derive(Clone)]
 pub struct Docker {
     transport: Transport,
 }
@@ -460,40 +461,40 @@ impl<'a, 'b> Container<'a, 'b> {
     }
 
     // TODO(abusch) fix this
-    // /// Exec the specified command in the container
-    // pub fn exec(&self, opts: &ExecContainerOptions) -> Result<Tty> {
-    //     let data = opts.serialize()?;
-    //     let bytes = data.into_bytes();
-    //     match self.docker.post(
-    //         &format!("/containers/{}/exec", self.id)[..],
-    //         Some((bytes, mime::APPLICATION_JSON)),
-    //     ) {
-    //         Err(e) => Err(e),
-    //         Ok(res) => {
-    //             let data = "{}";
-    //             let mut bytes = data.as_bytes();
-    //             let json: Value = serde_json::from_str(res.as_str())?;
+    /// Exec the specified command in the container
+    pub fn exec(
+        self,
+        opts: &ExecContainerOptions,
+    ) -> impl Stream<Item = TtyLine, Error = Error> {
+        let data = opts.serialize().unwrap(); // TODO fixme
+        let bytes = data.into_bytes();
+        let docker2 = self.docker.clone();
+        self.docker
+            .post(
+                &format!("/containers/{}/exec", self.id)[..],
+                Some((bytes, mime::APPLICATION_JSON)),
+            )
+            .map(move |res| {
+                let data = "{}";
+                let bytes = data.as_bytes();
+                let id = serde_json::from_str::<Value>(res.as_str())
+                    .ok()
+                    .and_then(|v| {
+                        v.as_object()
+                            .and_then(|v| v.get("Id"))
+                            .and_then(|v| v.as_str().map(|v| v.to_string()))
+                    })
+                    .unwrap(); // TODO fixme
 
-    //             if let Value::Object(ref obj) = json {
-    //                 self.docker
-    //                     .stream_post(
-    //                         &format!(
-    //                             "/exec/{}/start",
-    //                                 obj
-    //                                 .get("Id")
-    //                                 .unwrap()
-    //                                 .as_str()
-    //                                 .unwrap()
-    //                         )[..],
-    //                         Some((bytes, mime::APPLICATION_JSON)),
-    //                     ).map(|stream| Tty::new(stream))
-    //             } else {
-    //                 // TODO
-    //                 panic!()
-    //             }
-    //         }
-    //     }
-    // }
+                let decoder = TtyDecoder::new();
+                let chunk_stream = StreamReader::new(docker2.stream_post_chunks(
+                    &format!("/exec/{}/start", id)[..],
+                    Some((bytes, mime::APPLICATION_JSON)),
+                ));
+                FramedRead::new(chunk_stream, decoder)
+            })
+            .flatten_stream()
+    }
 
     // todo attach, attach/ws, copy, archive
 }
@@ -899,6 +900,17 @@ impl Docker {
         B: Into<Body>,
     {
         self.transport.stream(Method::POST, endpoint, body)
+    }
+
+    fn stream_post_chunks<B>(
+        &self,
+        endpoint: &str,
+        body: Option<(B, Mime)>,
+    ) -> impl Stream<Item = hyper::Chunk, Error = Error>
+    where
+        B: Into<Body>,
+    {
+        self.transport.stream_chunks(Method::POST, endpoint, body)
     }
 
     fn stream_get(
