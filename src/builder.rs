@@ -644,7 +644,23 @@ impl ExecContainerOptions {
 
     /// serialize options as a string. returns None if no options are defined
     pub fn serialize(&self) -> Result<String> {
-        serde_json::to_string(self).map_err(Error::from)
+        let mut body = serde_json::Map::new();
+
+        for (k, v) in &self.params {
+            body.insert(
+                k.to_string(),
+                serde_json::to_value(v).map_err(Error::SerdeJsonError)?,
+            );
+        }
+
+        for (k, v) in &self.params_bool {
+            body.insert(
+                k.to_string(),
+                serde_json::to_value(v).map_err(Error::SerdeJsonError)?,
+            );
+        }
+
+        serde_json::to_string(&body).map_err(Error::from)
     }
 }
 
