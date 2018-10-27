@@ -122,36 +122,7 @@ impl<'a, 'b> Image<'a, 'b> {
     /// Deletes an image
     pub fn delete(&self) -> impl Future<Item = Vec<Status>, Error = Error> {
         self.docker
-            .delete_json::<Value>(&format!("/images/{}", self.name)[..])
-            .and_then(|v| {
-                v.as_array()
-                    .ok_or(Error::InvalidResponse("Expected a JSON array".to_string()))
-                    .map(|array| {
-                        array
-                            .iter()
-                            .map(|j| {
-                                let obj = j.as_object().expect("expected json object");
-                                obj.get("Untagged")
-                                    .map(|sha| {
-                                        Status::Untagged(
-                                            sha.as_str()
-                                                .expect("expected Untagged to be a string")
-                                                .to_owned(),
-                                        )
-                                    })
-                                    .or(obj.get("Deleted").map(|sha| {
-                                        Status::Deleted(
-                                            sha.as_str()
-                                                .expect("expected Deleted to be a string")
-                                                .to_owned(),
-                                        )
-                                    }))
-                                    .expect("expected Untagged or Deleted")
-                            })
-                            .collect()
-                    })
-                    .into_future()
-            })
+            .delete_json::<Vec<Status>>(&format!("/images/{}", self.name)[..])
     }
 
     /// Export this image to a tarball

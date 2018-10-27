@@ -451,7 +451,7 @@ pub struct Actor {
     pub attributes: HashMap<String, String>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Status {
     Untagged(String),
     Deleted(String),
