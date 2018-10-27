@@ -114,8 +114,8 @@ pub struct NetworkSettings {
     pub ip_address: String,
     #[serde(rename = "IPPrefixLen")]
     pub ip_prefix_len: u64,
-    pub mac_address: String, /*    pub PortMapping: Option<???>,
-                              *   pub Ports: Option<???> */
+    pub mac_address: String,
+    pub ports: Option<HashMap<String, Option<Vec<HashMap<String, String>>>>>,
     pub networks: HashMap<String, NetworkEntry>,
 }
 
@@ -152,7 +152,7 @@ pub struct HostConfig {
     pub memory_swap: Option<i64>,
     pub network_mode: String,
     pub pid_mode: Option<String>,
-    // pub PortBindings: ???
+    pub port_bindings: Option<HashMap<String, Vec<HashMap<String, String>>>>,
     pub privileged: bool,
     pub publish_all_ports: bool,
     pub readonly_rootfs: Option<bool>, /* pub RestartPolicy: ???
@@ -171,7 +171,7 @@ pub struct Config {
     pub domainname: String,
     pub entrypoint: Option<Vec<String>>,
     pub env: Option<Vec<String>>,
-    // ExposedPorts
+    pub exposed_ports: Option<HashMap<String, HashMap<String, String>>>,
     pub hostname: String,
     pub image: String,
     pub labels: Option<HashMap<String, String>>,
