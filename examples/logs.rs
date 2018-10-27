@@ -16,8 +16,8 @@ fn main() {
         .logs(&LogsOptions::builder().stdout(true).stderr(true).build())
         .for_each(|line| {
             match line.stream_type {
-                StreamType::StdOut => println!("INFO : {}", line.data),
-                StreamType::StdErr => eprintln!("ERROR: {}", line.data),
+                StreamType::StdOut => println!("Stdout: {}", line.data),
+                StreamType::StdErr => eprintln!("Stderr: {}", line.data),
             }
             Ok(())
         })

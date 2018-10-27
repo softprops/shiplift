@@ -37,7 +37,7 @@ where
     #[inline]
     pub fn new(stream: S) -> StreamReader<S> {
         StreamReader {
-            stream: stream,
+            stream,
             state: ReadState::NotReady,
         }
     }

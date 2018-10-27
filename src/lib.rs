@@ -434,7 +434,7 @@ impl<'a, 'b> Container<'a, 'b> {
     // TODO(abusch) fix this
     /// Exec the specified command in the container
     pub fn exec(
-        self,
+        &self,
         opts: &ExecContainerOptions,
     ) -> impl Stream<Item = TtyLine, Error = Error> {
         let data = opts.serialize().unwrap(); // TODO fixme

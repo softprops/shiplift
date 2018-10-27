@@ -10,7 +10,6 @@ fn main() {
     let id = env::args()
         .nth(1)
         .expect("You need to specify a container id");
-    let containers = docker.containers();
 
     let options = ExecContainerOptions::builder()
         .cmd(vec![
@@ -22,18 +21,18 @@ fn main() {
         .attach_stdout(true)
         .attach_stderr(true)
         .build();
+    let fut = docker
+        .containers()
+        .get(&id)
+        .exec(&options)
+        .for_each(|line| {
+            match line.stream_type {
+                StreamType::StdOut => println!("Stdout: {}", line.data),
+                StreamType::StdErr => eprintln!("Stderr: {}", line.data),
+            }
+            Ok(())
+        })
+        .map_err(|e| eprintln!("Error: {}", e));
 
-    tokio::run(
-        containers
-            .get(&id)
-            .exec(&options)
-            .for_each(|line| {
-                match line.stream_type {
-                    StreamType::StdOut => println!("Stdout: {}", line.data),
-                    StreamType::StdErr => eprintln!("Stderr: {}", line.data),
-                }
-                Ok(())
-            })
-            .map_err(|e| eprintln!("Error: {}", e)),
-    );
+    tokio::run(fut);
 }
