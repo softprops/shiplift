@@ -1,9 +1,5 @@
 //! Transports for communicating with the docker daemon
 
-extern crate hyper;
-#[cfg(feature = "unix-socket")]
-extern crate hyperlocal;
-
 use self::super::{Error, Result};
 use futures::{
     future::{self, Either},
@@ -63,7 +59,7 @@ impl fmt::Debug for Transport {
 }
 
 impl Transport {
-    /// Make a request and returns the whole response in a string
+    /// Make a request and return the whole response in a `String`
     pub fn request<B>(
         &self,
         method: Method,
@@ -84,7 +80,7 @@ impl Transport {
             .inspect(move |body| debug!("{} raw response: {}", endpoint, body))
     }
 
-    /// Make a request and returns a [Stream] of [Chunks] as they are returned
+    /// Make a request and return a `Stream` of `Chunks` as they are returned.
     pub fn stream_chunks<B>(
         &self,
         method: Method,
