@@ -130,6 +130,7 @@ impl<'a, 'b> Image<'a, 'b> {
     pub fn export(&self) -> impl Stream<Item = Vec<u8>, Error = Error> {
         self.docker
             .stream_get(&format!("/images/{}/get", self.name)[..])
+            .map(|c| c.to_vec())
     }
 }
 
@@ -229,6 +230,7 @@ impl<'a> Images<'a> {
             .finish();
         self.docker
             .stream_get(&format!("/images/get?{}", query)[..])
+            .map(|c| c.to_vec())
     }
 
     // pub fn import(self, tarball: Box<Read>) -> Result<()> {
@@ -294,7 +296,7 @@ impl<'a, 'b> Container<'a, 'b> {
         }
 
         let decoder = TtyDecoder::new();
-        let chunk_stream = StreamReader::new(self.docker.stream_get_chunks(&path.join("?")));
+        let chunk_stream = StreamReader::new(self.docker.stream_get(&path.join("?")));
 
         FramedRead::new(chunk_stream, decoder)
     }
@@ -309,14 +311,21 @@ impl<'a, 'b> Container<'a, 'b> {
     pub fn export(&self) -> impl Stream<Item = Vec<u8>, Error = Error> {
         self.docker
             .stream_get(&format!("/containers/{}/export", self.id)[..])
+            .map(|c| c.to_vec())
     }
 
     /// Returns a stream of stats specific to this container instance
     pub fn stats(&self) -> impl Stream<Item = Stats, Error = Error> {
-        self.docker
-            .stream_get(&format!("/containers/{}/stats", self.id)[..])
+        let decoder = LinesCodec::new();
+        let stream_of_chunks = StreamReader::new(
+            self.docker
+                .stream_get(&format!("/containers/{}/stats", self.id)[..]),
+        );
+
+        FramedRead::new(stream_of_chunks, decoder)
+            .map_err(Error::IO)
             .and_then(|s| {
-                serde_json::from_slice::<Stats>(&s[..])
+                serde_json::from_str::<Stats>(&s)
                     .map_err(Error::SerdeJsonError)
                     .into_future()
             })
@@ -459,7 +468,7 @@ impl<'a, 'b> Container<'a, 'b> {
                     .unwrap(); // TODO fixme
 
                 let decoder = TtyDecoder::new();
-                let chunk_stream = StreamReader::new(docker2.stream_post_chunks(
+                let chunk_stream = StreamReader::new(docker2.stream_post(
                     &format!("/exec/{}/start", id)[..],
                     Some((bytes, mime::APPLICATION_JSON)),
                 ));
@@ -561,6 +570,7 @@ impl<'a> Networks<'a> {
         Network::new(self.docker, id)
     }
 
+    /// Create a new Network instance
     pub fn create(
         &self,
         opts: &NetworkCreateOptions,
@@ -786,12 +796,16 @@ impl Docker {
         if let Some(query) = opts.serialize() {
             path.push(query);
         }
-        let stream_of_chunks = self.stream_get_chunks(&path.join("?")[..]);
+        let stream_of_chunks = self.stream_get(&path.join("?")[..]);
         let reader = StreamReader::new(stream_of_chunks);
         FramedRead::new(reader, LinesCodec::new())
             .map_err(Error::IO)
             .and_then(|line| serde_json::from_str::<Event>(&line).map_err(Error::from))
     }
+
+    //
+    // Utility functions to make requests
+    //
 
     fn get(
         &self,
@@ -867,17 +881,6 @@ impl Docker {
         &self,
         endpoint: &str,
         body: Option<(B, Mime)>,
-    ) -> impl Stream<Item = Vec<u8>, Error = Error>
-    where
-        B: Into<Body>,
-    {
-        self.transport.stream(Method::POST, endpoint, body)
-    }
-
-    fn stream_post_chunks<B>(
-        &self,
-        endpoint: &str,
-        body: Option<(B, Mime)>,
     ) -> impl Stream<Item = hyper::Chunk, Error = Error>
     where
         B: Into<Body>,
@@ -886,13 +889,6 @@ impl Docker {
     }
 
     fn stream_get(
-        &self,
-        endpoint: &str,
-    ) -> impl Stream<Item = Vec<u8>, Error = Error> {
-        self.transport.stream::<Body>(Method::GET, endpoint, None)
-    }
-
-    fn stream_get_chunks(
         &self,
         endpoint: &str,
     ) -> impl Stream<Item = hyper::Chunk, Error = Error> {

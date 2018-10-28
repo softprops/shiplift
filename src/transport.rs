@@ -19,7 +19,7 @@ use hyperlocal::UnixConnector;
 #[cfg(feature = "unix-socket")]
 use hyperlocal::Uri as DomainUri;
 use mime::Mime;
-use serde_json::{self, Value};
+use serde_json;
 use std::fmt;
 
 pub fn tar() -> Mime {
@@ -63,6 +63,7 @@ impl fmt::Debug for Transport {
 }
 
 impl Transport {
+    /// Make a request and returns the whole response in a string
     pub fn request<B>(
         &self,
         method: Method,
@@ -73,59 +74,17 @@ impl Transport {
         B: Into<Body>,
     {
         let endpoint = endpoint.to_string();
-        self.stream(method, &endpoint, body)
+        self.stream_chunks(method, &endpoint, body)
             .concat2()
-            .and_then(|v| String::from_utf8(v).map_err(Error::Encoding).into_future())
+            .and_then(|v| {
+                String::from_utf8(v.to_vec())
+                    .map_err(Error::Encoding)
+                    .into_future()
+            })
             .inspect(move |body| debug!("{} raw response: {}", endpoint, body))
     }
 
-    /// Builds an HTTP request.
-    fn build_request<B>(
-        &self,
-        method: Method,
-        endpoint: &str,
-        body: Option<(B, Mime)>,
-    ) -> Result<Request<Body>>
-    where
-        B: Into<Body>,
-    {
-        let mut builder = Request::builder();
-        let req = match *self {
-            Transport::Tcp { ref host, .. } => {
-                builder.method(method).uri(&format!("{}{}", host, endpoint))
-            }
-            Transport::EncryptedTcp { ref host, .. } => {
-                builder.method(method).uri(&format!("{}{}", host, endpoint))
-            }
-            #[cfg(feature = "unix-socket")]
-            Transport::Unix { ref path, .. } => {
-                let uri: hyper::Uri = DomainUri::new(&path, endpoint).into();
-                builder.method(method).uri(&uri.to_string())
-            }
-        };
-        let req = req.header(header::HOST, "");
-
-        match body {
-            Some((b, c)) => Ok(req
-                .header(header::CONTENT_TYPE, &c.to_string()[..])
-                .body(b.into())?),
-            _ => Ok(req.body(Body::empty())?),
-        }
-    }
-
-    pub fn stream<B>(
-        &self,
-        method: Method,
-        endpoint: &str,
-        body: Option<(B, Mime)>,
-    ) -> impl Stream<Item = Vec<u8>, Error = Error>
-    where
-        B: Into<Body>,
-    {
-        self.stream_chunks(method, endpoint, body)
-            .map(|chunk| chunk.into_iter().collect::<Vec<u8>>())
-    }
-
+    /// Make a request and returns a [Stream] of [Chunks] as they are returned
     pub fn stream_chunks<B>(
         &self,
         method: Method,
@@ -172,11 +131,47 @@ impl Transport {
                 }
             })
             .map(|r| {
-                // Convert the response body into a stream of bytes
+                // Convert the response body into a stream of chunks
                 r.into_body().map_err(Error::Hyper)
             })
             .flatten_stream()
     }
+
+    /// Builds an HTTP request.
+    fn build_request<B>(
+        &self,
+        method: Method,
+        endpoint: &str,
+        body: Option<(B, Mime)>,
+    ) -> Result<Request<Body>>
+    where
+        B: Into<Body>,
+    {
+        let mut builder = Request::builder();
+        let req = match *self {
+            Transport::Tcp { ref host, .. } => {
+                builder.method(method).uri(&format!("{}{}", host, endpoint))
+            }
+            Transport::EncryptedTcp { ref host, .. } => {
+                builder.method(method).uri(&format!("{}{}", host, endpoint))
+            }
+            #[cfg(feature = "unix-socket")]
+            Transport::Unix { ref path, .. } => {
+                let uri: hyper::Uri = DomainUri::new(&path, endpoint).into();
+                builder.method(method).uri(&uri.to_string())
+            }
+        };
+        let req = req.header(header::HOST, "");
+
+        match body {
+            Some((b, c)) => Ok(req
+                .header(header::CONTENT_TYPE, &c.to_string()[..])
+                .body(b.into())?),
+            _ => Ok(req.body(Body::empty())?),
+        }
+    }
+
+    /// Send the given request to the docker daemon and return a Future of the response.
     fn send_request(
         &self,
         req: Request<hyper::Body>,
@@ -191,15 +186,16 @@ impl Transport {
         req.map_err(Error::Hyper)
     }
 
-    // Extract the error message content from an HTTP response that
-    // contains a Docker JSON error structure.
+    /// Extract the error message content from an HTTP response that
+    /// contains a Docker JSON error structure.
     fn get_error_message(body: &str) -> Option<String> {
-        serde_json::from_str::<Value>(body)
+        serde_json::from_str::<ErrorResponse>(body)
+            .map(|e| e.message)
             .ok()
-            .as_ref()
-            .and_then(|x| x.as_object())
-            .and_then(|x| x.get("message"))
-            .and_then(|x| x.as_str())
-            .map(|x| x.to_owned())
     }
+}
+
+#[derive(Serialize, Deserialize)]
+struct ErrorResponse {
+    message: String,
 }
