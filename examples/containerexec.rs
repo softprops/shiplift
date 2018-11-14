@@ -1,10 +1,16 @@
 extern crate shiplift;
+extern crate tokio;
 
-use shiplift::{Docker, ExecContainerOptions};
+use shiplift::{tty::StreamType, Docker, ExecContainerOptions};
 use std::env;
+use tokio::prelude::{Future, Stream};
 
 fn main() {
     let docker = Docker::new();
+    let id = env::args()
+        .nth(1)
+        .expect("You need to specify a container id");
+
     let options = ExecContainerOptions::builder()
         .cmd(vec![
             "bash",
@@ -15,13 +21,18 @@ fn main() {
         .attach_stdout(true)
         .attach_stderr(true)
         .build();
-    if let Some(id) = env::args().nth(1) {
-        match docker.containers().get(&id).exec(&options) {
-            Ok(res) => {
-                println!("Stdout: {}", res.stdout);
-                println!("Stderr: {}", res.stderr);
+    let fut = docker
+        .containers()
+        .get(&id)
+        .exec(&options)
+        .for_each(|line| {
+            match line.stream_type {
+                StreamType::StdOut => println!("Stdout: {}", line.data),
+                StreamType::StdErr => eprintln!("Stderr: {}", line.data),
             }
-            Err(err) => println!("An error occured: {:?}", err),
-        }
-    }
+            Ok(())
+        })
+        .map_err(|e| eprintln!("Error: {}", e));
+
+    tokio::run(fut);
 }

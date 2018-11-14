@@ -373,7 +373,7 @@ impl ContainerOptions {
 
     /// serialize options as a string. returns None if no options are defined
     pub fn serialize(&self) -> Result<String> {
-        Ok(serde_json::to_string(&self.to_json())?)
+        serde_json::to_string(&self.to_json()).map_err(Error::from)
     }
 
     fn to_json(&self) -> Value {
@@ -600,7 +600,23 @@ impl ExecContainerOptions {
 
     /// serialize options as a string. returns None if no options are defined
     pub fn serialize(&self) -> Result<String> {
-        Ok(serde_json::to_string(self)?)
+        let mut body = serde_json::Map::new();
+
+        for (k, v) in &self.params {
+            body.insert(
+                k.to_string(),
+                serde_json::to_value(v).map_err(Error::SerdeJsonError)?,
+            );
+        }
+
+        for (k, v) in &self.params_bool {
+            body.insert(
+                k.to_string(),
+                serde_json::to_value(v).map_err(Error::SerdeJsonError)?,
+            );
+        }
+
+        serde_json::to_string(&body).map_err(Error::from)
     }
 }
 
@@ -873,7 +889,7 @@ impl LogsOptionsBuilder {
         self
     }
 
-    /// how_many can either by "all" or a to_string() of the number
+    /// how_many can either be "all" or a to_string() of the number
     pub fn tail(
         &mut self,
         how_many: &str,
@@ -1067,15 +1083,22 @@ impl NetworkCreateOptions {
         NetworkCreateOptionsBuilder::new(name)
     }
 
+    fn to_json(&self) -> Value {
+        let mut body = serde_json::Map::new();
+        self.parse_from(&self.params, &mut body);
+        self.parse_from(&self.params_hash, &mut body);
+        Value::Object(body)
+    }
+
     /// serialize options as a string. returns None if no options are defined
     pub fn serialize(&self) -> Result<String> {
-        serde_json::to_string(self).map_err(Error::from)
+        serde_json::to_string(&self.to_json()).map_err(Error::from)
     }
 
     pub fn parse_from<'a, K, V>(
         &self,
         params: &'a HashMap<K, V>,
-        body: &mut BTreeMap<String, Value>,
+        body: &mut serde_json::Map<String, Value>,
     ) where
         &'a HashMap<K, V>: IntoIterator,
         K: ToString + Eq + Hash,

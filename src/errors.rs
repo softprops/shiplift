@@ -6,6 +6,7 @@ use serde_json::Error as SerdeError;
 use std::error::Error as StdError;
 use std::fmt;
 use std::io::Error as IoError;
+use std::string::FromUtf8Error;
 
 #[derive(Debug)]
 pub enum Error {
@@ -13,6 +14,8 @@ pub enum Error {
     Hyper(hyper::Error),
     Http(http::Error),
     IO(IoError),
+    Encoding(FromUtf8Error),
+    InvalidResponse(String),
     Fault { code: StatusCode, message: String },
 }
 
@@ -51,6 +54,10 @@ impl fmt::Display for Error {
             Error::Http(ref err) => err.fmt(f),
             Error::Hyper(ref err) => err.fmt(f),
             Error::IO(ref err) => err.fmt(f),
+            Error::Encoding(ref err) => err.fmt(f),
+            Error::InvalidResponse(ref cause) => {
+                write!(f, "Response doesn't have the expected format: {}", cause)
+            }
             Error::Fault { code, .. } => write!(f, "{}", code),
         }
     }

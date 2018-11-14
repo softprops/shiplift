@@ -1,12 +1,20 @@
 extern crate shiplift;
+extern crate tokio;
 
 use shiplift::Docker;
 use std::env;
+use tokio::prelude::Future;
 
 fn main() {
     let docker = Docker::new();
-    if let Some(id) = env::args().nth(1) {
-        let network = docker.networks().get(&id).inspect().unwrap();
-        println!("{:?}", network);
-    }
+    let id = env::args()
+        .nth(1)
+        .expect("You need to specify a network id");
+    let fut = docker
+        .networks()
+        .get(&id)
+        .inspect()
+        .map(|network| println!("{:#?}", network))
+        .map_err(|e| eprintln!("Error: {}", e));
+    tokio::run(fut);
 }

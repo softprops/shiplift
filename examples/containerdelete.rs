@@ -9,12 +9,11 @@ fn main() {
     let docker = Docker::new();
     let id = env::args()
         .nth(1)
-        .expect("Usage: cargo run --example imageinspect -- <image>");
+        .expect("You need to specify an container id");
     let fut = docker
-        .images()
+        .containers()
         .get(&id)
-        .inspect()
-        .map(|image| println!("{:#?}", image))
+        .delete()
         .map_err(|e| eprintln!("Error: {}", e));
     tokio::run(fut);
 }

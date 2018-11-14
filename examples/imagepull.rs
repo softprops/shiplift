@@ -1,17 +1,22 @@
 extern crate shiplift;
+extern crate tokio;
 
 use shiplift::{Docker, PullOptions};
 use std::env;
+use tokio::prelude::{Future, Stream};
 
 fn main() {
     let docker = Docker::new();
-    if let Some(img) = env::args().nth(1) {
-        let image = docker
-            .images()
-            .pull(&PullOptions::builder().image(img).build())
-            .unwrap();
-        for output in image {
+    let img = env::args()
+        .nth(1)
+        .expect("You need to specify an image name");
+    let fut = docker
+        .images()
+        .pull(&PullOptions::builder().image(img).build())
+        .for_each(|output| {
             println!("{:?}", output);
-        }
-    }
+            Ok(())
+        })
+        .map_err(|e| eprintln!("Error: {}", e));
+    tokio::run(fut);
 }
