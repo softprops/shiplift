@@ -729,6 +729,10 @@ impl Docker {
             Some("unix") => panic!("Unix socket support is disabled"),
 
             _ => {
+                let mut http = HttpConnector::new(1);
+                // Required to support DOCKER_HOST variables of the form `tcp://127.0.0.1:2375`.
+                http.enforce_http(false);
+
                 if let Ok(ref certs) = env::var("DOCKER_CERT_PATH") {
                     // fixme: don't unwrap before you know what's in the box
                     // https://github.com/hyperium/hyper/blob/master/src/net.rs#L427-L428
@@ -747,12 +751,10 @@ impl Docker {
                         connector.set_ca_file(&Path::new(ca)).unwrap();
                     }
 
-                    let http = HttpConnector::new(1);
-                    let connector = HttpsConnector::with_connector(http, connector).unwrap();
-
                     Docker {
                         transport: Transport::EncryptedTcp {
-                            client: Client::builder().build(connector),
+                            client: Client::builder()
+                                .build(HttpsConnector::with_connector(http, connector).unwrap()),
                             runtime: RefCell::new(tokio::runtime::Runtime::new().unwrap()),
                             host: tcp_host_str,
                         },
@@ -760,7 +762,7 @@ impl Docker {
                 } else {
                     Docker {
                         transport: Transport::Tcp {
-                            client: Client::new(),
+                            client: Client::builder().build(http),
                             runtime: RefCell::new(tokio::runtime::Runtime::new().unwrap()),
                             host: tcp_host_str,
                         },
