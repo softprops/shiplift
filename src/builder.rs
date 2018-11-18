@@ -489,6 +489,31 @@ impl ContainerOptionsBuilder {
         self
     }
 
+    /// Whether to attach to `stdin`.
+    pub fn attach_stdin(&mut self, attach: bool) -> &mut Self {
+        self.params.insert("AttachStdin", json!(attach));
+        self.params.insert("OpenStdin", json!(attach));
+        self
+    }
+
+    /// Whether to attach to `stdout`.
+    pub fn attach_stdout(&mut self, attach: bool) -> &mut Self {
+        self.params.insert("AttachStdout", json!(attach));
+        self
+    }
+
+    /// Whether to attach to `stderr`.
+    pub fn attach_stderr(&mut self, attach: bool) -> &mut Self {
+        self.params.insert("AttachStderr", json!(attach));
+        self
+    }
+
+    /// Whether standard streams should be attached to a TTY.
+    pub fn tty(&mut self, tty: bool) -> &mut Self {
+        self.params.insert("Tty", json!(tty));
+        self
+    }
+
     pub fn extra_hosts(
         &mut self,
         hosts: Vec<&str>,
