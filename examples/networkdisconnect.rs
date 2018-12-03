@@ -12,7 +12,7 @@ fn main() {
         (Some(container_id), Some(network_id)) => {
             let fut = networks
                 .get(&network_id)
-                .disconnect(&ContainerConnectionOptions::new(&container_id))
+                .disconnect(&ContainerConnectionOptions::builder(&container_id).build())
                 .map(|v| println!("{:?}", v))
                 .map_err(|e| eprintln!("Error: {}", e));
             tokio::run(fut);

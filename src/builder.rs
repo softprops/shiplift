@@ -1072,9 +1072,7 @@ impl NetworkListOptions {
 /// Interface for creating new docker network
 #[derive(Serialize)]
 pub struct NetworkCreateOptions {
-    pub name: Option<String>,
-    params: HashMap<&'static str, String>,
-    params_hash: HashMap<String, Vec<HashMap<String, String>>>,
+    params: HashMap<&'static str, Value>,
 }
 
 impl NetworkCreateOptions {
@@ -1083,16 +1081,9 @@ impl NetworkCreateOptions {
         NetworkCreateOptionsBuilder::new(name)
     }
 
-    fn to_json(&self) -> Value {
-        let mut body = serde_json::Map::new();
-        self.parse_from(&self.params, &mut body);
-        self.parse_from(&self.params_hash, &mut body);
-        Value::Object(body)
-    }
-
     /// serialize options as a string. returns None if no options are defined
     pub fn serialize(&self) -> Result<String> {
-        serde_json::to_string(&self.to_json()).map_err(Error::from)
+        serde_json::to_string(&self.params).map_err(Error::from)
     }
 
     pub fn parse_from<'a, K, V>(
@@ -1115,21 +1106,15 @@ impl NetworkCreateOptions {
 
 #[derive(Default)]
 pub struct NetworkCreateOptionsBuilder {
-    name: Option<String>,
-    params: HashMap<&'static str, String>,
-    params_hash: HashMap<String, Vec<HashMap<String, String>>>,
+    params: HashMap<&'static str, Value>,
 }
 
 impl NetworkCreateOptionsBuilder {
     pub(crate) fn new(name: &str) -> Self {
         let mut params = HashMap::new();
-        let params_hash = HashMap::new();
-
-        params.insert("Name", name.to_owned());
+        params.insert("Name", json!(name));
         NetworkCreateOptionsBuilder {
-            name: None,
-            params,
-            params_hash,
+            params
         }
     }
 
@@ -1138,29 +1123,22 @@ impl NetworkCreateOptionsBuilder {
         name: &str,
     ) -> &mut Self {
         if !name.is_empty() {
-            self.params.insert("Driver", name.to_owned());
+            self.params.insert("Driver", json!(name));
         }
         self
     }
 
     pub fn label(
         &mut self,
-        labels: Vec<HashMap<String, String>>,
+        labels: HashMap<String, String>,
     ) -> &mut Self {
-        for l in labels {
-            self.params_hash
-                .entry("Labels".to_string())
-                .or_insert_with(Vec::new)
-                .push(l)
-        }
+        self.params.insert("Labels", json!(labels));
         self
     }
 
     pub fn build(&self) -> NetworkCreateOptions {
         NetworkCreateOptions {
-            name: self.name.clone(),
             params: self.params.clone(),
-            params_hash: self.params_hash.clone(),
         }
     }
 }
@@ -1168,14 +1146,13 @@ impl NetworkCreateOptionsBuilder {
 /// Interface for connect container to network
 #[derive(Serialize)]
 pub struct ContainerConnectionOptions {
-    pub container: Option<String>,
-    params: HashMap<&'static str, String>,
+    params: HashMap<&'static str, Value>,
 }
 
 impl ContainerConnectionOptions {
     /// serialize options as a string. returns None if no options are defined
     pub fn serialize(&self) -> Result<String> {
-        serde_json::to_string(self).map_err(Error::from)
+        serde_json::to_string(&self.params).map_err(Error::from)
     }
 
     pub fn parse_from<'a, K, V>(
@@ -1195,19 +1172,40 @@ impl ContainerConnectionOptions {
         }
     }
 
-    pub fn new(container_id: &str) -> ContainerConnectionOptions {
+    /// return a new instance of a builder for options
+    pub fn builder(container_id: &str) -> ContainerConnectionOptionsBuilder {
+        ContainerConnectionOptionsBuilder::new(container_id)
+    }
+}
+
+#[derive(Default)]
+pub struct ContainerConnectionOptionsBuilder {
+    params: HashMap<&'static str, Value>,
+}
+
+impl ContainerConnectionOptionsBuilder {
+    pub(crate) fn new(container_id: &str) -> Self {
         let mut params = HashMap::new();
-        params.insert("Container", container_id.to_owned());
-        ContainerConnectionOptions {
-            container: None,
-            params: params.clone(),
-        }
+        params.insert("Container", json!(container_id));
+        ContainerConnectionOptionsBuilder { params }
     }
 
-    pub fn force(&mut self) -> ContainerConnectionOptions {
-        self.params.insert("Force", "true".to_owned());
+    pub fn aliases(
+        &mut self,
+        aliases: Vec<&str>,
+    ) -> &mut Self {
+        self.params
+            .insert("EndpointConfig", json!({"Aliases": json!(aliases)}));
+        self
+    }
+
+    pub fn force(&mut self) -> &mut Self {
+        self.params.insert("Force", json!(true));
+        self
+    }
+
+    pub fn build(&self) -> ContainerConnectionOptions {
         ContainerConnectionOptions {
-            container: None,
             params: self.params.clone(),
         }
     }
