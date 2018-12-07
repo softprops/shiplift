@@ -223,8 +223,7 @@ impl BuildOptionsBuilder {
     pub fn memory(
         &mut self,
         memory: u64,
-    ) -> &mut Self
-    {
+    ) -> &mut Self {
         self.params.insert("memory", memory.to_string());
         self
     }
@@ -232,8 +231,7 @@ impl BuildOptionsBuilder {
     pub fn cpu_shares(
         &mut self,
         cpu_shares: u32,
-    ) -> &mut Self
-    {
+    ) -> &mut Self {
         self.params.insert("cpushares", cpu_shares.to_string());
         self
     }
@@ -494,6 +492,17 @@ impl ContainerOptionsBuilder {
         memory: u64,
     ) -> &mut Self {
         self.params.insert("HostConfig.Memory", json!(memory));
+        self
+    }
+
+    /// Sets an integer value representing the container's
+    /// relative CPU weight versus other containers.
+    pub fn cpu_shares(
+        &mut self,
+        cpu_shares: u32,
+    ) -> &mut Self {
+        self.params
+            .insert("HostConfig.CpuShares", json!(cpu_shares));
         self
     }
 
