@@ -220,9 +220,25 @@ impl BuildOptionsBuilder {
         self
     }
 
-    // todo: memory
+    pub fn memory(
+        &mut self,
+        memory: u64,
+    ) -> &mut Self
+    {
+        self.params.insert("memory", memory.to_string());
+        self
+    }
+
+    pub fn cpu_shares(
+        &mut self,
+        cpu_shares: u32,
+    ) -> &mut Self
+    {
+        self.params.insert("cpushares", cpu_shares.to_string());
+        self
+    }
+
     // todo: memswap
-    // todo: cpushares
     // todo: cpusetcpus
     // todo: cpuperiod
     // todo: cpuquota
