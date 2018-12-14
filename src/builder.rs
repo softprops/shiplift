@@ -1213,6 +1213,75 @@ impl ContainerConnectionOptions {
     }
 }
 
+/// Interface for creating volumes
+#[derive(Serialize)]
+pub struct VolumeCreateOptions {
+    params: HashMap<&'static str, Value>,
+}
+
+impl VolumeCreateOptions {
+    /// serialize options as a string. returns None if no options are defined
+    pub fn serialize(&self) -> Result<String> {
+        serde_json::to_string(&self.params).map_err(Error::from)
+    }
+
+    pub fn parse_from<'a, K, V>(
+        &self,
+        params: &'a HashMap<K, V>,
+        body: &mut BTreeMap<String, Value>,
+    ) where
+        &'a HashMap<K, V>: IntoIterator,
+        K: ToString + Eq + Hash,
+        V: Serialize,
+    {
+        for (k, v) in params.iter() {
+            let key = k.to_string();
+            let value = serde_json::to_value(v).unwrap();
+
+            body.insert(key, value);
+        }
+    }
+
+    /// return a new instance of a builder for options
+    pub fn builder() -> VolumeCreateOptionsBuilder {
+        VolumeCreateOptionsBuilder::new()
+    }
+}
+
+#[derive(Default)]
+pub struct VolumeCreateOptionsBuilder {
+    params: HashMap<&'static str, Value>,
+}
+
+impl VolumeCreateOptionsBuilder {
+    pub(crate) fn new() -> Self {
+        let params = HashMap::new();
+        VolumeCreateOptionsBuilder { params }
+    }
+
+    pub fn name(
+        &mut self,
+        name: &str,
+    ) -> &mut Self {
+        self.params.insert("Name", json!(name));
+        self
+    }
+
+    pub fn labels(
+        &mut self,
+        labels: &HashMap<&str, &str>,
+    ) -> &mut Self {
+        self.params.insert("Labels", json!(labels));
+        self
+    }
+
+    pub fn build(&self) -> VolumeCreateOptions {
+        VolumeCreateOptions {
+            params: self.params.clone(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::ContainerOptionsBuilder;

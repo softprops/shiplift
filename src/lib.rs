@@ -56,6 +56,7 @@ pub use builder::{
     BuildOptions, ContainerConnectionOptions, ContainerFilter, ContainerListOptions,
     ContainerOptions, EventsOptions, ExecContainerOptions, ImageFilter, ImageListOptions,
     LogsOptions, NetworkCreateOptions, NetworkListOptions, PullOptions, RmContainerOptions,
+    VolumeCreateOptions,
 };
 pub use errors::Error;
 use futures::{future::Either, Future, IntoFuture, Stream};
@@ -68,12 +69,12 @@ use hyperlocal::UnixConnector;
 use mime::Mime;
 use openssl::ssl::{SslConnector, SslFiletype, SslMethod};
 use read::StreamReader;
-use rep::Image as ImageRep;
 use rep::{
     Change, Container as ContainerRep, ContainerCreateInfo, ContainerDetails, Event, Exit, History,
-    ImageDetails, Info, SearchResult, Stats, Status, Top, Version,
+    Image as ImageRep, ImageDetails, Info, NetworkCreateInfo, NetworkDetails as NetworkInfo,
+    SearchResult, Stats, Status, Top, Version, Volume as VolumeRep, VolumeCreateInfo,
+    Volumes as VolumesRep,
 };
-use rep::{NetworkCreateInfo, NetworkDetails as NetworkInfo};
 use serde_json::Value;
 use std::borrow::Cow;
 use std::env;
@@ -671,6 +672,85 @@ impl<'a, 'b> Network<'a, 'b> {
     }
 }
 
+/// Interface for docker volumes
+pub struct Volumes<'a> {
+    docker: &'a Docker,
+}
+
+impl<'a> Volumes<'a> {
+    /// Exports an interface for interacting with docker volumes
+    pub fn new(docker: &'a Docker) -> Volumes<'a> {
+        Volumes { docker }
+    }
+
+    pub fn create(
+        &self,
+        opts: &VolumeCreateOptions,
+    ) -> impl Future<Item = VolumeCreateInfo, Error = Error> {
+        let data = match opts.serialize() {
+            Ok(data) => data,
+            Err(e) => return Either::A(futures::future::err(e)),
+        };
+
+        let bytes = data.into_bytes();
+        let path = vec!["/volumes/create".to_owned()];
+
+        Either::B(
+            self.docker
+                .post_json(&path.join("?"), Some((bytes, mime::APPLICATION_JSON))),
+        )
+    }
+
+    /// Lists the docker volumes on the current docker host
+    pub fn list(&self) -> impl Future<Item = Vec<VolumeRep>, Error = Error> {
+        let path = vec!["/volumes".to_owned()];
+
+        self.docker
+            .get_json::<VolumesRep>(&path.join("?"))
+            .map(|volumes: VolumesRep| match volumes.volumes {
+                Some(volumes) => volumes.clone(),
+                None => vec![],
+            })
+    }
+
+    /// Returns a reference to a set of operations available for a named volume
+    pub fn get<'b>(
+        &self,
+        name: &'b str,
+    ) -> Volume<'a, 'b> {
+        Volume::new(self.docker, name)
+    }
+}
+
+/// Interface for accessing and manipulating a named docker volume
+pub struct Volume<'a, 'b> {
+    docker: &'a Docker,
+    name: Cow<'b, str>,
+}
+
+impl<'a, 'b> Volume<'a, 'b> {
+    /// Exports an interface for operations that may be performed against a named volume
+    pub fn new<S>(
+        docker: &'a Docker,
+        name: S,
+    ) -> Volume<'a, 'b>
+    where
+        S: Into<Cow<'b, str>>,
+    {
+        Volume {
+            docker,
+            name: name.into(),
+        }
+    }
+
+    /// Deletes a volume
+    pub fn delete(&self) -> impl Future<Item = (), Error = Error> {
+        self.docker
+            .delete(&format!("/volumes/{}", self.name)[..])
+            .map(|_| ())
+    }
+}
+
 // https://docs.docker.com/reference/api/docker_remote_api_v1.17/
 impl Docker {
     /// constructs a new Docker instance for a docker host listening at a url specified by an env var `DOCKER_HOST`,
@@ -778,6 +858,10 @@ impl Docker {
 
     pub fn networks(&self) -> Networks {
         Networks::new(self)
+    }
+
+    pub fn volumes(&self) -> Volumes {
+        Volumes::new(self)
     }
 
     /// Returns version information associated with the docker daemon
