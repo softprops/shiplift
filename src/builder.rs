@@ -580,10 +580,9 @@ impl ContainerOptionsBuilder {
 
     pub fn auto_remove(
         &mut self,
-        set: bool
+        set: bool,
     ) -> &mut Self {
-        self.params
-            .insert("HostConfig.AutoRemove", json!(set));
+        self.params.insert("HostConfig.AutoRemove", json!(set));
         self
     }
 
