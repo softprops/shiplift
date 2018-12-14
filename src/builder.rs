@@ -578,6 +578,15 @@ impl ContainerOptionsBuilder {
         self
     }
 
+    pub fn auto_remove(
+        &mut self,
+        set: bool
+    ) -> &mut Self {
+        self.params
+            .insert("HostConfig.AutoRemove", json!(set));
+        self
+    }
+
     pub fn build(&self) -> ContainerOptions {
         ContainerOptions {
             name: self.name.clone(),
@@ -1244,10 +1253,11 @@ mod tests {
     fn container_options_host_config() {
         let options = ContainerOptionsBuilder::new("test_image")
             .network_mode("host")
+            .auto_remove(true)
             .build();
 
         assert_eq!(
-            r#"{"HostConfig":{"NetworkMode":"host"},"Image":"test_image"}"#,
+            r#"{"HostConfig":{"AutoRemove":true,"NetworkMode":"host"},"Image":"test_image"}"#,
             options.serialize().unwrap()
         );
     }
