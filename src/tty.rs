@@ -46,6 +46,23 @@ pub struct TtyDecoder {
     state: TtyDecoderState,
 }
 
+impl Chunk {
+    /// Interprets the raw bytes as a string.
+    ///
+    /// Returns `None` if the raw bytes do not represent
+    /// a valid UTF-8 string.
+    pub fn as_string(&self) -> Option<String> {
+        String::from_utf8(self.data.clone()).ok()
+    }
+
+    /// Unconditionally interprets the raw bytes as a string.
+    ///
+    /// Inserts placeholder symbols for all non-character bytes.
+    pub fn as_string_lossy(&self) -> String {
+        String::from_utf8_lossy(&self.data).into_owned()
+    }
+}
+
 impl TtyDecoder {
     pub fn new() -> Self {
         Self {
