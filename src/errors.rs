@@ -17,6 +17,7 @@ pub enum Error {
     Encoding(FromUtf8Error),
     InvalidResponse(String),
     Fault { code: StatusCode, message: String },
+    ConnectionNotUpgraded,
 }
 
 impl From<SerdeError> for Error {
@@ -59,6 +60,7 @@ impl fmt::Display for Error {
                 write!(f, "Response doesn't have the expected format: {}", cause)
             }
             Error::Fault { code, .. } => write!(f, "{}", code),
+            Error::ConnectionNotUpgraded => write!(f, "expected the docker host to upgrade the HTTP connection but it did not"),
         }
     }
 }

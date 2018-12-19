@@ -210,10 +210,11 @@ impl Transport {
         }).expect("Failed to build request!");
 
         self.send_request(req).and_then(|res| {
-            if res.status() != StatusCode::SWITCHING_PROTOCOLS {
-                panic!("Our server didn't upgrade: {}", res.status());
+            match res.status() {
+                StatusCode::SWITCHING_PROTOCOLS => Ok(res),
+                _ => Err(Error::ConnectionNotUpgraded),
             }
-
+        }).and_then(|res| {
             res.into_body()
                .on_upgrade()
                .from_err()
