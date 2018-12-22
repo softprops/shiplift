@@ -456,3 +456,28 @@ pub enum Status {
     Untagged(String),
     Deleted(String),
 }
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct VolumeCreateInfo {
+    pub name: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct Volumes {
+    pub volumes: Option<Vec<Volume>>,
+    pub warnings: Option<Vec<String>>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct Volume {
+    pub created_at: String,
+    pub driver: String,
+    pub labels: Option<HashMap<String, String>>,
+    pub name: String,
+    pub mountpoint: String,
+    pub options: Option<HashMap<String, String>>,
+    pub scope: String,
+}

@@ -93,7 +93,7 @@ impl Decoder for TtyDecoder {
                             0 => {
                                 return Err(Error::InvalidResponse(
                                     "Unsupported stream of type stdin".to_string(),
-                                ))
+                                ));
                             }
                             1 => StreamType::StdOut,
                             2 => StreamType::StdErr,
@@ -101,7 +101,7 @@ impl Decoder for TtyDecoder {
                                 return Err(Error::InvalidResponse(format!(
                                     "Unsupported stream of type {}",
                                     n
-                                )))
+                                )));
                             }
                         };
 
