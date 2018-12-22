@@ -310,11 +310,14 @@ impl<'a, 'b> Container<'a, 'b> {
 
     /// Attaches to a running container, returning a stream that can
     /// be used to interact with the standard IO streams.
-    pub fn attach(&self)
-        -> impl Future<Item = tty::Multiplexed, Error = Error> {
+    pub fn attach(&self) -> impl Future<Item = tty::Multiplexed, Error = Error> {
         self.docker.stream_post_upgrade_multiplexed::<Body>(
-            &format!("/containers/{}/attach?stream=1&stdout=1&stderr=1&stdin=1", self.id),
-            None)
+            &format!(
+                "/containers/{}/attach?stream=1&stdout=1&stderr=1&stdin=1",
+                self.id
+            ),
+            None,
+        )
     }
 
     /// Attaches to a running container, returning a stream that can
@@ -804,7 +807,7 @@ impl Docker {
             "{}://{}:{}",
             host.scheme_part().map(|s| s.as_str()).unwrap(),
             host.host().unwrap().to_owned(),
-            host.port_part().unwrap_or(80)
+            host.port().unwrap_or(80)
         );
 
         match host.scheme_part().map(|s| s.as_str()) {
@@ -1009,7 +1012,9 @@ impl Docker {
         body: Option<(B, Mime)>,
     ) -> impl Future<Item = tty::Multiplexed, Error = Error>
     where
-        B: Into<Body> + 'static {
-        self.transport.stream_upgrade_multiplexed(Method::POST, endpoint, body)
+        B: Into<Body> + 'static,
+    {
+        self.transport
+            .stream_upgrade_multiplexed(Method::POST, endpoint, body)
     }
 }

@@ -143,7 +143,8 @@ impl Transport {
         f: impl FnOnce(&mut ::http::request::Builder),
     ) -> Result<Request<Body>>
     where
-        B: Into<Body> {
+        B: Into<Body>,
+    {
         let mut builder = Request::builder();
         f(&mut builder);
 
@@ -197,28 +198,27 @@ impl Transport {
         body: Option<(B, Mime)>,
     ) -> impl Future<Item = impl AsyncRead + AsyncWrite, Error = Error>
     where
-        B: Into<Body>
+        B: Into<Body>,
     {
         match self {
             Transport::Tcp { .. } | Transport::EncryptedTcp { .. } => (),
             _ => panic!("connection streaming is only supported over TCP"),
         };
 
-        let req = self.build_request(method, endpoint, body, |builder| {
-            builder.header(header::CONNECTION, "Upgrade")
-                .header(header::UPGRADE, "tcp");
-        }).expect("Failed to build request!");
+        let req = self
+            .build_request(method, endpoint, body, |builder| {
+                builder
+                    .header(header::CONNECTION, "Upgrade")
+                    .header(header::UPGRADE, "tcp");
+            })
+            .expect("Failed to build request!");
 
-        self.send_request(req).and_then(|res| {
-            match res.status() {
+        self.send_request(req)
+            .and_then(|res| match res.status() {
                 StatusCode::SWITCHING_PROTOCOLS => Ok(res),
                 _ => Err(Error::ConnectionNotUpgraded),
-            }
-        }).and_then(|res| {
-            res.into_body()
-               .on_upgrade()
-               .from_err()
-        })
+            })
+            .and_then(|res| res.into_body().on_upgrade().from_err())
     }
 
     pub fn stream_upgrade_multiplexed<B>(
@@ -228,7 +228,7 @@ impl Transport {
         body: Option<(B, Mime)>,
     ) -> impl Future<Item = ::tty::Multiplexed, Error = Error>
     where
-        B: Into<Body> + 'static
+        B: Into<Body> + 'static,
     {
         self.stream_upgrade(method, endpoint, body)
             .map(|u| ::tty::Multiplexed::new(u))

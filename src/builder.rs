@@ -515,26 +515,38 @@ impl ContainerOptionsBuilder {
     }
 
     /// Whether to attach to `stdin`.
-    pub fn attach_stdin(&mut self, attach: bool) -> &mut Self {
+    pub fn attach_stdin(
+        &mut self,
+        attach: bool,
+    ) -> &mut Self {
         self.params.insert("AttachStdin", json!(attach));
         self.params.insert("OpenStdin", json!(attach));
         self
     }
 
     /// Whether to attach to `stdout`.
-    pub fn attach_stdout(&mut self, attach: bool) -> &mut Self {
+    pub fn attach_stdout(
+        &mut self,
+        attach: bool,
+    ) -> &mut Self {
         self.params.insert("AttachStdout", json!(attach));
         self
     }
 
     /// Whether to attach to `stderr`.
-    pub fn attach_stderr(&mut self, attach: bool) -> &mut Self {
+    pub fn attach_stderr(
+        &mut self,
+        attach: bool,
+    ) -> &mut Self {
         self.params.insert("AttachStderr", json!(attach));
         self
     }
 
     /// Whether standard streams should be attached to a TTY.
-    pub fn tty(&mut self, tty: bool) -> &mut Self {
+    pub fn tty(
+        &mut self,
+        tty: bool,
+    ) -> &mut Self {
         self.params.insert("Tty", json!(tty));
         self
     }
@@ -1171,9 +1183,7 @@ impl NetworkCreateOptionsBuilder {
     pub(crate) fn new(name: &str) -> Self {
         let mut params = HashMap::new();
         params.insert("Name", json!(name));
-        NetworkCreateOptionsBuilder {
-            params
-        }
+        NetworkCreateOptionsBuilder { params }
     }
 
     pub fn driver(
@@ -1253,7 +1263,7 @@ impl ContainerConnectionOptionsBuilder {
         aliases: Vec<&str>,
     ) -> &mut Self {
         self.params
-            .insert("EndpointConfig", json!({"Aliases": json!(aliases)}));
+            .insert("EndpointConfig", json!({ "Aliases": json!(aliases) }));
         self
     }
 
