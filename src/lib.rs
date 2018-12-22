@@ -807,7 +807,7 @@ impl Docker {
             "{}://{}:{}",
             host.scheme_part().map(|s| s.as_str()).unwrap(),
             host.host().unwrap().to_owned(),
-            host.port_part().unwrap_or(80)
+            host.port().unwrap_or(80)
         );
 
         match host.scheme_part().map(|s| s.as_str()) {
