@@ -54,7 +54,7 @@ where
             let relativized = canonical
                 .to_str()
                 .unwrap()
-                .trim_left_matches(&base_path_str[..]);
+                .trim_start_matches(&base_path_str[..]);
             if path.is_dir() {
                 archive.append_dir(Path::new(relativized), &canonical)?
             } else {
