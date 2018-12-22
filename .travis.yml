@@ -1,5 +1,5 @@
-# true because of tarpaulin dependency
-sudo: true
+# required because of tarpaulin dependency
+sudo: required
 
 language: rust
 
@@ -16,20 +16,20 @@ matrix:
   - rust: nightly
   - rust: beta
   - rust: stable
-  allow_failures:
-  - rust: nightly
 
 install: |
-  # should only be necessary until rustfmt produces consistent results in stable/nightly
   # see also https://github.com/xd009642/tarpaulin/issues/150 for tarpaulin nightly dependency
-  rustup toolchain install nightly
-  rustup component add rustfmt-preview --toolchain nightly
-  if [[ "$TRAVIS_RUST_VERSION" == stable ]]; then
-    `RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo +nightly install --force cargo-tarpaulin`
+  if [[ "$TRAVIS_RUST_VERSION" == nightly ]]; then
+    `RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo install cargo-tarpaulin -f`
+    # should only be necessary until rustfmt produces consistent results in stable/nightly
+    rustup component add rustfmt`
   fi
 
 script:
-- cargo +nightly fmt --all -- --check
+- |
+   if [[ "$TRAVIS_RUST_VERSION" == nightly ]]; then
+     cargo fmt --all -- --check
+   fi
 - cargo test
 
 # Cache `cargo install`ed tools, but don't cache the project's `target`
@@ -61,8 +61,14 @@ after_success:
     [ $TRAVIS_BRANCH = master ] &&
     [ $TRAVIS_PULL_REQUEST = false ]
     && cargo doc --no-deps &&
-    echo "<meta http-equiv=refresh content=0;url=`echo $TRAVIS_REPO_SLUG | cut -d / -f 2`/index.html>" > target/doc/index.html &&
-    pip install --user ghp-import &&
-    /home/travis/.local/bin/ghp-import -n target/doc &&
-    git push -fq https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git gh-pages &&
-    echo "documented"'
+    echo "<meta http-equiv=refresh content=0;url=`echo $TRAVIS_REPO_SLUG | cut -d / -f 2`/index.html>" > target/doc/index.html'
+
+deploy:
+  provider: pages
+  skip-cleanup: true
+  github-token: $GH_TOKEN
+  local-dir: target/doc
+  keep-history: false
+  on:
+    branch: master
+    condition: $TRAVIS_RUST_VERSION = stable
