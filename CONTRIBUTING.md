@@ -49,7 +49,7 @@ $ rustup toolchain install nightly
 Install the most recent version of `rustfmt` using this command:
 
 ```sh
-$ rustup component add rustfmt-preview --toolchain nightly
+$ rustup component add rustfmt --toolchain nightly
 ```
 
 **3. Running rustfmt**
@@ -57,7 +57,7 @@ $ rustup component add rustfmt-preview --toolchain nightly
 To run `rustfmt`, use this command:
 
 ```sh
-$ cargo +nightly fmt
+$ cargo +nightly fmt --all
 ```
 
 [rustfmt]: https://github.com/rust-lang-nursery/rustfmt
