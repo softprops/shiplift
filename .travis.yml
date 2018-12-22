@@ -20,7 +20,7 @@ matrix:
 install: |
   # see also https://github.com/xd009642/tarpaulin/issues/150 for tarpaulin nightly dependency
   if [[ "$TRAVIS_RUST_VERSION" == nightly ]]; then
-    `RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo install cargo-tarpaulin -f`
+    RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo install cargo-tarpaulin -f
     # should only be necessary until rustfmt produces consistent results in stable/nightly
     rustup component add rustfmt`
   fi
