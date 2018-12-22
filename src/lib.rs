@@ -81,7 +81,7 @@ use std::path::Path;
 use std::time::Duration;
 use tokio_codec::{FramedRead, LinesCodec};
 use transport::{tar, Transport};
-use tty::{TtyDecoder, TtyLine};
+use tty::TtyDecoder;
 use url::form_urlencoded;
 
 /// Represents the result of all docker operations
@@ -295,7 +295,7 @@ impl<'a, 'b> Container<'a, 'b> {
     pub fn logs(
         &self,
         opts: &LogsOptions,
-    ) -> impl Stream<Item = TtyLine, Error = Error> {
+    ) -> impl Stream<Item = tty::Chunk, Error = Error> {
         let mut path = vec![format!("/containers/{}/logs", self.id)];
         if let Some(query) = opts.serialize() {
             path.push(query)
@@ -305,6 +305,21 @@ impl<'a, 'b> Container<'a, 'b> {
         let chunk_stream = StreamReader::new(self.docker.stream_get(&path.join("?")));
 
         FramedRead::new(chunk_stream, decoder)
+    }
+
+    /// Attaches to a running container, returning a stream that can
+    /// be used to interact with the standard IO streams.
+    pub fn attach(&self)
+        -> impl Future<Item = tty::Multiplexed, Error = Error> {
+        self.docker.stream_post_upgrade_multiplexed::<Body>(
+            &format!("/containers/{}/attach?stream=1&stdout=1&stderr=1&stdin=1", self.id),
+            None)
+    }
+
+    /// Attaches to a running container, returning a stream that can
+    /// be used to interact with the standard IO streams.
+    pub fn attach_blocking(&self) -> Result<tty::MultiplexedBlocking> {
+        self.attach().map(|s| s.wait()).wait()
     }
 
     /// Returns a set of changes made to the container instance
@@ -452,7 +467,7 @@ impl<'a, 'b> Container<'a, 'b> {
     pub fn exec(
         &self,
         opts: &ExecContainerOptions,
-    ) -> impl Stream<Item = TtyLine, Error = Error> {
+    ) -> impl Stream<Item = tty::Chunk, Error = Error> {
         let data = opts.serialize().unwrap(); // TODO fixme
         let bytes = data.into_bytes();
         let docker2 = self.docker.clone();
@@ -902,5 +917,15 @@ impl Docker {
     ) -> impl Stream<Item = hyper::Chunk, Error = Error> {
         self.transport
             .stream_chunks::<Body>(Method::GET, endpoint, None)
+    }
+
+    fn stream_post_upgrade_multiplexed<B>(
+        &self,
+        endpoint: &str,
+        body: Option<(B, Mime)>,
+    ) -> impl Future<Item = tty::Multiplexed, Error = Error>
+    where
+        B: Into<Body> + 'static {
+        self.transport.stream_upgrade_multiplexed(Method::POST, endpoint, body)
     }
 }

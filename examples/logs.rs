@@ -14,10 +14,11 @@ fn main() {
         .containers()
         .get(&id)
         .logs(&LogsOptions::builder().stdout(true).stderr(true).build())
-        .for_each(|line| {
-            match line.stream_type {
-                StreamType::StdOut => println!("Stdout: {}", line.data),
-                StreamType::StdErr => eprintln!("Stderr: {}", line.data),
+        .for_each(|chunk| {
+            match chunk.stream_type {
+                StreamType::StdOut => println!("Stdout: {}", chunk.as_string_lossy()),
+                StreamType::StdErr => eprintln!("Stderr: {}", chunk.as_string_lossy()),
+                StreamType::StdIn => unreachable!(),
             }
             Ok(())
         })
