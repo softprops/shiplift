@@ -184,7 +184,7 @@ impl BuildOptionsBuilder {
     }
 
     /// don't use the image cache when building image
-    pub fn nocache<R>(
+    pub fn nocache(
         &mut self,
         nc: bool,
     ) -> &mut Self {
