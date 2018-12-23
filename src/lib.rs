@@ -19,29 +19,9 @@
 //! tokio::run(fut);
 //! ```
 
-#[macro_use]
-extern crate log;
-extern crate byteorder;
-extern crate bytes;
-extern crate flate2;
-extern crate futures;
-extern crate http;
-extern crate hyper;
-extern crate hyper_openssl;
+//extern crate hyper_openssl;
 #[cfg(feature = "unix-socket")]
 extern crate hyperlocal;
-extern crate mime;
-extern crate openssl;
-extern crate tar;
-extern crate url;
-#[macro_use]
-extern crate serde_derive;
-extern crate serde;
-#[macro_use]
-extern crate serde_json;
-extern crate tokio;
-extern crate tokio_codec;
-extern crate tokio_io;
 
 pub mod builder;
 pub mod errors;
@@ -52,37 +32,36 @@ pub mod tty;
 
 mod tarball;
 
-pub use builder::{
-    BuildOptions, ContainerConnectionOptions, ContainerFilter, ContainerListOptions,
-    ContainerOptions, EventsOptions, ExecContainerOptions, ImageFilter, ImageListOptions,
-    LogsOptions, NetworkCreateOptions, NetworkListOptions, PullOptions, RmContainerOptions,
-    VolumeCreateOptions,
+pub use crate::{
+    builder::{
+        BuildOptions, ContainerConnectionOptions, ContainerFilter, ContainerListOptions,
+        ContainerOptions, EventsOptions, ExecContainerOptions, ImageFilter, ImageListOptions,
+        LogsOptions, NetworkCreateOptions, NetworkListOptions, PullOptions, RmContainerOptions,
+        VolumeCreateOptions,
+    },
+    errors::Error,
 };
-pub use errors::Error;
+use crate::{
+    read::StreamReader,
+    rep::{
+        Change, Container as ContainerRep, ContainerCreateInfo, ContainerDetails, Event, Exit,
+        History, Image as ImageRep, ImageDetails, Info, NetworkCreateInfo,
+        NetworkDetails as NetworkInfo, SearchResult, Stats, Status, Top, Version,
+        Volume as VolumeRep, VolumeCreateInfo, Volumes as VolumesRep,
+    },
+    transport::{tar, Transport},
+    tty::TtyDecoder,
+};
 use futures::{future::Either, Future, IntoFuture, Stream};
-use hyper::client::HttpConnector;
-use hyper::Body;
-use hyper::{Client, Method, Uri};
+use hyper::{client::HttpConnector, Body, Client, Method, Uri};
 use hyper_openssl::HttpsConnector;
 #[cfg(feature = "unix-socket")]
 use hyperlocal::UnixConnector;
 use mime::Mime;
 use openssl::ssl::{SslConnector, SslFiletype, SslMethod};
-use read::StreamReader;
-use rep::{
-    Change, Container as ContainerRep, ContainerCreateInfo, ContainerDetails, Event, Exit, History,
-    Image as ImageRep, ImageDetails, Info, NetworkCreateInfo, NetworkDetails as NetworkInfo,
-    SearchResult, Stats, Status, Top, Version, Volume as VolumeRep, VolumeCreateInfo,
-    Volumes as VolumesRep,
-};
 use serde_json::Value;
-use std::borrow::Cow;
-use std::env;
-use std::path::Path;
-use std::time::Duration;
+use std::{borrow::Cow, env, path::Path, time::Duration};
 use tokio_codec::{FramedRead, LinesCodec};
-use transport::{tar, Transport};
-use tty::TtyDecoder;
 use url::form_urlencoded;
 
 /// Represents the result of all docker operations
@@ -769,7 +748,7 @@ impl<'a, 'b> Volume<'a, 'b> {
     }
 }
 
-// https://docs.docker.com/reference/api/docker_remote_api_v1.17/
+// https://docs.docker.com/reference/api/
 impl Docker {
     /// constructs a new Docker instance for a docker host listening at a url specified by an env var `DOCKER_HOST`,
     /// falling back on unix:///var/run/docker.sock

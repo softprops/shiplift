@@ -2,9 +2,7 @@ extern crate shiplift;
 extern crate tokio;
 
 use shiplift::{errors::Error, Docker};
-use std::env;
-use std::fs::OpenOptions;
-use std::io::Write;
+use std::{env, fs::OpenOptions, io::Write};
 use tokio::prelude::{Future, Stream};
 
 fn main() {

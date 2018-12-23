@@ -20,20 +20,15 @@ Some small example programs can be found in this repository's [examples director
 ### communicating with hosts
 
 To use shiplift, you must first have a docker daemon readily accessible. Typically this daemon processs
-is resolvable via a url specified by an env var named `DOCKER_HOST`. If you are using osx, [docker-machine](https://docs.docker.com/machine/) typically
-will have already set up every thing you need to get started when you run `docker-machine env {envid}`.
+is resolvable via a url specified by an env var named `DOCKER_HOST`.
 
 ```rust
-extern crate shiplift;
 let docker = shiplift::Docker::new();
 ```
 
 If you wish to be more explicit you can provide a host in the form of a `url.Url`.
 
 ```rust
-extern crate shiplift;
-extern crate url;
-
 use shiplift::Docker;
 use url::Url;
 
@@ -45,8 +40,6 @@ let docker = Docker::host(Url::parse("http://yourhost").unwrap());
 If you are interacting with docker containers, chances are you will also need to interact with docker image information. You can interact docker images with `docker.images()`.
 
 ```rust
-extern crate shiplift;
-
 use shiplift::Docker;
 
 let docker = Docker.new();
@@ -127,8 +120,6 @@ println!("- {:?}", img.delete().unwrap());
 Containers are instances of images. To gain access to this interface use `docker.containers()`
 
 ```rust
-extern crate shiplift;
-
 use shiplift::Docker;
 
 let docker = Docker.new();

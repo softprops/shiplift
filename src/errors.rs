@@ -3,10 +3,7 @@
 use http;
 use hyper::{self, StatusCode};
 use serde_json::Error as SerdeError;
-use std::error::Error as StdError;
-use std::fmt;
-use std::io::Error as IoError;
-use std::string::FromUtf8Error;
+use std::{error::Error as StdError, fmt, io::Error as IoError, string::FromUtf8Error};
 
 #[derive(Debug)]
 pub enum Error {

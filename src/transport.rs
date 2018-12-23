@@ -1,6 +1,6 @@
 //! Transports for communicating with the docker daemon
 
-use self::super::{Error, Result};
+use crate::{Error, Result};
 use futures::{
     future::{self, Either},
     Future, IntoFuture, Stream,
@@ -14,7 +14,9 @@ use hyper_openssl::HttpsConnector;
 use hyperlocal::UnixConnector;
 #[cfg(feature = "unix-socket")]
 use hyperlocal::Uri as DomainUri;
+use log::debug;
 use mime::Mime;
+use serde_derive::{Deserialize, Serialize};
 use serde_json;
 use std::fmt;
 use tokio_io::{AsyncRead, AsyncWrite};
@@ -226,12 +228,12 @@ impl Transport {
         method: Method,
         endpoint: &str,
         body: Option<(B, Mime)>,
-    ) -> impl Future<Item = ::tty::Multiplexed, Error = Error>
+    ) -> impl Future<Item = crate::tty::Multiplexed, Error = Error>
     where
         B: Into<Body> + 'static,
     {
         self.stream_upgrade(method, endpoint, body)
-            .map(|u| ::tty::Multiplexed::new(u))
+            .map(|u| crate::tty::Multiplexed::new(u))
     }
 
     /// Extract the error message content from an HTTP response that

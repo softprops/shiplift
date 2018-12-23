@@ -1,8 +1,9 @@
-use flate2::write::GzEncoder;
-use flate2::Compression;
-use std::fs::{self, File};
-use std::io::{self, Write};
-use std::path::{Path, MAIN_SEPARATOR};
+use flate2::{write::GzEncoder, Compression};
+use std::{
+    fs::{self, File},
+    io::{self, Write},
+    path::{Path, MAIN_SEPARATOR},
+};
 use tar::Builder;
 
 // todo: this is pretty involved. (re)factor this into its own crate

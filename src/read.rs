@@ -1,8 +1,10 @@
-use errors::Error;
+use crate::errors::Error;
 use futures::{Async, Stream};
 use hyper::Chunk;
-use std::cmp;
-use std::io::{self, Read};
+use std::{
+    cmp,
+    io::{self, Read},
+};
 use tokio_io::AsyncRead;
 
 /*

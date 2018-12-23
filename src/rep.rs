@@ -1,5 +1,6 @@
 //! Rust representations of docker json structures
 
+use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
