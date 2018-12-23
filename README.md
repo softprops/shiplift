@@ -13,10 +13,6 @@ Add the following to your `Cargo.toml` file
 shiplift = "0.4"
 ```
 
-## docs
-
-Find them [here](https://softprops.github.io/shiplift).
-
 ## usage
 
 Some small example programs can be found in this repository's [examples directory](https://github.com/softprops/shiplift/tree/master/examples).
