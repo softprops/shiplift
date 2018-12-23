@@ -1,7 +1,15 @@
 # 0.4.0 (unreleased)
 
-This release brings a number of breaking changes, all hopefully considered to be *good* :), and some new process to help track future changes. Some notable changes are listed below. The best source of truth will be the updated rustdocs.
+This release brings a number of breaking changes, all hopefully considered to be *good* :), and some new process to help track future changes. Some notable changes are listed below. The best source of truth will be the updated rustdocs as well as example programs in this repositories `examples` directory
 
+* create, list, and delete volumes [#138](https://github.com/softprops/shiplift/pull/138)
+* support for AutoRemove flag [#137](https://github.com/softprops/shiplift/pull/137)
+* support interactive stdin/stdout streams [#136](https://github.com/softprops/shiplift/pull/136)
+* remove an unused type parameter from the 'nocache' function [#135](https://github.com/softprops/shiplift/pull/135)
+* support for setting CPU shares/memory for image builder [#134](https://github.com/softprops/shiplift/pull/134)
+* container Network Aliases  [#133](https://github.com/softprops/shiplift/pull/133)
+* disable Hyper's http protocol enforcement (fixes windows issue) [#129](https://github.com/softprops/shiplift/pull/129)
+* switch to async api [#128](https://github.com/softprops/shiplift/pull/128)
 * add `expose` option for ports on container builders [#127](https://github.com/softprops/shiplift/pull/127)
 * removed public {Entity}Builder.new() constructors. Use `{Entity}.builder()` interfaces to construct these instead [#125](https://github.com/softprops/shiplift/pull/125)
 * repo labels are now optional [#102](https://github.com/softprops/shiplift/pull/102)
