@@ -3,9 +3,6 @@
 //! # examples
 //!
 //! ```no_run
-//! extern crate shiplift;
-//! extern crate tokio;
-//!
 //! use tokio::prelude::Future;
 //!
 //! let docker = shiplift::Docker::new();
@@ -18,10 +15,6 @@
 //!
 //! tokio::run(fut);
 //! ```
-
-//extern crate hyper_openssl;
-#[cfg(feature = "unix-socket")]
-extern crate hyperlocal;
 
 pub mod builder;
 pub mod errors;
