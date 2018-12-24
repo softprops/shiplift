@@ -39,6 +39,6 @@ Many small runnable example programs can be found in this repository's [examples
 
 ## planned changes
 
-none at the moment
+* give image pull chunked json a proper type
 
 Doug Tangren (softprops) 2015-2018

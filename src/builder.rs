@@ -43,6 +43,11 @@ pub struct PullOptionsBuilder {
 }
 
 impl PullOptionsBuilder {
+    ///  Name of the image to pull. The name may include a tag or digest.
+    /// This parameter may only be used when pulling an image.
+    /// If an untagged value is provided and no `tag` is provided, _all_
+    /// tags will be pulled
+    /// The pull is cancelled if the HTTP connection is closed.
     pub fn image<I>(
         &mut self,
         img: I,
@@ -65,6 +70,8 @@ impl PullOptionsBuilder {
         self
     }
 
+    /// Repository name given to an image when it is imported. The repo may include a tag.
+    /// This parameter may only be used when importing an image.
     pub fn repo<R>(
         &mut self,
         r: R,
@@ -76,6 +83,8 @@ impl PullOptionsBuilder {
         self
     }
 
+    /// Tag or digest. If empty when pulling an image,
+    /// this causes all tags for the given image to be pulled.
     pub fn tag<T>(
         &mut self,
         t: T,
