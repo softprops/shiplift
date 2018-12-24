@@ -195,10 +195,7 @@ impl<'a> Images<'a> {
         self.docker
             .stream_post::<Body>(&path.join("?"), None)
             // todo: give this a proper enum type
-            .and_then(|r| {
-                println!("parsing {:?}", r);
-                serde_json::from_slice::<Value>(&r[..]).map_err(Error::from)
-                })
+            .and_then(|r| serde_json::from_slice::<Value>(&r[..]).map_err(Error::from))
     }
 
     /// exports a collection of named images,

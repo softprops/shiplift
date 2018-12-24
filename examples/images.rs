@@ -9,7 +9,11 @@ fn main() {
         .list(&Default::default())
         .map(|images| {
             for i in images {
-                println!("{:?}", i.repo_tags.unwrap_or_else(|| vec!["none".into()]));
+                println!(
+                    "{} {:?}",
+                    i.id,
+                    i.repo_tags.unwrap_or_else(|| vec!["none".into()])
+                );
             }
         })
         .map_err(|e| eprintln!("Error: {}", e));
