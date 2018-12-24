@@ -10,6 +10,12 @@ repository = "https://github.com/softprops/shiplift"
 keywords = ["docker", "unix", "containers", "hyper", "ship"]
 license = "MIT"
 edition = "2018"
+readme = "README.md"
+
+[bdages]
+travis-ci = { repository = "softprops/shiplift" }
+coveralls = { repository = "softprops/shipflit" }
+maintenance = { status = "actively-developed" }
 
 [dependencies]
 byteorder = "1"
