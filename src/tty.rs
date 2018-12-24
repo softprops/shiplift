@@ -1,12 +1,11 @@
+use crate::errors::Error;
 use byteorder::{BigEndian, ByteOrder, ReadBytesExt};
 use bytes::BytesMut;
-use errors::Error;
-use std::io::Cursor;
-use tokio_codec::Decoder;
-
 use futures::{self, Async};
 use hyper::rt::{Future, Stream};
-use std::io;
+use log::trace;
+use std::io::{self, Cursor};
+use tokio_codec::Decoder;
 use tokio_io::{AsyncRead, AsyncWrite};
 
 #[derive(Debug)]
@@ -25,12 +24,12 @@ pub enum StreamType {
 /// A multiplexed stream.
 pub struct Multiplexed {
     stdin: Box<AsyncWrite>,
-    chunks: Box<futures::Stream<Item = Chunk, Error = ::Error>>,
+    chunks: Box<futures::Stream<Item = Chunk, Error = crate::Error>>,
 }
 
 pub struct MultiplexedBlocking {
     stdin: Box<AsyncWrite>,
-    chunks: Box<Iterator<Item = Result<Chunk, ::Error>>>,
+    chunks: Box<Iterator<Item = Result<Chunk, crate::Error>>>,
 }
 
 /// Represent the current state of the decoding of a TTY frame
@@ -164,17 +163,17 @@ impl Multiplexed {
 
 impl futures::Stream for Multiplexed {
     type Item = Chunk;
-    type Error = ::Error;
+    type Error = crate::Error;
 
-    fn poll(&mut self) -> Result<Async<Option<Chunk>>, ::Error> {
+    fn poll(&mut self) -> Result<Async<Option<Chunk>>, crate::Error> {
         self.chunks.poll()
     }
 }
 
 impl Iterator for MultiplexedBlocking {
-    type Item = Result<Chunk, ::Error>;
+    type Item = Result<Chunk, crate::Error>;
 
-    fn next(&mut self) -> Option<Result<Chunk, ::Error>> {
+    fn next(&mut self) -> Option<Result<Chunk, crate::Error>> {
         self.chunks.next()
     }
 }
@@ -199,7 +198,7 @@ macro_rules! delegate_io_write {
 delegate_io_write!(Multiplexed);
 delegate_io_write!(MultiplexedBlocking);
 
-pub fn chunks<S>(stream: S) -> impl futures::Stream<Item = Chunk, Error = ::Error>
+pub fn chunks<S>(stream: S) -> impl futures::Stream<Item = Chunk, Error = crate::Error>
 where
     S: AsyncRead,
 {
@@ -227,7 +226,7 @@ where
     });
 
     util::stop_on_err(stream, |e| e.kind() != io::ErrorKind::UnexpectedEof)
-        .map_err(|e| ::Error::from(e))
+        .map_err(|e| crate::Error::from(e))
 }
 
 mod util {

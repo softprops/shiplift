@@ -1,6 +1,3 @@
-extern crate shiplift;
-extern crate tokio;
-
 use shiplift::{tty::StreamType, Docker, ExecContainerOptions};
 use std::env;
 use tokio::prelude::{Future, Stream};

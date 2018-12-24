@@ -1,10 +1,5 @@
-extern crate shiplift;
-extern crate tokio;
-
-use shiplift::builder::VolumeCreateOptions;
-use shiplift::Docker;
-use std::collections::HashMap;
-use std::env;
+use shiplift::{builder::VolumeCreateOptions, Docker};
+use std::{collections::HashMap, env};
 use tokio::prelude::Future;
 
 fn main() {

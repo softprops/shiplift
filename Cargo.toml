@@ -1,7 +1,7 @@
 [package]
 
 name = "shiplift"
-version = "0.3.2"
+version = "0.4.0"
 authors = ["softprops <d.tangren@gmail.com>"]
 description = "A Rust interface for maneuvering Docker containers"
 documentation = "https://docs.rs/shiplift"
@@ -9,6 +9,7 @@ homepage = "https://github.com/softprops/shiplift"
 repository = "https://github.com/softprops/shiplift"
 keywords = ["docker", "unix", "containers", "hyper", "ship"]
 license = "MIT"
+edition = "2018"
 
 [dependencies]
 byteorder = "1"
