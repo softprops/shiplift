@@ -67,7 +67,16 @@ impl fmt::Display for Error {
 
 impl StdError for Error {
     fn description(&self) -> &str {
-        "Shiplift Error"
+        match self {
+            Error::SerdeJsonError(e) => e.description(),
+            Error::Hyper(e) => e.description(),
+            Error::Http(e) => e.description(),
+            Error::IO(e) => e.description(),
+            Error::Encoding(e) => e.description(),
+            Error::InvalidResponse(msg) => msg.as_str(),
+            Error::Fault { message, .. } => message.as_str(),
+            Error::ConnectionNotUpgraded => "connection not upgraded",
+        }
     }
 
     fn cause(&self) -> Option<&StdError> {
@@ -75,6 +84,7 @@ impl StdError for Error {
             Error::SerdeJsonError(ref err) => Some(err),
             Error::Http(ref err) => Some(err),
             Error::IO(ref err) => Some(err),
+            Error::Encoding(e) => Some(e),
             _ => None,
         }
     }
