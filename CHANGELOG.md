@@ -1,8 +1,8 @@
-# 0.4.0 (unreleased)
+# 0.4.0
 
 This release brings a number of breaking changes, all hopefully considered to be *good* :), and some new process to help track future changes. Some notable changes are listed below. The best source of truth will be the updated rustdocs as well as example programs in this repositories `examples` directory
 
-* upgraded to Rust 2018 edition [#141](https://github.com/softprops/shiplift/pull/141)
+* upgraded to Rust 2018 edition c[#141](https://github.com/softprops/shiplift/pull/141)
 * create, list, and delete volumes [#138](https://github.com/softprops/shiplift/pull/138)
 * support for AutoRemove flag [#137](https://github.com/softprops/shiplift/pull/137)
 * support interactive stdin/stdout streams [#136](https://github.com/softprops/shiplift/pull/136)
