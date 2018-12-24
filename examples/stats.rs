@@ -1,3 +1,4 @@
+//  cargo run --example stats -- <container>
 use shiplift::Docker;
 use std::env;
 use tokio::prelude::{Future, Stream};

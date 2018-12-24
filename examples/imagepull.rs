@@ -1,8 +1,11 @@
+// cargo run --example imagepull busybox
+
 use shiplift::{Docker, PullOptions};
 use std::env;
 use tokio::prelude::{Future, Stream};
 
 fn main() {
+    env_logger::init();
     let docker = Docker::new();
     let img = env::args()
         .nth(1)

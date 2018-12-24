@@ -12,7 +12,7 @@ license = "MIT"
 edition = "2018"
 readme = "README.md"
 
-[bdages]
+[badges]
 travis-ci = { repository = "softprops/shiplift" }
 coveralls = { repository = "softprops/shipflit" }
 maintenance = { status = "actively-developed" }

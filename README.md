@@ -15,8 +15,6 @@ shiplift = "0.4"
 
 ## usage
 
-Some small example programs can be found in this repository's [examples directory](https://github.com/softprops/shiplift/tree/master/examples).
-
 ### communicating with hosts
 
 To use shiplift, you must first have a docker daemon readily accessible. Typically this daemon processs
@@ -35,158 +33,12 @@ use url::Url;
 let docker = Docker::host(Url::parse("http://yourhost").unwrap());
 ```
 
-### images
+### Examples
 
-If you are interacting with docker containers, chances are you will also need to interact with docker image information. You can interact docker images with `docker.images()`.
+Many small runnable example programs can be found in this repository's [examples directory](https://github.com/softprops/shiplift/tree/master/examples).
 
-```rust
-use shiplift::Docker;
+## planned changes
 
-let docker = Docker.new();
-let images = docker.images();
-```
+none at the moment
 
-#### list host-local images
-
-```rust
-for i in images.list(&Default::default()).unwrap() {
-  println!("-> {:?}", i);
-}
-```
-
-#### find remote images
-
-```rust
-for i in image.search("rust").unwrap() {
-  println!("- {:?}", i);
-}
-```
-
-#### creating new image by pulling an existing image
-
-```rust
-use shiplift::PullOptions;
-let output = images.pull(
-  &PullOptions::builder().image("redis:2.8.18").build()
-).unwrap();
-for o in output {
-  println!("{:?}", o);
-}
-```
-
-### build an image from the contents of a directory containing a Dockerfile
-
-the following is equivalent to `docker build -t shiplift_test .`
-
-```rust
-use shiplift::BuildOptions;
-
-let output = images.build(
-     &BuildOptions::builder(".").tag("shiplift_test").build()
-).unwrap();
-for o in output {
-    println!("{:?}", o);
-}
-```
-
-#### accessing image info
-
-```rust
-let img = images.get("imagename");
-```
-
-##### inspecting image info
-
-```rust
-println!("- {:?}", img.inspect().unwrap());
-```
-
-##### getting image history
-
-```rust
-for h in img.history().unwrap() {
-  println!("- {:?}", h);
-}
-```
-
-###### deleting image
-
-```rust
-println!("- {:?}", img.delete().unwrap());
-```
-
-### containers
-
-Containers are instances of images. To gain access to this interface use `docker.containers()`
-
-```rust
-use shiplift::Docker;
-
-let docker = Docker.new();
-let containers = docker.containers();
-```
-
-#### listing host local containers
-
-```rust
-for c in containers.list(&Default::default()).unwrap() {
-  println!("- {:?}", c);
-}
-```
-
-#### get a container reference
-
-```rust
-let container = containers.get("containerid");
-```
-
-#### inspect container details
-
-```rust
-println!("- {:?}", container.inspect());
-```
-
-#### access `top` info
-
-```rust
-println!("- {:?}", container.top().unwrap());
-```
-
-#### view container logs
-
-(todoc)
-
-#### view a list of container changes
-
-```rust
-for c in container.changes().unwrap() {
-  println!("- {:?}", c);
-}
-```
-
-#### stream container stats
-
-```rust
-for stats in container.stats().unwrap() {
-  println!("- {:?}", stats);
-}
-```
-
-### stop, start, restart container
-
-```rust
-container.stop();
-container.start();
-container.restart();
-```
-
-### misc
-
-todoc
-
-## roadmap
-
-There are plans on switching from rustc-serialize to serde for serialization in 0.4.0 this should not have
-major impact on current interfaces.
-
-Doug Tangren (softprops) 2015-2016
+Doug Tangren (softprops) 2015-2018
