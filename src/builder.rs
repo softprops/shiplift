@@ -653,6 +653,14 @@ impl ContainerOptionsBuilder {
         self
     }
 
+    pub fn userns_mode(
+        &mut self,
+        mode: &str,
+    ) -> &mut Self {
+        self.params.insert("HostConfig.UsernsMode", json!(mode));
+        self
+    }
+
     pub fn build(&self) -> ContainerOptions {
         ContainerOptions {
             name: self.name.clone(),
