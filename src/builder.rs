@@ -661,6 +661,14 @@ impl ContainerOptionsBuilder {
         self
     }
 
+    pub fn privileged(
+        &mut self,
+        set: bool,
+    ) -> &mut Self {
+        self.params.insert("HostConfig.Privileged", json!(set));
+        self
+    }
+
     pub fn build(&self) -> ContainerOptions {
         ContainerOptions {
             name: self.name.clone(),
@@ -1393,10 +1401,11 @@ mod tests {
         let options = ContainerOptionsBuilder::new("test_image")
             .network_mode("host")
             .auto_remove(true)
+            .privileged(true)
             .build();
 
         assert_eq!(
-            r#"{"HostConfig":{"AutoRemove":true,"NetworkMode":"host"},"Image":"test_image"}"#,
+            r#"{"HostConfig":{"AutoRemove":true,"NetworkMode":"host","Privileged":true},"Image":"test_image"}"#,
             options.serialize().unwrap()
         );
     }
