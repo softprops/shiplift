@@ -9,6 +9,7 @@ use hyper::{
     client::{Client, HttpConnector},
     header, Body, Chunk, Method, Request, StatusCode,
 };
+#[cfg(feature = "tls")]
 use hyper_openssl::HttpsConnector;
 #[cfg(feature = "unix-socket")]
 use hyperlocal::UnixConnector;
@@ -35,6 +36,7 @@ pub enum Transport {
         host: String,
     },
     /// TCP/TLS
+    #[cfg(feature = "tls")]
     EncryptedTcp {
         client: Client<HttpsConnector<HttpConnector>>,
         host: String,
@@ -54,6 +56,7 @@ impl fmt::Debug for Transport {
     ) -> fmt::Result {
         match *self {
             Transport::Tcp { ref host, .. } => write!(f, "Tcp({})", host),
+            #[cfg(feature = "tls")]
             Transport::EncryptedTcp { ref host, .. } => write!(f, "EncryptedTcp({})", host),
             #[cfg(feature = "unix-socket")]
             Transport::Unix { ref path, .. } => write!(f, "Unix({})", path),
@@ -154,6 +157,7 @@ impl Transport {
             Transport::Tcp { ref host, .. } => {
                 builder.method(method).uri(&format!("{}{}", host, endpoint))
             }
+            #[cfg(feature = "tls")]
             Transport::EncryptedTcp { ref host, .. } => {
                 builder.method(method).uri(&format!("{}{}", host, endpoint))
             }
@@ -180,6 +184,7 @@ impl Transport {
     ) -> impl Future<Item = hyper::Response<Body>, Error = Error> {
         let req = match self {
             Transport::Tcp { ref client, .. } => client.request(req),
+            #[cfg(feature = "tls")]
             Transport::EncryptedTcp { ref client, .. } => client.request(req),
             #[cfg(feature = "unix-socket")]
             Transport::Unix { ref client, .. } => client.request(req),
@@ -203,7 +208,9 @@ impl Transport {
         B: Into<Body>,
     {
         match self {
-            Transport::Tcp { .. } | Transport::EncryptedTcp { .. } => (),
+            Transport::Tcp { .. } => (),
+            #[cfg(feature = "tls")]
+            Transport::EncryptedTcp { .. } => (),
             _ => panic!("connection streaming is only supported over TCP"),
         };
 
