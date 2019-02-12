@@ -477,7 +477,27 @@ impl<'a, 'b> Container<'a, 'b> {
             .flatten_stream()
     }
 
-    // todo attach, attach/ws, copy, archive
+    /// Copy a file/folder from the container.  The resulting stream is a tarball of the extracted
+    /// files.
+    ///
+    /// If `path` is not an absolute path, it is relative to the container’s root directory. The
+    /// resource specified by `path` must exist. To assert that the resource is expected to be a
+    /// directory, `path` should end in `/` or `/`. (assuming a path separator of `/`). If `path`
+    /// ends in `/.`  then this indicates that only the contents of the path directory should be
+    /// copied.  A symlink is always resolved to its target.
+    pub fn copy_from(
+        &self,
+        path: &Path,
+    ) -> impl Stream<Item = Vec<u8>, Error = Error> {
+        let path_arg = form_urlencoded::Serializer::new(String::new())
+            .append_pair("path", &path.to_string_lossy())
+            .finish();
+        self.docker
+            .stream_get(&format!("/containers/{}/archive?{}", self.id, path_arg))
+            .map(|c| c.to_vec())
+    }
+
+    // TODO: copy_into
 }
 
 /// Interface for docker containers
@@ -838,7 +858,7 @@ impl Docker {
             "{}://{}:{}",
             host.scheme_part().map(|s| s.as_str()).unwrap(),
             host.host().unwrap().to_owned(),
-            host.port().unwrap_or(80)
+            host.port_u16().unwrap_or(80)
         );
 
         match host.scheme_part().map(|s| s.as_str()) {
