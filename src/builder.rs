@@ -467,9 +467,9 @@ impl ContainerOptionsBuilder {
         for (key, val) in self
             .params
             .get("HostConfig.PortBindings")
-            .unwrap_or(&mut json!(null))
+            .unwrap_or(&json!(null))
             .as_object()
-            .unwrap_or(&mut Map::new())
+            .unwrap_or(&Map::new())
             .iter()
         {
             binding.insert(key.to_string(), json!(val));

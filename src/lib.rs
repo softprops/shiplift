@@ -1031,3 +1031,9 @@ impl Docker {
             .stream_upgrade_multiplexed(Method::POST, endpoint, body)
     }
 }
+
+impl Default for Docker {
+    fn default() -> Self {
+        Self::new()
+    }
+}

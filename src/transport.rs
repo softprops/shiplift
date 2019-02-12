@@ -240,7 +240,7 @@ impl Transport {
         B: Into<Body> + 'static,
     {
         self.stream_upgrade(method, endpoint, body)
-            .map(|u| crate::tty::Multiplexed::new(u))
+            .map(crate::tty::Multiplexed::new)
     }
 
     /// Extract the error message content from an HTTP response that
