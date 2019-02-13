@@ -70,6 +70,12 @@ impl TtyDecoder {
     }
 }
 
+impl Default for TtyDecoder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Decoder for TtyDecoder {
     type Item = Chunk;
     type Error = Error;
@@ -226,7 +232,7 @@ where
     });
 
     util::stop_on_err(stream, |e| e.kind() != io::ErrorKind::UnexpectedEof)
-        .map_err(|e| crate::Error::from(e))
+        .map_err(crate::Error::from)
 }
 
 mod util {

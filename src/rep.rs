@@ -106,6 +106,8 @@ pub struct State {
     pub started_at: String,
 }
 
+type PortDescription = HashMap<String, Option<Vec<HashMap<String, String>>>>;
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct NetworkSettings {
@@ -116,7 +118,7 @@ pub struct NetworkSettings {
     #[serde(rename = "IPPrefixLen")]
     pub ip_prefix_len: u64,
     pub mac_address: String,
-    pub ports: Option<HashMap<String, Option<Vec<HashMap<String, String>>>>>,
+    pub ports: Option<PortDescription>,
     pub networks: HashMap<String, NetworkEntry>,
 }
 
