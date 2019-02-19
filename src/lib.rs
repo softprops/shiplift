@@ -497,7 +497,37 @@ impl<'a, 'b> Container<'a, 'b> {
             .map(|c| c.to_vec())
     }
 
-    // TODO: copy_into
+    /// Copy a byte slice as file into (see `bytes`) the container.
+    ///
+    /// The file will be copied at the given location (see `path`) and will be owned by root
+    /// with access mask 644. The specified `path` parent location must exists, otherwise the
+    /// creation of the file fails.
+    pub fn copy_file_into(
+        &self,
+        path: &Path,
+        bytes: &[u8]
+    ) -> impl Future<Item = (), Error = Error> {
+
+        let mut ar = tar::Builder::new(Vec::new());
+        let mut header = tar::Header::new_gnu();
+        header.set_size(bytes.len() as u64);
+        header.set_mode(0o0644);
+        ar.append_data(&mut header,
+            path.file_name().map(|f| f.to_str().unwrap()).unwrap(),
+            bytes
+        ).unwrap();
+        let data = ar.into_inner().unwrap();
+
+        let body = Some((data, "application/x-tar".parse::<Mime>().unwrap()));
+
+        let path_arg = form_urlencoded::Serializer::new(String::new())
+            .append_pair("path", &path.parent().map(|p| p.to_string_lossy()).unwrap())
+            .finish();
+
+        self.docker
+            .put(&format!("/containers/{}/archive?{}", self.id, path_arg), body)
+            .map(|_| ())
+    }
 }
 
 /// Interface for docker containers
@@ -959,6 +989,17 @@ impl Docker {
         B: Into<Body>,
     {
         self.transport.request(Method::POST, endpoint, body)
+    }
+
+    fn put<B>(
+        &self,
+        endpoint: &str,
+        body: Option<(B, Mime)>,
+    ) -> impl Future<Item = String, Error = Error>
+        where
+            B: Into<Body>,
+    {
+        self.transport.request(Method::PUT, endpoint, body)
     }
 
     fn post_json<B, T>(
