@@ -2,7 +2,6 @@
 
 use crate::{errors::Error, Result};
 use serde::Serialize;
-use serde_derive::Serialize;
 use serde_json::{self, json, map::Map, Value};
 use std::{
     cmp::Eq,

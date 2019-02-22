@@ -34,8 +34,7 @@ tokio = "0.1.15"
 tokio-codec = "0.1.1"
 tokio-io = "0.1.11"
 url = "1.7.2"
-serde = "1.0.87"
-serde_derive = "1.0.87"
+serde = { version = "1.0.87", features = ["derive"] }
 serde_json = "1.0.38"
 
 [dev-dependencies]
