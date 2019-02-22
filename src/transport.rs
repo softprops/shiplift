@@ -17,7 +17,7 @@ use hyperlocal::UnixConnector;
 use hyperlocal::Uri as DomainUri;
 use log::debug;
 use mime::Mime;
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use serde_json;
 use std::fmt;
 use tokio_io::{AsyncRead, AsyncWrite};
