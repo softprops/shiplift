@@ -11,13 +11,12 @@ fn main() {
         .nth(2)
         .expect("Usage: cargo run --example containercopyinto -- <local path> <container>");
 
-
-    use std::fs::File;
-    use std::io::prelude::*;
+    use std::{fs::File, io::prelude::*};
 
     let mut file = File::open(&path).unwrap();
     let mut bytes = Vec::new();
-    file.read_to_end(&mut bytes).expect("Cannot read file on the localhost.");
+    file.read_to_end(&mut bytes)
+        .expect("Cannot read file on the localhost.");
 
     let fut = docker
         .containers()
