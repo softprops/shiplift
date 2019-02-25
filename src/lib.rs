@@ -505,17 +505,18 @@ impl<'a, 'b> Container<'a, 'b> {
     pub fn copy_file_into(
         &self,
         path: &Path,
-        bytes: &[u8]
+        bytes: &[u8],
     ) -> impl Future<Item = (), Error = Error> {
-
         let mut ar = tar::Builder::new(Vec::new());
         let mut header = tar::Header::new_gnu();
         header.set_size(bytes.len() as u64);
         header.set_mode(0o0644);
-        ar.append_data(&mut header,
+        ar.append_data(
+            &mut header,
             path.file_name().map(|f| f.to_str().unwrap()).unwrap(),
-            bytes
-        ).unwrap();
+            bytes,
+        )
+        .unwrap();
         let data = ar.into_inner().unwrap();
 
         let body = Some((data, "application/x-tar".parse::<Mime>().unwrap()));
@@ -525,7 +526,10 @@ impl<'a, 'b> Container<'a, 'b> {
             .finish();
 
         self.docker
-            .put(&format!("/containers/{}/archive?{}", self.id, path_arg), body)
+            .put(
+                &format!("/containers/{}/archive?{}", self.id, path_arg),
+                body,
+            )
             .map(|_| ())
     }
 }
@@ -996,8 +1000,8 @@ impl Docker {
         endpoint: &str,
         body: Option<(B, Mime)>,
     ) -> impl Future<Item = String, Error = Error>
-        where
-            B: Into<Body>,
+    where
+        B: Into<Body>,
     {
         self.transport.request(Method::PUT, endpoint, body)
     }
