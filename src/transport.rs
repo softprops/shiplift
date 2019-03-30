@@ -19,7 +19,7 @@ use log::debug;
 use mime::Mime;
 use serde::{Deserialize, Serialize};
 use serde_json;
-use std::fmt;
+use std::{fmt, iter};
 use tokio_io::{AsyncRead, AsyncWrite};
 
 pub fn tar() -> Mime {
@@ -76,7 +76,7 @@ impl Transport {
         B: Into<Body>,
     {
         let endpoint = endpoint.to_string();
-        self.stream_chunks(method, &endpoint, body)
+        self.stream_chunks(method, &endpoint, body, None::<iter::Empty<_>>)
             .concat2()
             .and_then(|v| {
                 String::from_utf8(v.to_vec())
@@ -87,17 +87,19 @@ impl Transport {
     }
 
     /// Make a request and return a `Stream` of `Chunks` as they are returned.
-    pub fn stream_chunks<B>(
+    pub fn stream_chunks<B, H>(
         &self,
         method: Method,
         endpoint: &str,
         body: Option<(B, Mime)>,
+        headers: Option<H>,
     ) -> impl Stream<Item = Chunk, Error = Error>
     where
         B: Into<Body>,
+        H: IntoIterator<Item = (&'static str, String)>,
     {
         let req = self
-            .build_request(method, endpoint, body, |_| ())
+            .build_request(method, endpoint, body, headers, |_| ())
             .expect("Failed to build request!");
 
         self.send_request(req)
@@ -140,15 +142,17 @@ impl Transport {
     }
 
     /// Builds an HTTP request.
-    fn build_request<B>(
+    fn build_request<B, H>(
         &self,
         method: Method,
         endpoint: &str,
         body: Option<(B, Mime)>,
+        headers: Option<H>,
         f: impl FnOnce(&mut ::http::request::Builder),
     ) -> Result<Request<Body>>
     where
         B: Into<Body>,
+        H: IntoIterator<Item = (&'static str, String)>,
     {
         let mut builder = Request::builder();
         f(&mut builder);
@@ -168,6 +172,12 @@ impl Transport {
             }
         };
         let req = req.header(header::HOST, "");
+
+        if let Some(h) = headers {
+            for (k, v) in h.into_iter() {
+                req.header(k, v);
+            }
+        }
 
         match body {
             Some((b, c)) => Ok(req
@@ -215,7 +225,7 @@ impl Transport {
         };
 
         let req = self
-            .build_request(method, endpoint, body, |builder| {
+            .build_request(method, endpoint, body, None::<iter::Empty<_>>, |builder| {
                 builder
                     .header(header::CONNECTION, "Upgrade")
                     .header(header::UPGRADE, "tcp");

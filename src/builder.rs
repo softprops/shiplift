@@ -11,8 +11,116 @@ use std::{
 };
 use url::form_urlencoded;
 
+#[derive(Clone, Serialize)]
+#[serde(untagged)]
+pub enum RegistryAuth {
+    Password {
+        username: String,
+        password: String,
+
+        #[serde(skip_serializing_if = "Option::is_none")]
+        email: Option<String>,
+
+        #[serde(rename = "serveraddress")]
+        #[serde(skip_serializing_if = "Option::is_none")]
+        server_address: Option<String>,
+    },
+    Token {
+        #[serde(rename = "identitytoken")]
+        identity_token: String,
+    },
+}
+
+impl RegistryAuth {
+    /// return a new instance with token authentication
+    pub fn token<S>(token: S) -> RegistryAuth
+    where
+        S: Into<String>,
+    {
+        RegistryAuth::Token {
+            identity_token: token.into(),
+        }
+    }
+
+    /// return a new instance of a builder for authentication
+    pub fn builder() -> RegistryAuthBuilder {
+        RegistryAuthBuilder::default()
+    }
+
+    /// serialize authentication as JSON in base64
+    pub fn serialize(&self) -> String {
+        serde_json::to_string(self)
+            .map(|c| base64::encode(&c))
+            .unwrap()
+    }
+}
+
+#[derive(Default)]
+pub struct RegistryAuthBuilder {
+    username: Option<String>,
+    password: Option<String>,
+    email: Option<String>,
+    server_address: Option<String>,
+}
+
+impl RegistryAuthBuilder {
+    pub fn username<I>(
+        &mut self,
+        username: I,
+    ) -> &mut Self
+    where
+        I: Into<String>,
+    {
+        self.username = Some(username.into());
+        self
+    }
+
+    pub fn password<I>(
+        &mut self,
+        password: I,
+    ) -> &mut Self
+    where
+        I: Into<String>,
+    {
+        self.password = Some(password.into());
+        self
+    }
+
+    pub fn email<I>(
+        &mut self,
+        email: I,
+    ) -> &mut Self
+    where
+        I: Into<String>,
+    {
+        self.email = Some(email.into());
+        self
+    }
+
+    pub fn server_address<I>(
+        &mut self,
+        server_address: I,
+    ) -> &mut Self
+    where
+        I: Into<String>,
+    {
+        self.server_address = Some(server_address.into());
+        self
+    }
+
+    pub fn build(&self) -> RegistryAuth {
+        RegistryAuth::Password {
+            username: self.username.clone().unwrap_or_else(String::new),
+            password: self.password.clone().unwrap_or_else(String::new),
+            email: self.email.clone(),
+            server_address: self.server_address.clone(),
+        }
+    }
+}
+
 #[derive(Default)]
 pub struct PullOptions {
+    auth: Option<RegistryAuth>,
     params: HashMap<&'static str, String>,
 }
 
@@ -34,10 +142,15 @@ impl PullOptions {
             )
         }
     }
+
+    pub(crate) fn auth_header(&self) -> Option<String> {
+        self.auth.clone().map(|a| a.serialize())
+    }
 }
 
 #[derive(Default)]
 pub struct PullOptionsBuilder {
+    auth: Option<RegistryAuth>,
     params: HashMap<&'static str, String>,
 }
 
@@ -95,8 +208,17 @@ impl PullOptionsBuilder {
         self
     }
 
-    pub fn build(&self) -> PullOptions {
+    pub fn auth(
+        &mut self,
+        auth: RegistryAuth,
+    ) -> &mut Self {
+        self.auth = Some(auth);
+        self
+    }
+
+    pub fn build(&mut self) -> PullOptions {
         PullOptions {
+            auth: self.auth.take(),
             params: self.params.clone(),
         }
     }
@@ -1370,7 +1492,7 @@ impl VolumeCreateOptionsBuilder {
 
 #[cfg(test)]
 mod tests {
-    use super::ContainerOptionsBuilder;
+    use super::{ContainerOptionsBuilder, RegistryAuth};
 
     #[test]
     fn container_options_simple() {
@@ -1461,6 +1583,44 @@ mod tests {
         assert_eq!(
             r#"{"HostConfig":{"RestartPolicy":{"Name":"always"}},"Image":"test_image"}"#,
             options.serialize().unwrap()
+        );
+    }
+
+    /// Test registry auth with token
+    #[test]
+    fn registry_auth_token() {
+        let options = RegistryAuth::token("abc");
+        assert_eq!(
+            base64::encode(r#"{"identitytoken":"abc"}"#),
+            options.serialize()
+        );
+    }
+
+    /// Test registry auth with username and password
+    #[test]
+    fn registry_auth_password_simple() {
+        let options = RegistryAuth::builder()
+            .username("user_abc")
+            .password("password_abc")
+            .build();
+        assert_eq!(
+            base64::encode(r#"{"username":"user_abc","password":"password_abc"}"#),
+            options.serialize()
+        );
+    }
+
+    /// Test registry auth with all fields
+    #[test]
+    fn registry_auth_password_all() {
+        let options = RegistryAuth::builder()
+            .username("user_abc")
+            .password("password_abc")
+            .email("email_abc")
+            .server_address("https://example.org")
+            .build();
+        assert_eq!(
+            base64::encode(r#"{"username":"user_abc","password":"password_abc","email":"email_abc","serveraddress":"https://example.org"}"#),
+            options.serialize()
         );
     }
 }
