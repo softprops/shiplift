@@ -29,8 +29,8 @@ pub use crate::{
     builder::{
         BuildOptions, ContainerConnectionOptions, ContainerFilter, ContainerListOptions,
         ContainerOptions, EventsOptions, ExecContainerOptions, ImageFilter, ImageListOptions,
-        LogsOptions, NetworkCreateOptions, NetworkListOptions, PullOptions, RmContainerOptions,
-        VolumeCreateOptions,
+        LogsOptions, NetworkCreateOptions, NetworkListOptions, PullOptions, RegistryAuth,
+        RmContainerOptions, VolumeCreateOptions,
     },
     errors::Error,
 };
@@ -55,7 +55,7 @@ use mime::Mime;
 #[cfg(feature = "tls")]
 use openssl::ssl::{SslConnector, SslFiletype, SslMethod};
 use serde_json::Value;
-use std::{borrow::Cow, env, path::Path, time::Duration};
+use std::{borrow::Cow, env, iter, path::Path, time::Duration};
 use tokio_codec::{FramedRead, LinesCodec};
 use url::form_urlencoded;
 
@@ -141,7 +141,11 @@ impl<'a> Images<'a> {
         match tarball::dir(&mut bytes, &opts.path[..]) {
             Ok(_) => Box::new(
                 self.docker
-                    .stream_post(&path.join("?"), Some((Body::from(bytes), tar())))
+                    .stream_post(
+                        &path.join("?"),
+                        Some((Body::from(bytes), tar())),
+                        None::<iter::Empty<_>>,
+                    )
                     .and_then(|bytes| {
                         serde_json::from_slice::<'_, Value>(&bytes[..])
                             .map_err(Error::from)
@@ -194,8 +198,11 @@ impl<'a> Images<'a> {
         if let Some(query) = opts.serialize() {
             path.push(query);
         }
+        let headers = opts
+            .auth_header()
+            .map(|a| iter::once(("X-Registry-Auth", a)));
         self.docker
-            .stream_post::<Body>(&path.join("?"), None)
+            .stream_post::<Body, _>(&path.join("?"), None, headers)
             // todo: give this a proper enum type
             .map(|r| {
                 futures::stream::iter_result(
@@ -479,6 +486,7 @@ impl<'a, 'b> Container<'a, 'b> {
                 let chunk_stream = StreamReader::new(docker2.stream_post(
                     &format!("/exec/{}/start", id)[..],
                     Some((bytes, mime::APPLICATION_JSON)),
+                    None::<iter::Empty<_>>,
                 ));
                 FramedRead::new(chunk_stream, decoder)
             })
@@ -1053,15 +1061,18 @@ impl Docker {
             })
     }
 
-    fn stream_post<B>(
+    fn stream_post<B, H>(
         &self,
         endpoint: &str,
         body: Option<(B, Mime)>,
+        headers: Option<H>,
     ) -> impl Stream<Item = hyper::Chunk, Error = Error>
     where
         B: Into<Body>,
+        H: IntoIterator<Item = (&'static str, String)>,
     {
-        self.transport.stream_chunks(Method::POST, endpoint, body)
+        self.transport
+            .stream_chunks(Method::POST, endpoint, body, headers)
     }
 
     fn stream_get(
@@ -1069,7 +1080,7 @@ impl Docker {
         endpoint: &str,
     ) -> impl Stream<Item = hyper::Chunk, Error = Error> {
         self.transport
-            .stream_chunks::<Body>(Method::GET, endpoint, None)
+            .stream_chunks::<Body, iter::Empty<_>>(Method::GET, endpoint, None, None)
     }
 
     fn stream_post_upgrade_multiplexed<B>(
