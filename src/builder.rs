@@ -11,7 +11,7 @@ use std::{
 };
 use url::form_urlencoded;
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Serialize, Debug)]
 #[serde(untagged)]
 pub enum RegistryAuth {
     Password {
@@ -118,7 +118,7 @@ impl RegistryAuthBuilder {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct PullOptions {
     auth: Option<RegistryAuth>,
     params: HashMap<&'static str, String>,
@@ -224,7 +224,7 @@ impl PullOptionsBuilder {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct BuildOptions {
     pub path: String,
     params: HashMap<&'static str, String>,
@@ -377,7 +377,7 @@ impl BuildOptionsBuilder {
 }
 
 /// Options for filtering container list results
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct ContainerListOptions {
     params: HashMap<&'static str, String>,
 }
@@ -471,7 +471,7 @@ impl ContainerListOptionsBuilder {
 }
 
 /// Interface for building a new docker container from an existing image
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct ContainerOptions {
     pub name: Option<String>,
     params: HashMap<&'static str, Value>,
@@ -809,7 +809,7 @@ impl ContainerOptionsBuilder {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct ExecContainerOptions {
     params: HashMap<&'static str, Vec<String>>,
     params_bool: HashMap<&'static str, bool>,
@@ -905,7 +905,7 @@ impl ExecContainerOptionsBuilder {
 }
 
 /// Options for filtering streams of Docker events
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct EventsOptions {
     params: HashMap<&'static str, String>,
 }
@@ -1048,7 +1048,7 @@ impl EventsOptionsBuilder {
 }
 
 /// Options for controlling log request results
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct LogsOptions {
     params: HashMap<&'static str, String>,
 }
@@ -1136,7 +1136,7 @@ pub enum ImageFilter {
 }
 
 /// Options for filtering image list results
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct ImageListOptions {
     params: HashMap<&'static str, String>,
 }
@@ -1216,7 +1216,7 @@ impl ImageListOptionsBuilder {
 }
 
 /// Options for controlling log request results
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct RmContainerOptions {
     params: HashMap<&'static str, String>,
 }
@@ -1272,7 +1272,7 @@ impl RmContainerOptionsBuilder {
 }
 
 /// Options for filtering networks list results
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct NetworkListOptions {
     params: HashMap<&'static str, String>,
 }
@@ -1293,7 +1293,7 @@ impl NetworkListOptions {
 }
 
 /// Interface for creating new docker network
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct NetworkCreateOptions {
     params: HashMap<&'static str, Value>,
 }
@@ -1365,7 +1365,7 @@ impl NetworkCreateOptionsBuilder {
 }
 
 /// Interface for connect container to network
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct ContainerConnectionOptions {
     params: HashMap<&'static str, Value>,
 }
@@ -1433,7 +1433,7 @@ impl ContainerConnectionOptionsBuilder {
 }
 
 /// Interface for creating volumes
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct VolumeCreateOptions {
     params: HashMap<&'static str, Value>,
 }
