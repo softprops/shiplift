@@ -582,9 +582,9 @@ impl ContainerOptionsBuilder {
         exposedport.insert("HostPort".to_string(), hostport.to_string());
 
         /* The idea here is to go thought the 'old' port binds
-         * and to apply them to the local 'binding' variable,
+         * and to apply them to the local 'port_bindings' variable,
          * add the bind we want and replace the 'old' value */
-        let mut binding: HashMap<String, Value> = HashMap::new();
+        let mut port_bindings: HashMap<String, Value> = HashMap::new();
         for (key, val) in self
             .params
             .get("HostConfig.PortBindings")
@@ -593,15 +593,26 @@ impl ContainerOptionsBuilder {
             .unwrap_or(&Map::new())
             .iter()
         {
-            binding.insert(key.to_string(), json!(val));
+            port_bindings.insert(key.to_string(), json!(val));
         }
-        binding.insert(
+        port_bindings.insert(
             format!("{}/{}", srcport, protocol),
             json!(vec![exposedport]),
         );
 
         self.params
-            .insert("HostConfig.PortBindings", json!(binding));
+            .insert("HostConfig.PortBindings", json!(port_bindings));
+
+        // Replicate the port bindings over to the exposed ports config
+        let mut exposed_ports: HashMap<String, Value> = HashMap::new();
+        let empty_config = String::new();
+        for (key, _) in port_bindings {
+            exposed_ports.insert(key, json!(vec![&empty_config]));
+        }
+
+        self.params
+            .insert("ExposedPorts", json!(exposed_ports));
+
         self
     }
 
