@@ -605,9 +605,9 @@ impl ContainerOptionsBuilder {
 
         // Replicate the port bindings over to the exposed ports config
         let mut exposed_ports: HashMap<String, Value> = HashMap::new();
-        let empty_config = String::new();
-        for (key, _) in port_bindings {
-            exposed_ports.insert(key, json!(vec![&empty_config]));
+        let empty_config: HashMap<String, Value> = HashMap::new();
+        for (key, _) in &port_bindings {
+            exposed_ports.insert(key.to_string(), json!(empty_config));
         }
 
         self.params
