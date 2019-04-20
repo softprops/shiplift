@@ -1548,7 +1548,7 @@ mod tests {
             .expose(80, "tcp", 8080)
             .build();
         assert_eq!(
-            r#"{"HostConfig":{"PortBindings":{"80/tcp":[{"HostPort":"8080"}]}},"Image":"test_image"}"#,
+            r#"{"ExposedPorts":{"80/tcp":{}},"HostConfig":{"PortBindings":{"80/tcp":[{"HostPort":"8080"}]}},"Image":"test_image"}"#,
             options.serialize().unwrap()
         );
         // try exposing two
@@ -1557,7 +1557,7 @@ mod tests {
             .expose(81, "tcp", 8081)
             .build();
         assert_eq!(
-            r#"{"HostConfig":{"PortBindings":{"80/tcp":[{"HostPort":"8080"}],"81/tcp":[{"HostPort":"8081"}]}},"Image":"test_image"}"#,
+            r#"{"ExposedPorts":{"80/tcp":{},"81/tcp":{}},"HostConfig":{"PortBindings":{"80/tcp":[{"HostPort":"8080"}],"81/tcp":[{"HostPort":"8081"}]}},"Image":"test_image"}"#,
             options.serialize().unwrap()
         );
     }
