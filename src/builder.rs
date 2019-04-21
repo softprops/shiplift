@@ -610,8 +610,7 @@ impl ContainerOptionsBuilder {
             exposed_ports.insert(key.to_string(), json!(empty_config));
         }
 
-        self.params
-            .insert("ExposedPorts", json!(exposed_ports));
+        self.params.insert("ExposedPorts", json!(exposed_ports));
 
         self
     }
