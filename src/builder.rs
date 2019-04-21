@@ -11,7 +11,7 @@ use std::{
 };
 use url::form_urlencoded;
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Serialize, Debug)]
 #[serde(untagged)]
 pub enum RegistryAuth {
     Password {
@@ -118,7 +118,7 @@ impl RegistryAuthBuilder {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct PullOptions {
     auth: Option<RegistryAuth>,
     params: HashMap<&'static str, String>,
@@ -224,7 +224,7 @@ impl PullOptionsBuilder {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct BuildOptions {
     pub path: String,
     params: HashMap<&'static str, String>,
@@ -377,7 +377,7 @@ impl BuildOptionsBuilder {
 }
 
 /// Options for filtering container list results
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct ContainerListOptions {
     params: HashMap<&'static str, String>,
 }
@@ -471,7 +471,7 @@ impl ContainerListOptionsBuilder {
 }
 
 /// Interface for building a new docker container from an existing image
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct ContainerOptions {
     pub name: Option<String>,
     params: HashMap<&'static str, Value>,
@@ -582,9 +582,9 @@ impl ContainerOptionsBuilder {
         exposedport.insert("HostPort".to_string(), hostport.to_string());
 
         /* The idea here is to go thought the 'old' port binds
-         * and to apply them to the local 'binding' variable,
+         * and to apply them to the local 'port_bindings' variable,
          * add the bind we want and replace the 'old' value */
-        let mut binding: HashMap<String, Value> = HashMap::new();
+        let mut port_bindings: HashMap<String, Value> = HashMap::new();
         for (key, val) in self
             .params
             .get("HostConfig.PortBindings")
@@ -593,15 +593,25 @@ impl ContainerOptionsBuilder {
             .unwrap_or(&Map::new())
             .iter()
         {
-            binding.insert(key.to_string(), json!(val));
+            port_bindings.insert(key.to_string(), json!(val));
         }
-        binding.insert(
+        port_bindings.insert(
             format!("{}/{}", srcport, protocol),
             json!(vec![exposedport]),
         );
 
         self.params
-            .insert("HostConfig.PortBindings", json!(binding));
+            .insert("HostConfig.PortBindings", json!(port_bindings));
+
+        // Replicate the port bindings over to the exposed ports config
+        let mut exposed_ports: HashMap<String, Value> = HashMap::new();
+        let empty_config: HashMap<String, Value> = HashMap::new();
+        for (key, _) in &port_bindings {
+            exposed_ports.insert(key.to_string(), json!(empty_config));
+        }
+
+        self.params.insert("ExposedPorts", json!(exposed_ports));
+
         self
     }
 
@@ -798,7 +808,7 @@ impl ContainerOptionsBuilder {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct ExecContainerOptions {
     params: HashMap<&'static str, Vec<String>>,
     params_bool: HashMap<&'static str, bool>,
@@ -894,7 +904,7 @@ impl ExecContainerOptionsBuilder {
 }
 
 /// Options for filtering streams of Docker events
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct EventsOptions {
     params: HashMap<&'static str, String>,
 }
@@ -1037,7 +1047,7 @@ impl EventsOptionsBuilder {
 }
 
 /// Options for controlling log request results
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct LogsOptions {
     params: HashMap<&'static str, String>,
 }
@@ -1125,7 +1135,7 @@ pub enum ImageFilter {
 }
 
 /// Options for filtering image list results
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct ImageListOptions {
     params: HashMap<&'static str, String>,
 }
@@ -1205,7 +1215,7 @@ impl ImageListOptionsBuilder {
 }
 
 /// Options for controlling log request results
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct RmContainerOptions {
     params: HashMap<&'static str, String>,
 }
@@ -1261,7 +1271,7 @@ impl RmContainerOptionsBuilder {
 }
 
 /// Options for filtering networks list results
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct NetworkListOptions {
     params: HashMap<&'static str, String>,
 }
@@ -1282,7 +1292,7 @@ impl NetworkListOptions {
 }
 
 /// Interface for creating new docker network
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct NetworkCreateOptions {
     params: HashMap<&'static str, Value>,
 }
@@ -1354,7 +1364,7 @@ impl NetworkCreateOptionsBuilder {
 }
 
 /// Interface for connect container to network
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct ContainerConnectionOptions {
     params: HashMap<&'static str, Value>,
 }
@@ -1422,7 +1432,7 @@ impl ContainerConnectionOptionsBuilder {
 }
 
 /// Interface for creating volumes
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct VolumeCreateOptions {
     params: HashMap<&'static str, Value>,
 }
@@ -1537,7 +1547,7 @@ mod tests {
             .expose(80, "tcp", 8080)
             .build();
         assert_eq!(
-            r#"{"HostConfig":{"PortBindings":{"80/tcp":[{"HostPort":"8080"}]}},"Image":"test_image"}"#,
+            r#"{"ExposedPorts":{"80/tcp":{}},"HostConfig":{"PortBindings":{"80/tcp":[{"HostPort":"8080"}]}},"Image":"test_image"}"#,
             options.serialize().unwrap()
         );
         // try exposing two
@@ -1546,7 +1556,7 @@ mod tests {
             .expose(81, "tcp", 8081)
             .build();
         assert_eq!(
-            r#"{"HostConfig":{"PortBindings":{"80/tcp":[{"HostPort":"8080"}],"81/tcp":[{"HostPort":"8081"}]}},"Image":"test_image"}"#,
+            r#"{"ExposedPorts":{"80/tcp":{},"81/tcp":{}},"HostConfig":{"PortBindings":{"80/tcp":[{"HostPort":"8080"}],"81/tcp":[{"HostPort":"8081"}]}},"Image":"test_image"}"#,
             options.serialize().unwrap()
         );
     }
