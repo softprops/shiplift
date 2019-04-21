@@ -1,3 +1,14 @@
+# 0.5.0
+
+* make tls an optional dependency [#130](https://github.com/softprops/shiplift/pull/130)
+* impl copy from container [#150](https://github.com/softprops/shiplift/pull/150)
+* add registry authentication [#157](https://github.com/softprops/shiplift/pull/157)
+* added exposted ports [#162](https://github.com/softprops/shiplift/pull/162)
+* support multiple messages per chunk in streaming image pull [#154](https://github.com/softprops/shiplift/pull/154)
+* migrate serde dependency to use derive feature  [#152](https://github.com/softprops/shiplift/pull/152)
+* add ContainerOptionsBuilder::privileged() [#149](https://github.com/softprops/shiplift/pull/149)
+* support for Userns Mode [#147](https://github.com/softprops/shiplift/pull/147)
+
 # 0.4.0
 
 This release brings a number of breaking changes, all hopefully considered to be *good* :), and some new process to help track future changes. Some notable changes are listed below. The best source of truth will be the updated rustdocs as well as example programs in this repositories `examples` directory

@@ -10,7 +10,7 @@ Add the following to your `Cargo.toml` file
 
 ```toml
 [dependencies]
-shiplift = "0.4"
+shiplift = "0.5"
 ```
 
 ## usage
