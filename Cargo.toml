@@ -1,7 +1,7 @@
 [package]
 
 name = "shiplift"
-version = "0.4.0"
+version = "0.5.0"
 authors = ["softprops <d.tangren@gmail.com>"]
 description = "A Rust interface for maneuvering Docker containers"
 documentation = "https://docs.rs/shiplift"
@@ -19,27 +19,27 @@ maintenance = { status = "actively-developed" }
 
 [dependencies]
 byteorder = "1.3.1"
-bytes = "0.4.11"
-flate2 = "1.0.6"
-futures = "0.1.25"
-http = "0.1.15"
-hyper = "0.12.24"
-hyper-openssl = { version = "0.7.0", optional = true }
-hyperlocal = { version = "0.6.0", optional = true }
+bytes = "0.4"
+flate2 = "1.0"
+futures = "0.1"
+http = "0.1"
+hyper = "0.12"
+hyper-openssl = { version = "0.7", optional = true }
+hyperlocal = { version = "0.6", optional = true }
 log = "0.4.6"
 mime = "0.3.13"
-openssl = { version = "0.10.16", optional = true }
-tar = "0.4.20"
-tokio = "0.1.15"
-tokio-codec = "0.1.1"
-tokio-io = "0.1.11"
-url = "1.7.2"
-serde = { version = "1.0.87", features = ["derive"] }
-serde_json = "1.0.38"
+openssl = { version = "0.10", optional = true }
+tar = "0.4"
+tokio = "0.1"
+tokio-codec = "0.1"
+tokio-io = "0.1"
+url = "1.7"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 base64 = "0.10"
 
 [dev-dependencies]
-env_logger = "0.6.0"
+env_logger = "0.6"
 
 [features]
 default = ["unix-socket", "tls"]
