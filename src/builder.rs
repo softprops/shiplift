@@ -564,6 +564,7 @@ impl ContainerOptionsBuilder {
         self
     }
 
+    /// Specify any bind mounts, taking the form of `/some/host/path:/some/container/path`
     pub fn volumes(
         &mut self,
         volumes: Vec<&str>,
