@@ -1,5 +1,5 @@
 use shiplift::Docker;
-use std::{env, path};
+use std::env;
 use tokio::prelude::Future;
 
 fn main() {
@@ -21,7 +21,7 @@ fn main() {
     let fut = docker
         .containers()
         .get(&id)
-        .copy_file_into(path::Path::new(&path), &bytes[..])
+        .copy_file_into(path, &bytes[..])
         .map_err(|e| eprintln!("Error: {}", e));
     tokio::run(fut);
 }

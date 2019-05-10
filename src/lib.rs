@@ -518,11 +518,13 @@ impl<'a, 'b> Container<'a, 'b> {
     /// The file will be copied at the given location (see `path`) and will be owned by root
     /// with access mask 644. The specified `path` parent location must exists, otherwise the
     /// creation of the file fails.
-    pub fn copy_file_into(
+    pub fn copy_file_into<P: AsRef<Path>>(
         &self,
-        path: &Path,
+        path: P,
         bytes: &[u8],
     ) -> impl Future<Item = (), Error = Error> {
+        let path = path.as_ref();
+
         let mut ar = tar::Builder::new(Vec::new());
         let mut header = tar::Header::new_gnu();
         header.set_size(bytes.len() as u64);
