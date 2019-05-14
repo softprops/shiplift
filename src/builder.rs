@@ -1121,6 +1121,14 @@ impl LogsOptionsBuilder {
         self
     }
 
+    pub fn since(
+        &mut self,
+        timestamp: i64,
+    ) -> &mut Self {
+        self.params.insert("since", timestamp.to_string());
+        self
+    }
+
     pub fn build(&self) -> LogsOptions {
         LogsOptions {
             params: self.params.clone(),
