@@ -1511,7 +1511,7 @@ impl VolumeCreateOptionsBuilder {
 
 #[cfg(test)]
 mod tests {
-    use super::{ContainerOptionsBuilder, RegistryAuth};
+    use super::{ContainerOptionsBuilder, LogsOptionsBuilder, RegistryAuth};
 
     #[test]
     fn container_options_simple() {
@@ -1641,5 +1641,26 @@ mod tests {
             base64::encode(r#"{"username":"user_abc","password":"password_abc","email":"email_abc","serveraddress":"https://example.org"}"#),
             options.serialize()
         );
+    }
+
+    #[test]
+    fn logs_options() {
+        let options = LogsOptionsBuilder::default()
+            .follow(true)
+            .stdout(true)
+            .stderr(true)
+            .timestamps(true)
+            .tail("all")
+            .since(2_147_483_647)
+            .build();
+
+        let serialized = options.serialize().unwrap();
+
+        assert!(serialized.contains("follow=true"));
+        assert!(serialized.contains("stdout=true"));
+        assert!(serialized.contains("stderr=true"));
+        assert!(serialized.contains("timestamps=true"));
+        assert!(serialized.contains("tail=all"));
+        assert!(serialized.contains("since=2147483647"));
     }
 }
