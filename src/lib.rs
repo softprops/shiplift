@@ -55,7 +55,7 @@ use mime::Mime;
 #[cfg(feature = "tls")]
 use openssl::ssl::{SslConnector, SslFiletype, SslMethod};
 use serde_json::Value;
-use std::{borrow::Cow, env, iter, path::Path, time::Duration};
+use std::{borrow::Cow, env, io::Read, iter, path::Path, time::Duration};
 use tokio_codec::{FramedRead, LinesCodec};
 use url::form_urlencoded;
 
@@ -230,9 +230,32 @@ impl<'a> Images<'a> {
             .map(|c| c.to_vec())
     }
 
-    // pub fn import(self, tarball: Box<Read>) -> Result<()> {
-    //  self.docker.post
-    // }
+    /// imports an image or set of images from a given tarball source
+    /// source can be uncompressed on compressed via gzip, bzip2 or xz
+    pub fn import(
+        self,
+        mut tarball: Box<Read>,
+    ) -> impl Stream<Item = Value, Error = Error> {
+        let mut bytes = Vec::new();
+
+        match tarball.read_to_end(&mut bytes) {
+            Ok(_) => Box::new(
+                self.docker
+                    .stream_post(
+                        "/images/load",
+                        Some((Body::from(bytes), tar())),
+                        None::<iter::Empty<_>>,
+                    )
+                    .and_then(|bytes| {
+                        serde_json::from_slice::<'_, Value>(&bytes[..])
+                            .map_err(Error::from)
+                            .into_future()
+                    }),
+            ) as Box<Stream<Item = Value, Error = Error> + Send>,
+            Err(e) => Box::new(futures::future::err(Error::IO(e)).into_stream())
+                as Box<Stream<Item = Value, Error = Error> + Send>,
+        }
+    }
 }
 
 /// Interface for accessing and manipulating a docker container
