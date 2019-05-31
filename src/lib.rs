@@ -146,11 +146,15 @@ impl<'a> Images<'a> {
                         Some((Body::from(bytes), tar())),
                         None::<iter::Empty<_>>,
                     )
-                    .and_then(|bytes| {
-                        serde_json::from_slice::<'_, Value>(&bytes[..])
-                            .map_err(Error::from)
-                            .into_future()
-                    }),
+                    .map(|r| {
+                        futures::stream::iter_result(
+                            serde_json::Deserializer::from_slice(&r[..])
+                                .into_iter::<Value>()
+                                .collect::<Vec<_>>(),
+                        )
+                        .map_err(Error::from)
+                    })
+                    .flatten(),
             ) as Box<Stream<Item = Value, Error = Error> + Send>,
             Err(e) => Box::new(futures::future::err(Error::IO(e)).into_stream())
                 as Box<Stream<Item = Value, Error = Error> + Send>,
