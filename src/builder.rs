@@ -564,6 +564,15 @@ impl ContainerOptionsBuilder {
         self
     }
 
+    /// Specify the working dir (corresponds to the `-w` docker cli argument)
+    pub fn working_dir(
+        &mut self,
+        working_dir: &str,
+    ) -> &mut Self {
+        self.params.insert("WorkingDir", json!(working_dir));
+        self
+    }
+
     /// Specify any bind mounts, taking the form of `/some/host/path:/some/container/path`
     pub fn volumes(
         &mut self,
