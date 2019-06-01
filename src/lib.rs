@@ -543,8 +543,7 @@ impl<'a, 'b> Container<'a, 'b> {
     /// Copy a byte slice as file into (see `bytes`) the container.
     ///
     /// The file will be copied at the given location (see `path`) and will be owned by root
-    /// with access mask 644. The specified `path` parent location must exists, otherwise the
-    /// creation of the file fails.
+    /// with access mask 644.
     pub fn copy_file_into<P: AsRef<Path>>(
         &self,
         path: P,
@@ -558,7 +557,10 @@ impl<'a, 'b> Container<'a, 'b> {
         header.set_mode(0o0644);
         ar.append_data(
             &mut header,
-            path.file_name().map(|f| f.to_str().unwrap()).unwrap(),
+            path.to_path_buf()
+                .iter()
+                .skip(1)
+                .collect::<std::path::PathBuf>(),
             bytes,
         )
         .unwrap();
@@ -567,7 +569,7 @@ impl<'a, 'b> Container<'a, 'b> {
         let body = Some((data, "application/x-tar".parse::<Mime>().unwrap()));
 
         let path_arg = form_urlencoded::Serializer::new(String::new())
-            .append_pair("path", &path.parent().map(|p| p.to_string_lossy()).unwrap())
+            .append_pair("path", "/")
             .finish();
 
         self.docker
