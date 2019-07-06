@@ -17,7 +17,7 @@ shiplift = "0.5"
 
 ### communicating with hosts
 
-To use shiplift, you must first have a docker daemon readily accessible. Typically this daemon processs
+To use shiplift, you must first have a docker daemon readily accessible. Typically this daemon process
 is resolvable via a url specified by an env var named `DOCKER_HOST`.
 
 ```rust
