@@ -30,7 +30,7 @@ pub use crate::{
         BuildOptions, ContainerConnectionOptions, ContainerFilter, ContainerListOptions,
         ContainerOptions, EventsOptions, ExecContainerOptions, ImageFilter, ImageListOptions,
         LogsOptions, NetworkCreateOptions, NetworkListOptions, PullOptions, RegistryAuth,
-        RmContainerOptions, VolumeCreateOptions,
+        RmContainerOptions, TagOptions, VolumeCreateOptions,
     },
     errors::Error,
 };
@@ -63,12 +63,13 @@ use url::form_urlencoded;
 pub type Result<T> = std::result::Result<T, Error>;
 
 /// Entrypoint interface for communicating with docker daemon
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Docker {
     transport: Transport,
 }
 
 /// Interface for accessing and manipulating a named docker image
+#[derive(Debug)]
 pub struct Image<'a, 'b> {
     docker: &'a Docker,
     name: Cow<'b, str>,
@@ -112,6 +113,18 @@ impl<'a, 'b> Image<'a, 'b> {
         self.docker
             .stream_get(&format!("/images/{}/get", self.name)[..])
             .map(|c| c.to_vec())
+    }
+
+    /// Adds a tag to an image
+    pub fn tag(
+        &self,
+        opts: &TagOptions,
+    ) -> impl Future<Item = (), Error = Error> {
+        let mut path = vec![format!("/images/{}/tag", self.name)];
+        if let Some(query) = opts.serialize() {
+            path.push(query)
+        }
+        self.docker.post::<Body>(&path.join("?"), None).map(|_| ())
     }
 }
 
@@ -170,6 +183,7 @@ impl<'a> Images<'a> {
         if let Some(query) = opts.serialize() {
             path.push(query);
         }
+        println!("{}", &path.join("?"));
         self.docker.get_json::<Vec<ImageRep>>(&path.join("?"))
     }
 
