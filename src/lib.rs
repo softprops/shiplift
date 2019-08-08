@@ -63,13 +63,12 @@ use url::form_urlencoded;
 pub type Result<T> = std::result::Result<T, Error>;
 
 /// Entrypoint interface for communicating with docker daemon
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Docker {
     transport: Transport,
 }
 
 /// Interface for accessing and manipulating a named docker image
-#[derive(Debug)]
 pub struct Image<'a, 'b> {
     docker: &'a Docker,
     name: Cow<'b, str>,
@@ -183,7 +182,6 @@ impl<'a> Images<'a> {
         if let Some(query) = opts.serialize() {
             path.push(query);
         }
-        println!("{}", &path.join("?"));
         self.docker.get_json::<Vec<ImageRep>>(&path.join("?"))
     }
 
