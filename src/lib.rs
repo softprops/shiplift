@@ -30,7 +30,7 @@ pub use crate::{
         BuildOptions, ContainerConnectionOptions, ContainerFilter, ContainerListOptions,
         ContainerOptions, EventsOptions, ExecContainerOptions, ImageFilter, ImageListOptions,
         LogsOptions, NetworkCreateOptions, NetworkListOptions, PullOptions, RegistryAuth,
-        RmContainerOptions, VolumeCreateOptions,
+        RmContainerOptions, TagOptions, VolumeCreateOptions,
     },
     errors::Error,
 };
@@ -112,6 +112,18 @@ impl<'a, 'b> Image<'a, 'b> {
         self.docker
             .stream_get(&format!("/images/{}/get", self.name)[..])
             .map(|c| c.to_vec())
+    }
+
+    /// Adds a tag to an image
+    pub fn tag(
+        &self,
+        opts: &TagOptions,
+    ) -> impl Future<Item = (), Error = Error> {
+        let mut path = vec![format!("/images/{}/tag", self.name)];
+        if let Some(query) = opts.serialize() {
+            path.push(query)
+        }
+        self.docker.post::<Body>(&path.join("?"), None).map(|_| ())
     }
 }
 

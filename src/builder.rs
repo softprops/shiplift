@@ -119,6 +119,66 @@ impl RegistryAuthBuilder {
 }
 
 #[derive(Default, Debug)]
+pub struct TagOptions {
+    pub params: HashMap<&'static str, String>,
+}
+
+impl TagOptions {
+    /// return a new instance of a builder for options
+    pub fn builder() -> TagOptionsBuilder {
+        TagOptionsBuilder::default()
+    }
+
+    /// serialize options as a string. returns None if no options are defined
+    pub fn serialize(&self) -> Option<String> {
+        if self.params.is_empty() {
+            None
+        } else {
+            Some(
+                form_urlencoded::Serializer::new(String::new())
+                    .extend_pairs(&self.params)
+                    .finish(),
+            )
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct TagOptionsBuilder {
+    params: HashMap<&'static str, String>,
+}
+
+impl TagOptionsBuilder {
+    pub fn repo<R>(
+        &mut self,
+        r: R,
+    ) -> &mut Self
+    where
+        R: Into<String>,
+    {
+        self.params.insert("repo", r.into());
+        self
+    }
+
+    pub fn tag<T>(
+        &mut self,
+        t: T,
+    ) -> &mut Self
+    where
+        T: Into<String>,
+    {
+        self.params.insert("tag", t.into());
+        self
+    }
+
+    pub fn build(&self) -> TagOptions {
+        TagOptions {
+            params: self.params.clone(),
+        }
+    }
+}
+
+#[derive(Default, Debug)]
 pub struct PullOptions {
     auth: Option<RegistryAuth>,
     params: HashMap<&'static str, String>,
