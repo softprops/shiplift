@@ -7,6 +7,7 @@ use std::{
     io::{self, Read},
 };
 use tokio_io::AsyncRead;
+use crate::Result;
 
 /*
  * The following is taken from
@@ -35,7 +36,7 @@ pub struct StreamReader<S> {
 
 impl<S> StreamReader<S>
 where
-    S: Stream<Item = Chunk, Error = Error>,
+    S: Stream<Item = Result<Chunk>>,
 {
     #[inline]
     pub fn new(stream: S) -> StreamReader<S> {
@@ -48,7 +49,7 @@ where
 
 impl<S> Read for StreamReader<S>
 where
-    S: Stream<Item = Chunk, Error = Error>,
+    S: Stream<Item = Result<Chunk>>,
 {
     fn read(
         &mut self,
@@ -103,4 +104,4 @@ where
     }
 }
 
-impl<S> AsyncRead for StreamReader<S> where S: Stream<Item = Chunk, Error = Error> {}
+impl<S> AsyncRead for StreamReader<S> where S: Stream<Item = Result<Chunk>> {}

@@ -2,7 +2,9 @@
 
 use crate::{Error, Result};
 use futures::{
+    compat::Future01CompatExt,
     future::{self, Either},
+    stream::StreamExt,
     Future, Stream,
 };
 use hyper::{
@@ -21,7 +23,6 @@ use serde::{Deserialize, Serialize};
 use serde_json;
 use std::{fmt, iter};
 use tokio_io::{AsyncRead, AsyncWrite};
-use futures::compat::Future01CompatExt;
 
 pub fn tar() -> Mime {
     "application/tar".parse().unwrap()
@@ -77,14 +78,14 @@ impl Transport {
         B: Into<Body>,
     {
         let endpoint = endpoint.to_string();
-        self.stream_chunks(method, &endpoint, body, None::<iter::Empty<_>>)
-            .concat2()
-            .and_then(|v| {
-                String::from_utf8(v.to_vec())
-                    .map_err(Error::Encoding)
-                    .into_future()
-            })
-            .inspect(move |body| debug!("{} raw response: {}", endpoint, body))
+        let v = self
+            .stream_chunks(method, &endpoint, body, None::<iter::Empty<_>>)
+            .concat()
+            .await?;
+            
+        let string = String::from_utf8(v.to_vec()).map_err(Error::Encoding);
+        debug!("{} raw response: {}", endpoint, body);
+        string
     }
 
     /// Make a request and return a `Stream` of `Chunks` as they are returned.
@@ -199,7 +200,9 @@ impl Transport {
             Transport::EncryptedTcp { ref client, .. } => client.request(req),
             #[cfg(feature = "unix-socket")]
             Transport::Unix { ref client, .. } => client.request(req),
-        }.compat().await;
+        }
+        .compat()
+        .await;
 
         req.map_err(Error::Hyper)
     }
@@ -233,10 +236,10 @@ impl Transport {
             })
             .expect("Failed to build request!");
 
-        let result =  self.send_request(req).await?;
+        let result = self.send_request(req).await?;
 
         if !(result.status() == StatusCode::SWITCHING_PROTOCOLS) {
-            return Err(Error::ConnectionNotUpgraded)
+            return Err(Error::ConnectionNotUpgraded);
         }
 
         Ok(result.into_body().on_upgrade())
@@ -251,7 +254,8 @@ impl Transport {
     where
         B: Into<Body> + 'static,
     {
-        self.stream_upgrade(method, endpoint, body).await
+        self.stream_upgrade(method, endpoint, body)
+            .await
             .map(crate::tty::Multiplexed::new)
     }
 

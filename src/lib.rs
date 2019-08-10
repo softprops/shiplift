@@ -50,7 +50,7 @@ use crate::{
     transport::{tar, Transport},
     tty::TtyDecoder,
 };
-use futures::{future::Either, Future};
+use futures::Future;
 use hyper::{client::HttpConnector, Body, Client, Method, Uri};
 #[cfg(feature = "tls")]
 use hyper_openssl::HttpsConnector;
@@ -116,10 +116,10 @@ impl<'a, 'b> Image<'a, 'b> {
     }
 
     /// Export this image to a tarball
-    pub fn export(&self) -> impl Stream<Item = Vec<u8>, Error = Error> {
+    pub fn export(&self) -> impl Stream<Item = Result<Vec<u8>>> {
         self.docker
             .stream_get(&format!("/images/{}/get", self.name)[..])
-            .map(|c| c.to_vec())
+            .map(|c| c.map(|c| c.to_vec()))
     }
 }
 
@@ -138,7 +138,7 @@ impl<'a> Images<'a> {
     pub fn build(
         &self,
         opts: &BuildOptions,
-    ) -> impl Stream<Item = Value, Error = Error> {
+    ) -> impl Stream<Item = Result<Value>> {
         let mut path = vec!["/build".to_owned()];
         if let Some(query) = opts.serialize() {
             path.push(query)
@@ -163,9 +163,9 @@ impl<'a> Images<'a> {
                         .map_err(Error::from)
                     })
                     .flatten(),
-            ) as Box<Stream<Item = Value, Error = Error> + Send>,
+            ) as Box<dyn Stream<Item = Result<Value>> + Send>,
             Err(e) => Box::new(futures::future::err(Error::IO(e)).into_stream())
-                as Box<Stream<Item = Value, Error = Error> + Send>,
+                as Box<dyn Stream<Item = Result<Value>> + Send>,
         }
     }
 
@@ -206,7 +206,7 @@ impl<'a> Images<'a> {
     pub fn pull(
         &self,
         opts: &PullOptions,
-    ) -> impl Stream<Item = Value, Error = Error> {
+    ) -> impl Stream<Item = Result<Value>> {
         let mut path = vec!["/images/create".to_owned()];
         if let Some(query) = opts.serialize() {
             path.push(query);
@@ -233,14 +233,14 @@ impl<'a> Images<'a> {
     pub fn export(
         &self,
         names: Vec<&str>,
-    ) -> impl Stream<Item = Vec<u8>, Error = Error> {
+    ) -> impl Stream<Item = Result<Vec<u8>>> {
         let params = names.iter().map(|n| ("names", *n));
         let query = form_urlencoded::Serializer::new(String::new())
             .extend_pairs(params)
             .finish();
         self.docker
             .stream_get(&format!("/images/get?{}", query)[..])
-            .map(|c| c.to_vec())
+            .map(|c| c.map(|c| c.to_vec()))
     }
 
     /// imports an image or set of images from a given tarball source
@@ -248,7 +248,7 @@ impl<'a> Images<'a> {
     pub fn import(
         self,
         mut tarball: Box<Read>,
-    ) -> impl Stream<Item = Value, Error = Error> {
+    ) -> impl Stream<Item = Result<Value>> {
         let mut bytes = Vec::new();
 
         match tarball.read_to_end(&mut bytes) {
@@ -323,7 +323,7 @@ impl<'a, 'b> Container<'a, 'b> {
     pub fn logs(
         &self,
         opts: &LogsOptions,
-    ) -> impl Stream<Item = tty::Chunk, Error = Error> {
+    ) -> impl Stream<Item = Result<tty::Chunk>> {
         let mut path = vec![format!("/containers/{}/logs", self.id)];
         if let Some(query) = opts.serialize() {
             path.push(query)
@@ -363,14 +363,14 @@ impl<'a, 'b> Container<'a, 'b> {
     }
 
     /// Exports the current docker container into a tarball
-    pub fn export(&self) -> impl Stream<Item = Vec<u8>, Error = Error> {
+    pub fn export(&self) -> impl Stream<Item = Result<Vec<u8>>> {
         self.docker
             .stream_get(&format!("/containers/{}/export", self.id)[..])
             .map(|c| c.to_vec())
     }
 
     /// Returns a stream of stats specific to this container instance
-    pub fn stats(&self) -> impl Stream<Item = Stats, Error = Error> {
+    pub fn stats(&self) -> impl Stream<Item = Result<Stats>> {
         let decoder = LinesCodec::new();
         let stream_of_chunks = StreamReader::new(
             self.docker
@@ -500,15 +500,15 @@ impl<'a, 'b> Container<'a, 'b> {
     }
 
     /// Delete the container instance (todo: force/v)
-    pub fn remove(
+    pub async fn remove(
         &self,
         opts: RmContainerOptions,
-    ) -> impl Future<Item = (), Error = Error> {
+    ) -> Result<()> {
         let mut path = vec![format!("/containers/{}", self.id)];
         if let Some(query) = opts.serialize() {
             path.push(query)
         }
-        self.docker.delete(&path.join("?")).map(|_| ())
+        self.docker.delete(&path.join("?")).await.map(|_| ())
     }
 
     // TODO(abusch) fix this
@@ -516,7 +516,7 @@ impl<'a, 'b> Container<'a, 'b> {
     pub fn exec(
         &self,
         opts: &ExecContainerOptions,
-    ) -> impl Stream<Item = tty::Chunk, Error = Error> {
+    ) -> impl Stream<Item = Result<tty::Chunk>> {
         let data = opts.serialize().unwrap(); // TODO fixme
         let bytes = data.into_bytes();
         let docker2 = self.docker.clone();
@@ -559,7 +559,7 @@ impl<'a, 'b> Container<'a, 'b> {
     pub fn copy_from(
         &self,
         path: &Path,
-    ) -> impl Stream<Item = Vec<u8>, Error = Error> {
+    ) -> impl Stream<Item = Result<Vec<u8>>> {
         let path_arg = form_urlencoded::Serializer::new(String::new())
             .append_pair("path", &path.to_string_lossy())
             .finish();
@@ -858,9 +858,10 @@ impl<'a, 'b> Volume<'a, 'b> {
     }
 
     /// Deletes a volume
-    pub fn delete(&self) -> impl Future<Item = (), Error = Error> {
+    pub async fn delete(&self) -> Result<()> {
         self.docker
             .delete(&format!("/volumes/{}", self.name)[..])
+            .await
             .map(|_| ())
     }
 }
@@ -1002,20 +1003,20 @@ impl Docker {
     }
 
     /// Returns information associated with the docker daemon
-    pub fn info(&self) -> impl Future<Item = Info, Error = Error> {
-        self.get_json("/info")
+    pub async fn info(&self) -> Result<Info> {
+        self.get_json("/info").await
     }
 
     /// Returns a simple ping response indicating the docker daemon is accessible
-    pub fn ping(&self) -> impl Future<Item = String, Error = Error> {
-        self.get("/_ping")
+    pub async fn ping(&self) -> Result<String> {
+        self.get("/_ping").await
     }
 
     /// Returns a stream of docker events
     pub fn events(
         &self,
         opts: &EventsOptions,
-    ) -> impl Stream<Item = Event, Error = Error> {
+    ) -> impl Stream<Item = Result<Event>> {
         let mut path = vec!["/events".to_owned()];
         if let Some(query) = opts.serialize() {
             path.push(query);
@@ -1114,7 +1115,7 @@ impl Docker {
         endpoint: &str,
         body: Option<(B, Mime)>,
         headers: Option<H>,
-    ) -> impl Stream<Item = hyper::Chunk, Error = Error>
+    ) -> impl Stream<Item = Result<hyper::Chunk>>
     where
         B: Into<Body>,
         H: IntoIterator<Item = (&'static str, String)>,
@@ -1126,7 +1127,7 @@ impl Docker {
     fn stream_get(
         &self,
         endpoint: &str,
-    ) -> impl Stream<Item = hyper::Chunk, Error = Error> {
+    ) -> impl Stream<Item = Result<hyper::Chunk>> {
         self.transport
             .stream_chunks::<Body, iter::Empty<_>>(Method::GET, endpoint, None, None)
     }

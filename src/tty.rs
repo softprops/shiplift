@@ -1,12 +1,16 @@
+use std::task::Poll;
+use std::task::Context;
+use std::pin::Pin;
 use crate::errors::Error;
 use byteorder::{BigEndian, ByteOrder, ReadBytesExt};
 use bytes::BytesMut;
-use futures::{self, Async};
-use hyper::rt::{Future, Stream};
+use hyper::rt::{Future};
 use log::trace;
 use std::io::{self, Cursor};
 use tokio_codec::Decoder;
 use tokio_io::{AsyncRead, AsyncWrite};
+use crate::Result;
+use futures::stream::Stream;
 
 #[derive(Debug)]
 pub struct Chunk {
@@ -23,13 +27,13 @@ pub enum StreamType {
 
 /// A multiplexed stream.
 pub struct Multiplexed {
-    stdin: Box<AsyncWrite>,
-    chunks: Box<futures::Stream<Item = Chunk, Error = crate::Error>>,
+    stdin: Box<dyn AsyncWrite>,
+    chunks: Box<dyn futures::Stream<Item = Result<Chunk>>>,
 }
 
 pub struct MultiplexedBlocking {
-    stdin: Box<AsyncWrite>,
-    chunks: Box<Iterator<Item = Result<Chunk, crate::Error>>>,
+    stdin: Box<dyn AsyncWrite>,
+    chunks: Box<dyn Iterator<Item = Result<Chunk>>>,
 }
 
 /// Represent the current state of the decoding of a TTY frame
@@ -83,7 +87,7 @@ impl Decoder for TtyDecoder {
     fn decode(
         &mut self,
         src: &mut BytesMut,
-    ) -> Result<Option<Self::Item>, Self::Error> {
+    ) -> Result<Option<Self::Item>> {
         loop {
             match self.state {
                 TtyDecoderState::WaitingHeader => {
@@ -168,18 +172,17 @@ impl Multiplexed {
 }
 
 impl futures::Stream for Multiplexed {
-    type Item = Chunk;
-    type Error = crate::Error;
+    type Item = Result<Chunk>;
 
-    fn poll(&mut self) -> Result<Async<Option<Chunk>>, crate::Error> {
-        self.chunks.poll()
+    fn poll_next(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
+        self.chunks.poll_next(cx)
     }
 }
 
 impl Iterator for MultiplexedBlocking {
-    type Item = Result<Chunk, crate::Error>;
+    type Item = Result<Chunk>;
 
-    fn next(&mut self) -> Option<Result<Chunk, crate::Error>> {
+    fn next(&mut self) -> Option<Result<Chunk>> {
         self.chunks.next()
     }
 }
@@ -190,11 +193,11 @@ macro_rules! delegate_io_write {
             fn write(
                 &mut self,
                 buf: &[u8],
-            ) -> Result<usize, io::Error> {
+            ) -> std::result::Result<usize, io::Error> {
                 self.stdin.write(buf)
             }
 
-            fn flush(&mut self) -> Result<(), io::Error> {
+            fn flush(&mut self) -> std::result::Result<(), io::Error> {
                 self.stdin.flush()
             }
         }
@@ -204,7 +207,7 @@ macro_rules! delegate_io_write {
 delegate_io_write!(Multiplexed);
 delegate_io_write!(MultiplexedBlocking);
 
-pub fn chunks<S>(stream: S) -> impl futures::Stream<Item = Chunk, Error = crate::Error>
+pub fn chunks<S>(stream: S) -> impl Stream<Item = Result<Chunk>>
 where
     S: AsyncRead,
 {
@@ -236,7 +239,7 @@ where
 }
 
 mod util {
-    use futures::{Async, Stream};
+    use futures::{Stream};
 
     pub struct StopOnError<S, F> {
         stream: S,
