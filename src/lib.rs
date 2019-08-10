@@ -15,7 +15,7 @@
 //!
 //! tokio::run(fut);
 //! ```
-
+#![feature(async_await)]
 pub mod builder;
 pub mod errors;
 pub mod read;
@@ -24,6 +24,8 @@ pub mod transport;
 pub mod tty;
 
 mod tarball;
+
+use futures::compat::Future01CompatExt;
 
 pub use crate::{
     builder::{
