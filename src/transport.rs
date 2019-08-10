@@ -3,7 +3,7 @@
 use crate::{Error, Result};
 use futures::{
     future::{self, Either},
-    Future, IntoFuture, Stream,
+    Future, Stream,
 };
 use hyper::{
     client::{Client, HttpConnector},
@@ -21,6 +21,7 @@ use serde::{Deserialize, Serialize};
 use serde_json;
 use std::{fmt, iter};
 use tokio_io::{AsyncRead, AsyncWrite};
+use futures::compat::Future01CompatExt;
 
 pub fn tar() -> Mime {
     "application/tar".parse().unwrap()
@@ -66,12 +67,12 @@ impl fmt::Debug for Transport {
 
 impl Transport {
     /// Make a request and return the whole response in a `String`
-    pub fn request<B>(
+    pub async fn request<B>(
         &self,
         method: Method,
         endpoint: &str,
         body: Option<(B, Mime)>,
-    ) -> impl Future<Item = String, Error = Error>
+    ) -> Result<String>
     where
         B: Into<Body>,
     {
@@ -93,7 +94,7 @@ impl Transport {
         endpoint: &str,
         body: Option<(B, Mime)>,
         headers: Option<H>,
-    ) -> impl Stream<Item = Chunk, Error = Error>
+    ) -> impl Stream<Item = Result<Chunk>>
     where
         B: Into<Body>,
         H: IntoIterator<Item = (&'static str, String)>,
@@ -188,17 +189,17 @@ impl Transport {
     }
 
     /// Send the given request to the docker daemon and return a Future of the response.
-    fn send_request(
+    async fn send_request(
         &self,
         req: Request<hyper::Body>,
-    ) -> impl Future<Item = hyper::Response<Body>, Error = Error> {
+    ) -> Result<hyper::Response<Body>> {
         let req = match self {
             Transport::Tcp { ref client, .. } => client.request(req),
             #[cfg(feature = "tls")]
             Transport::EncryptedTcp { ref client, .. } => client.request(req),
             #[cfg(feature = "unix-socket")]
             Transport::Unix { ref client, .. } => client.request(req),
-        };
+        }.compat().await;
 
         req.map_err(Error::Hyper)
     }
@@ -208,12 +209,12 @@ impl Transport {
     ///
     /// This method can be used for operations such as viewing
     /// docker container logs interactively.
-    pub fn stream_upgrade<B>(
+    pub async fn stream_upgrade<B>(
         &self,
         method: Method,
         endpoint: &str,
         body: Option<(B, Mime)>,
-    ) -> impl Future<Item = impl AsyncRead + AsyncWrite, Error = Error>
+    ) -> Result<hyper::upgrade::OnUpgrade>
     where
         B: Into<Body>,
     {
@@ -232,24 +233,25 @@ impl Transport {
             })
             .expect("Failed to build request!");
 
-        self.send_request(req)
-            .and_then(|res| match res.status() {
-                StatusCode::SWITCHING_PROTOCOLS => Ok(res),
-                _ => Err(Error::ConnectionNotUpgraded),
-            })
-            .and_then(|res| res.into_body().on_upgrade().from_err())
+        let result =  self.send_request(req).await?;
+
+        if !(result.status() == StatusCode::SWITCHING_PROTOCOLS) {
+            return Err(Error::ConnectionNotUpgraded)
+        }
+
+        Ok(result.into_body().on_upgrade())
     }
 
-    pub fn stream_upgrade_multiplexed<B>(
+    pub async fn stream_upgrade_multiplexed<B>(
         &self,
         method: Method,
         endpoint: &str,
         body: Option<(B, Mime)>,
-    ) -> impl Future<Item = crate::tty::Multiplexed, Error = Error>
+    ) -> Result<crate::tty::Multiplexed>
     where
         B: Into<Body> + 'static,
     {
-        self.stream_upgrade(method, endpoint, body)
+        self.stream_upgrade(method, endpoint, body).await
             .map(crate::tty::Multiplexed::new)
     }
 

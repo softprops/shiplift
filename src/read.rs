@@ -1,5 +1,6 @@
 use crate::errors::Error;
-use futures::{Async, Stream};
+use futures::{Stream};
+use std::task::Poll;
 use hyper::Chunk;
 use std::{
     cmp,
@@ -79,17 +80,17 @@ where
                     match self.stream.poll() {
                         // Polling stream yielded a Chunk that can be read from.
                         //
-                        Ok(Async::Ready(Some(chunk))) => {
+                        Ok(Poll::Ready(Some(chunk))) => {
                             self.state = ReadState::Ready(chunk, 0);
 
                             continue;
                         }
                         // Polling stream yielded EOF.
                         //
-                        Ok(Async::Ready(None)) => return Ok(0),
+                        Ok(Poll::Ready(None)) => return Ok(0),
                         // Stream could not be read from.
                         //
-                        Ok(Async::NotReady) => return Err(io::ErrorKind::WouldBlock.into()),
+                        Ok(Poll::Pending) => return Err(io::ErrorKind::WouldBlock.into()),
                         Err(e) => return Err(io::Error::new(io::ErrorKind::Other, e.to_string())),
                     }
                 }
