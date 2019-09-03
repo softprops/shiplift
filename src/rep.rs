@@ -1,5 +1,7 @@
 //! Rust representations of docker json structures
 
+#[cfg(feature = "chrono")]
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -15,6 +17,10 @@ pub struct SearchResult {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct Image {
+    #[cfg(feature = "chrono")]
+    #[serde(deserialize_with = "datetime_from_unix_timestamp")]
+    pub created: DateTime<Utc>,
+    #[cfg(not(feature = "chrono"))]
     pub created: u64,
     pub id: String,
     pub parent_id: String,
@@ -31,6 +37,9 @@ pub struct ImageDetails {
     pub author: String,
     pub comment: String,
     pub config: Config,
+    #[cfg(feature = "chrono")]
+    pub created: DateTime<Utc>,
+    #[cfg(not(feature = "chrono"))]
     pub created: String,
     pub docker_version: String,
     pub id: String,
@@ -43,6 +52,10 @@ pub struct ImageDetails {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct Container {
+    #[cfg(feature = "chrono")]
+    #[serde(deserialize_with = "datetime_from_unix_timestamp")]
+    pub created: DateTime<Utc>,
+    #[cfg(not(feature = "chrono"))]
     pub created: u64,
     pub command: String,
     pub id: String,
@@ -61,6 +74,9 @@ pub struct ContainerDetails {
     pub app_armor_profile: String,
     pub args: Vec<String>,
     pub config: Config,
+    #[cfg(feature = "chrono")]
+    pub created: DateTime<Utc>,
+    #[cfg(not(feature = "chrono"))]
     pub created: String,
     pub driver: String,
     // pub ExecIDs: ??
@@ -96,6 +112,9 @@ pub struct Mount {
 pub struct State {
     pub error: String,
     pub exit_code: u64,
+    #[cfg(feature = "chrono")]
+    pub finished_at: DateTime<Utc>,
+    #[cfg(not(feature = "chrono"))]
     pub finished_at: String,
     #[serde(rename = "OOMKilled")]
     pub oom_killed: bool,
@@ -103,6 +122,9 @@ pub struct State {
     pub pid: u64,
     pub restarting: bool,
     pub running: bool,
+    #[cfg(feature = "chrono")]
+    pub started_at: DateTime<Utc>,
+    #[cfg(not(feature = "chrono"))]
     pub started_at: String,
 }
 
@@ -420,6 +442,10 @@ pub struct ContainerCreateInfo {
 #[serde(rename_all = "PascalCase")]
 pub struct History {
     pub id: String,
+    #[cfg(feature = "chrono")]
+    #[serde(deserialize_with = "datetime_from_unix_timestamp")]
+    pub created: DateTime<Utc>,
+    #[cfg(not(feature = "chrono"))]
     pub created: u64,
     pub created_by: String,
 }
@@ -441,7 +467,15 @@ pub struct Event {
     pub status: Option<String>,
     pub id: Option<String>,
     pub from: Option<String>,
+    #[cfg(feature = "chrono")]
+    #[serde(deserialize_with = "datetime_from_unix_timestamp")]
+    pub time: DateTime<Utc>,
+    #[cfg(not(feature = "chrono"))]
     pub time: u64,
+    #[cfg(feature = "chrono")]
+    #[serde(deserialize_with = "datetime_from_nano_timestamp", rename = "timeNano")]
+    pub time_nano: DateTime<Utc>,
+    #[cfg(not(feature = "chrono"))]
     #[serde(rename = "timeNano")]
     pub time_nano: u64,
 }
@@ -476,6 +510,9 @@ pub struct Volumes {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct Volume {
+    #[cfg(feature = "chrono")]
+    pub created_at: DateTime<Utc>,
+    #[cfg(not(feature = "chrono"))]
     pub created_at: String,
     pub driver: String,
     pub labels: Option<HashMap<String, String>>,
@@ -483,4 +520,26 @@ pub struct Volume {
     pub mountpoint: String,
     pub options: Option<HashMap<String, String>>,
     pub scope: String,
+}
+
+#[cfg(feature = "chrono")]
+fn datetime_from_unix_timestamp<'de, D>(deserializer: D) -> Result<DateTime<Utc>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let timestamp = chrono::NaiveDateTime::from_timestamp(i64::deserialize(deserializer)?, 0);
+    Ok(DateTime::<Utc>::from_utc(timestamp, Utc))
+}
+
+#[cfg(feature = "chrono")]
+fn datetime_from_nano_timestamp<'de, D>(deserializer: D) -> Result<DateTime<Utc>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let timestamp_nano = u64::deserialize(deserializer)?;
+    let timestamp = chrono::NaiveDateTime::from_timestamp(
+        (timestamp_nano / 1_000_000_000) as i64,
+        (timestamp_nano % 1_000_000_000) as u32,
+    );
+    Ok(DateTime::<Utc>::from_utc(timestamp, Utc))
 }

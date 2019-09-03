@@ -10,8 +10,9 @@ fn main() {
         .map(|images| {
             for i in images {
                 println!(
-                    "{} {:?}",
+                    "{} {} {:?}",
                     i.id,
+                    i.created,
                     i.repo_tags.unwrap_or_else(|| vec!["none".into()])
                 );
             }

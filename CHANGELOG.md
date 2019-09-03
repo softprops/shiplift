@@ -1,3 +1,7 @@
+# 0.6.0
+
+* add chrono as an optional feature [#190](https://github.com/softprops/shiplift/pull/190)
+
 # 0.5.0
 
 * make tls an optional dependency [#130](https://github.com/softprops/shiplift/pull/130)
