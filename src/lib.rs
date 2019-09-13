@@ -885,6 +885,12 @@ fn get_docker_for_tcp(tcp_host_str: String) -> Docker {
             connector.set_ca_file(&Path::new(ca)).unwrap();
         }
 
+        let tcp_host_str = if tcp_host_str.contains("tcp://") {
+            tcp_host_str.replace("tcp://", "https://")
+        } else {
+            tcp_host_str
+        };
+
         Docker {
             transport: Transport::EncryptedTcp {
                 client: Client::builder()
