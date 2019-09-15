@@ -23,13 +23,13 @@ pub enum StreamType {
 
 /// A multiplexed stream.
 pub struct Multiplexed {
-    stdin: Box<AsyncWrite>,
-    chunks: Box<futures::Stream<Item = Chunk, Error = crate::Error>>,
+    stdin: Box<dyn AsyncWrite>,
+    chunks: Box<dyn futures::Stream<Item = Chunk, Error = crate::Error>>,
 }
 
 pub struct MultiplexedBlocking {
-    stdin: Box<AsyncWrite>,
-    chunks: Box<Iterator<Item = Result<Chunk, crate::Error>>>,
+    stdin: Box<dyn AsyncWrite>,
+    chunks: Box<dyn Iterator<Item = Result<Chunk, crate::Error>>>,
 }
 
 /// Represent the current state of the decoding of a TTY frame

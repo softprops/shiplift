@@ -167,9 +167,9 @@ impl<'a> Images<'a> {
                         .map_err(Error::from)
                     })
                     .flatten(),
-            ) as Box<Stream<Item = Value, Error = Error> + Send>,
+            ) as Box<dyn Stream<Item = Value, Error = Error> + Send>,
             Err(e) => Box::new(futures::future::err(Error::IO(e)).into_stream())
-                as Box<Stream<Item = Value, Error = Error> + Send>,
+                as Box<dyn Stream<Item = Value, Error = Error> + Send>,
         }
     }
 
@@ -250,7 +250,7 @@ impl<'a> Images<'a> {
     /// source can be uncompressed on compressed via gzip, bzip2 or xz
     pub fn import(
         self,
-        mut tarball: Box<Read>,
+        mut tarball: Box<dyn Read>,
     ) -> impl Stream<Item = Value, Error = Error> {
         let mut bytes = Vec::new();
 
@@ -267,9 +267,9 @@ impl<'a> Images<'a> {
                             .map_err(Error::from)
                             .into_future()
                     }),
-            ) as Box<Stream<Item = Value, Error = Error> + Send>,
+            ) as Box<dyn Stream<Item = Value, Error = Error> + Send>,
             Err(e) => Box::new(futures::future::err(Error::IO(e)).into_stream())
-                as Box<Stream<Item = Value, Error = Error> + Send>,
+                as Box<dyn Stream<Item = Value, Error = Error> + Send>,
         }
     }
 }
