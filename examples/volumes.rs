@@ -12,7 +12,7 @@ fn main() {
                 println!("volume -> {:#?}", v)
             }
         })
-        .map_err(|e| eprintln!("Error: {}", e));;
+        .map_err(|e| eprintln!("Error: {}", e));
 
     tokio::run(fut);
 }
