@@ -283,6 +283,7 @@ pub struct NetworkDetails {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct NetworkContainerDetails {
+    #[serde(rename = "EndpointID")]
     pub endpoint_id: String,
     pub mac_address: String,
     #[serde(rename = "IPv4Address")]
