@@ -685,6 +685,40 @@ impl ContainerOptionsBuilder {
         self
     }
 
+    /// Publish a port in the container without assigning a port on the host
+    pub fn publish(
+        &mut self,
+        srcport: u32,
+        protocol: &str,
+    ) -> &mut Self {
+        /* The idea here is to go thought the 'old' port binds
+         * and to apply them to the local 'exposedport_bindings' variable,
+         * add the bind we want and replace the 'old' value */
+        let mut exposed_port_bindings: HashMap<String, Value> = HashMap::new();
+        for (key, val) in self
+            .params
+            .get("ExposedPorts")
+            .unwrap_or(&json!(null))
+            .as_object()
+            .unwrap_or(&Map::new())
+            .iter()
+        {
+            exposed_port_bindings.insert(key.to_string(), json!(val));
+        }
+        exposed_port_bindings.insert(format!("{}/{}", srcport, protocol), json!({}));
+
+        // Replicate the port bindings over to the exposed ports config
+        let mut exposed_ports: HashMap<String, Value> = HashMap::new();
+        let empty_config: HashMap<String, Value> = HashMap::new();
+        for key in exposed_port_bindings.keys() {
+            exposed_ports.insert(key.to_string(), json!(empty_config));
+        }
+
+        self.params.insert("ExposedPorts", json!(exposed_ports));
+
+        self
+    }
+
     pub fn links(
         &mut self,
         links: Vec<&str>,
@@ -1653,6 +1687,26 @@ mod tests {
         );
     }
 
+    #[test]
+    fn container_options_publish() {
+        let options = ContainerOptionsBuilder::new("test_image")
+            .publish(80, "tcp")
+            .build();
+        assert_eq!(
+            r#"{"ExposedPorts":{"80/tcp":{}},"HostConfig":{},"Image":"test_image"}"#,
+            options.serialize().unwrap()
+        );
+        // try exposing two
+        let options = ContainerOptionsBuilder::new("test_image")
+            .publish(80, "tcp")
+            .publish(81, "tcp")
+            .build();
+        assert_eq!(
+            r#"{"ExposedPorts":{"80/tcp":{},"81/tcp":{}},"HostConfig":{},"Image":"test_image"}"#,
+            options.serialize().unwrap()
+        );
+    }
+
     /// Test container options that are nested 3 levels deep.
     #[test]
     fn container_options_nested() {
@@ -1676,7 +1730,7 @@ mod tests {
         assert_eq!(
             r#"{"HostConfig":{"RestartPolicy":{"MaximumRetryCount":10,"Name":"on-failure"}},"Image":"test_image"}"#,
             options.serialize().unwrap()
-       );
+        );
 
         options = ContainerOptionsBuilder::new("test_image")
             .restart_policy("always", 0)
@@ -1721,7 +1775,9 @@ mod tests {
             .server_address("https://example.org")
             .build();
         assert_eq!(
-            base64::encode(r#"{"username":"user_abc","password":"password_abc","email":"email_abc","serveraddress":"https://example.org"}"#),
+            base64::encode(
+                r#"{"username":"user_abc","password":"password_abc","email":"email_abc","serveraddress":"https://example.org"}"#
+            ),
             options.serialize()
         );
     }
