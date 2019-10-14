@@ -30,6 +30,7 @@ hyper-openssl = { version = "0.7", optional = true }
 hyperlocal = { version = "0.6", optional = true }
 log = "0.4.6"
 mime = "0.3.13"
+openssl = { version = "0.10", optional = true }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tar = "0.4"
@@ -38,11 +39,6 @@ tokio-codec = "0.1"
 tokio-io = "0.1"
 url = "1.7"
 
-[target.'cfg(windows)'.dependencies]
-openssl = { version = "0.10", optional = true, features = ["vendored"] }
-[target.'cfg(not(windows))'.dependencies]
-openssl = { version = "0.10", optional = true }
-
 [dev-dependencies]
 env_logger = "0.6"
 
@@ -50,3 +46,4 @@ env_logger = "0.6"
 default = ["chrono", "unix-socket", "tls"]
 unix-socket = ["hyperlocal"]
 tls = ["openssl", "hyper-openssl"]
+vendored-ssl = ["tls", "openssl/vendored"]

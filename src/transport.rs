@@ -221,7 +221,8 @@ impl Transport {
             Transport::Tcp { .. } => (),
             #[cfg(feature = "tls")]
             Transport::EncryptedTcp { .. } => (),
-            _ => panic!("connection streaming is only supported over TCP"),
+            #[cfg(feature = "unix-socket")]
+            Transport::Unix { .. } => panic!("connection streaming is only supported over TCP"),
         };
 
         let req = self
