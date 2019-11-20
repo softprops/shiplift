@@ -44,7 +44,7 @@ use crate::{
     },
     transport::{tar, Transport},
 };
-use futures::{Stream, TryStreamExt};
+use futures::{Stream, TryFutureExt, TryStreamExt};
 use hyper::{client::HttpConnector, Body, Client, Method, Uri};
 #[cfg(feature = "tls")]
 use hyper_openssl::HttpsConnector;
@@ -480,12 +480,11 @@ impl<'a> Container<'a> {
         #[serde(rename_all = "PascalCase")]
         struct Response {
             id: String,
-            warnings: Vec<String>,
         }
 
         let options = opts.serialize().unwrap().into_bytes();
 
-        let Response { id, warnings } = self
+        let Response { id } = self
             .docker
             .post_json(
                 &format!("/containers/{}/exec", self.id)[..],
@@ -494,6 +493,32 @@ impl<'a> Container<'a> {
             .await?;
 
         Ok(id)
+    }
+
+    fn exec_start(
+        &self,
+        id: String,
+    ) -> impl Stream<Item = Result<tty::TtyChunk>> + 'a {
+        let bytes = "{}".as_bytes();
+
+        let stream = Box::pin(self.docker.stream_post(
+            format!("/exec/{}/start", id),
+            Some((bytes.into(), mime::APPLICATION_JSON)),
+            None::<iter::Empty<_>>,
+        ));
+
+        tty::chunks(stream)
+    }
+
+    pub fn exec(
+        &'a self,
+        opts: &'a ExecContainerOptions,
+    ) -> impl Stream<Item = Result<tty::TtyChunk>> + 'a {
+        async move {
+            let id = self.exec_create(opts).await?;
+            Ok(self.exec_start(id))
+        }
+        .try_flatten_stream()
     }
 
     /// Copy a file/folder from the container.  The resulting stream is a tarball of the extracted
