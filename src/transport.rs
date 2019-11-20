@@ -1,10 +1,7 @@
 //! Transports for communicating with the docker daemon
 
 use crate::{Error, Result};
-use futures::{
-    future::{self, Either},
-    Future, IntoFuture, Stream,
-};
+use futures::{Stream, TryFutureExt};
 use hyper::{
     client::{Client, HttpConnector},
     header, Body, Chunk, Method, Request, StatusCode,
@@ -15,12 +12,10 @@ use hyper_openssl::HttpsConnector;
 use hyperlocal::UnixConnector;
 #[cfg(feature = "unix-socket")]
 use hyperlocal::Uri as DomainUri;
-use log::debug;
 use mime::Mime;
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::{fmt, iter};
-use tokio_io::{AsyncRead, AsyncWrite};
 
 pub fn tar() -> Mime {
     "application/tar".parse().unwrap()
@@ -64,36 +59,106 @@ impl fmt::Debug for Transport {
     }
 }
 
+use futures::stream::TryStreamExt;
+
 impl Transport {
     /// Make a request and return the whole response in a `String`
-    pub fn request<B>(
+    pub async fn request(
         &self,
         method: Method,
-        endpoint: &str,
-        body: Option<(B, Mime)>,
-    ) -> impl Future<Item = String, Error = Error>
-    where
-        B: Into<Body>,
-    {
-        let endpoint = endpoint.to_string();
-        self.stream_chunks(method, &endpoint, body, None::<iter::Empty<_>>)
-            .concat2()
-            .and_then(|v| {
-                String::from_utf8(v.to_vec())
-                    .map_err(Error::Encoding)
-                    .into_future()
-            })
-            .inspect(move |body| debug!("{} raw response: {}", endpoint, body))
+        endpoint: impl AsRef<str>,
+        body: Option<(Body, Mime)>,
+    ) -> Result<String> {
+        let chunk = self
+            .stream_chunks(method, endpoint, body, None::<iter::Empty<_>>)
+            .try_concat()
+            .await?;
+
+        let string = String::from_utf8(chunk.to_vec())?;
+
+        Ok(string)
     }
 
-    /// Make a request and return a `Stream` of `Chunks` as they are returned.
+    async fn get_body<B, H>(
+        &self,
+        method: Method,
+        endpoint: impl AsRef<str>,
+        body: Option<(B, Mime)>,
+        headers: Option<H>,
+    ) -> Result<Body>
+    where
+        B: Into<Body>,
+        H: IntoIterator<Item = (&'static str, String)>,
+    {
+        let req = self
+            .build_request(method, endpoint, body, headers, |_| ())
+            .expect("Failed to build request!");
+
+        let response = self.send_request(req).await?;
+
+        let status = response.status();
+
+        match status {
+            // Success case: pass on the response
+            StatusCode::OK
+            | StatusCode::CREATED
+            | StatusCode::SWITCHING_PROTOCOLS
+            | StatusCode::NO_CONTENT => Ok(response.into_body()),
+            _ => {
+                let chunk = concat_chunks(response.into_body()).await?;
+
+                let message_body = String::from_utf8(chunk.into_bytes().into_iter().collect())?;
+
+                Err(Error::Fault {
+                    code: status,
+                    message: Self::get_error_message(&message_body).unwrap_or_else(|| {
+                        status
+                            .canonical_reason()
+                            .unwrap_or_else(|| "unknown error code")
+                            .to_owned()
+                    }),
+                })
+            }
+        }
+    }
+
+    async fn x<B, H>(
+        &self,
+        method: Method,
+        endpoint: impl AsRef<str>,
+        body: Option<(B, Mime)>,
+        headers: Option<H>,
+    ) -> Result<impl Stream<Item = Result<Chunk>>>
+    where
+        B: Into<Body>,
+        H: IntoIterator<Item = (&'static str, String)>,
+    {
+        let body = self.get_body(method, endpoint, body, headers).await?;
+
+        Ok(stream_body(body))
+    }
+
+    pub fn stream_chunks<'a, H>(
+        &'a self,
+        method: Method,
+        endpoint: impl AsRef<str> + 'a,
+        body: Option<(Body, Mime)>,
+        headers: Option<H>,
+    ) -> impl Stream<Item = Result<Chunk>> + 'a
+    where
+        H: IntoIterator<Item = (&'static str, String)> + 'a,
+    {
+        self.x(method, endpoint, body, headers).try_flatten_stream()
+    }
+
+    /*     /// Make a request and return a `Stream` of `Chunks` as they are returned.
     pub fn stream_chunks<B, H>(
         &self,
         method: Method,
         endpoint: &str,
         body: Option<(B, Mime)>,
         headers: Option<H>,
-    ) -> impl Stream<Item = Chunk, Error = Error>
+    ) -> impl Stream<Item = Result<Chunk>>
     where
         B: Into<Body>,
         H: IntoIterator<Item = (&'static str, String)>,
@@ -139,13 +204,13 @@ impl Transport {
                 r.into_body().map_err(Error::Hyper)
             })
             .flatten_stream()
-    }
+    } */
 
     /// Builds an HTTP request.
     fn build_request<B, H>(
         &self,
         method: Method,
-        endpoint: &str,
+        endpoint: impl AsRef<str>,
         body: Option<(B, Mime)>,
         headers: Option<H>,
         f: impl FnOnce(&mut ::http::request::Builder),
@@ -159,11 +224,15 @@ impl Transport {
 
         let req = match *self {
             Transport::Tcp { ref host, .. } => {
-                builder.method(method).uri(&format!("{}{}", host, endpoint))
+                builder
+                    .method(method)
+                    .uri(&format!("{}{}", host, endpoint.as_ref()))
             }
             #[cfg(feature = "tls")]
             Transport::EncryptedTcp { ref host, .. } => {
-                builder.method(method).uri(&format!("{}{}", host, endpoint))
+                builder
+                    .method(method)
+                    .uri(&format!("{}{}", host, endpoint.as_ref()))
             }
             #[cfg(feature = "unix-socket")]
             Transport::Unix { ref path, .. } => {
@@ -188,71 +257,36 @@ impl Transport {
     }
 
     /// Send the given request to the docker daemon and return a Future of the response.
-    fn send_request(
+    async fn send_request(
         &self,
         req: Request<hyper::Body>,
-    ) -> impl Future<Item = hyper::Response<Body>, Error = Error> {
-        let req = match self {
-            Transport::Tcp { ref client, .. } => client.request(req),
-            #[cfg(feature = "tls")]
-            Transport::EncryptedTcp { ref client, .. } => client.request(req),
-            #[cfg(feature = "unix-socket")]
-            Transport::Unix { ref client, .. } => client.request(req),
-        };
-
-        req.map_err(Error::Hyper)
-    }
-
-    /// Makes an HTTP request, upgrading the connection to a TCP
-    /// stream on success.
-    ///
-    /// This method can be used for operations such as viewing
-    /// docker container logs interactively.
-    pub fn stream_upgrade<B>(
-        &self,
-        method: Method,
-        endpoint: &str,
-        body: Option<(B, Mime)>,
-    ) -> impl Future<Item = impl AsyncRead + AsyncWrite, Error = Error>
-    where
-        B: Into<Body>,
-    {
+    ) -> Result<hyper::Response<Body>> {
         match self {
-            Transport::Tcp { .. } => (),
+            Transport::Tcp { ref client, .. } => Ok(client.request(req).await?),
             #[cfg(feature = "tls")]
-            Transport::EncryptedTcp { .. } => (),
-            _ => panic!("connection streaming is only supported over TCP"),
-        };
-
-        let req = self
-            .build_request(method, endpoint, body, None::<iter::Empty<_>>, |builder| {
-                builder
-                    .header(header::CONNECTION, "Upgrade")
-                    .header(header::UPGRADE, "tcp");
-            })
-            .expect("Failed to build request!");
-
-        self.send_request(req)
-            .and_then(|res| match res.status() {
-                StatusCode::SWITCHING_PROTOCOLS => Ok(res),
-                _ => Err(Error::ConnectionNotUpgraded),
-            })
-            .and_then(|res| res.into_body().on_upgrade().from_err())
+            Transport::EncryptedTcp { ref client, .. } => Ok(client.request(req).await?),
+            #[cfg(feature = "unix-socket")]
+            Transport::Unix { ref client, .. } => Ok(client.request(req).await?),
+        }
     }
 
-    pub fn stream_upgrade_multiplexed<B>(
-        &self,
-        method: Method,
-        endpoint: &str,
-        body: Option<(B, Mime)>,
-    ) -> impl Future<Item = crate::tty::Multiplexed, Error = Error>
-    where
-        B: Into<Body> + 'static,
-    {
-        self.stream_upgrade(method, endpoint, body)
-            .map(crate::tty::Multiplexed::new)
-    }
-
+    /*     /// Makes an HTTP request, upgrading the connection to a TCP
+       /// stream on success.
+       ///
+       /// This method can be used for operations such as viewing
+       /// docker container logs interactively.
+       pub async fn stream_upgrade<B>(
+           &self,
+           method: Method,
+           endpoint: &str,
+           body: Option<(B, Mime)>,
+       ) -> Result<impl AsyncRead + AsyncWrite>
+       where
+           B: Into<Body>,
+       {
+           unimplemented!()
+       }
+    */
     /// Extract the error message content from an HTTP response that
     /// contains a Docker JSON error structure.
     fn get_error_message(body: &str) -> Option<String> {
@@ -265,4 +299,16 @@ impl Transport {
 #[derive(Serialize, Deserialize)]
 struct ErrorResponse {
     message: String,
+}
+
+fn stream_body(body: Body) -> impl Stream<Item = Result<Chunk>> {
+    futures::stream::unfold(body, async move |mut body| {
+        let chunk_result = body.next().await?.map_err(Error::from);
+
+        Some((chunk_result, body))
+    })
+}
+
+async fn concat_chunks(body: Body) -> Result<Chunk> {
+    stream_body(body).try_concat().await
 }

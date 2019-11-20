@@ -2,9 +2,9 @@
 
 use shiplift::{Docker, PullOptions, RegistryAuth};
 use std::env;
-use tokio::prelude::{Future, Stream};
 
-fn main() {
+#[tokio::main]
+async fn main() {
     env_logger::init();
     let docker = Docker::new();
     let img = env::args()
@@ -16,13 +16,18 @@ fn main() {
         .username(username)
         .password(password)
         .build();
-    let fut = docker
+
+    while let Some(output) = docker
         .images()
         .pull(&PullOptions::builder().image(img).auth(auth).build())
-        .for_each(|output| {
-            println!("{:?}", output);
-            Ok(())
-        })
-        .map_err(|e| eprintln!("Error: {}", e));
+        .await
+    {
+        println!("{:?}", output)
+    }
+    .for_each(|output| {
+        println!("{:?}", output);
+        Ok(())
+    })
+    .map_err(|e| eprintln!("Error: {}", e));
     tokio::run(fut);
 }
