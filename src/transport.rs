@@ -302,11 +302,13 @@ struct ErrorResponse {
 }
 
 fn stream_body(body: Body) -> impl Stream<Item = Result<Chunk>> {
-    futures::stream::unfold(body, async move |mut body| {
-        let chunk_result = body.next().await?.map_err(Error::from);
+    futures::stream::unfold(body, stream_body_unfold)
+}
 
-        Some((chunk_result, body))
-    })
+async fn stream_body_unfold(mut body: Body) -> Option<(Result<Chunk>, Body)> {
+    let chunk_result = body.next().await?.map_err(Error::from);
+
+    Some((chunk_result, body))
 }
 
 async fn concat_chunks(body: Body) -> Result<Chunk> {

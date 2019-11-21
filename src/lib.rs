@@ -18,7 +18,6 @@
 //!
 //! }
 //! ```
-#![feature(async_closure)]
 
 pub mod builder;
 pub mod errors;
@@ -225,9 +224,9 @@ impl<'a> Images<'a> {
         Box::pin(
             self.docker
                 .stream_post(path.join("?"), None, headers)
-                .and_then(async move |chunk| {
+                .and_then(move |chunk| {
                     // todo: give this a proper enum type
-                    serde_json::from_slice(&chunk).map_err(Error::from)
+                    futures::future::ready(serde_json::from_slice(&chunk).map_err(Error::from))
                 }),
         )
     }
