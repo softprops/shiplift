@@ -109,10 +109,12 @@ impl<'a> Image<'a> {
     }
 
     /// Export this image to a tarball
-    pub fn export(&self) -> impl Stream<Item = Result<Vec<u8>>> + 'a {
-        self.docker
-            .stream_get(format!("/images/{}/get", self.name))
-            .map_ok(|c| c.to_vec())
+    pub fn export(&self) -> impl Stream<Item = Result<Vec<u8>>> + Unpin + 'a {
+        Box::pin(
+            self.docker
+                .stream_get(format!("/images/{}/get", self.name))
+                .map_ok(|c| c.to_vec()),
+        )
     }
 
     /// Adds a tag to an image
@@ -142,28 +144,34 @@ impl<'a> Images<'a> {
 
     /// Builds a new image build by reading a Dockerfile in a target directory
     pub fn build(
-        &self,
-        opts: &BuildOptions,
-    ) -> Result<impl Stream<Item = Result<Value>> + 'a> {
-        let mut path = vec!["/build".to_owned()];
-        if let Some(query) = opts.serialize() {
-            path.push(query)
-        }
+        &'a self,
+        opts: &'a BuildOptions,
+    ) -> impl Stream<Item = Result<Value>> + Unpin + 'a {
+        Box::pin(
+            async move {
+                let mut path = vec!["/build".to_owned()];
+                if let Some(query) = opts.serialize() {
+                    path.push(query)
+                }
 
-        let mut bytes = Vec::default();
+                let mut bytes = Vec::default();
 
-        tarball::dir(&mut bytes, &opts.path[..])?;
+                tarball::dir(&mut bytes, &opts.path[..])?;
 
-        let chunk_stream = self.docker.stream_post(
-            path.join("?"),
-            Some((Body::from(bytes), tar())),
-            None::<iter::Empty<_>>,
-        );
+                let chunk_stream = self.docker.stream_post(
+                    path.join("?"),
+                    Some((Body::from(bytes), tar())),
+                    None::<iter::Empty<_>>,
+                );
 
-        let value_stream = chunk_stream
-            .and_then(|chunk| async move { serde_json::from_slice(&chunk).map_err(Error::from) });
+                let value_stream = chunk_stream.and_then(|chunk| {
+                    async move { serde_json::from_slice(&chunk).map_err(Error::from) }
+                });
 
-        Ok(value_stream)
+                Ok(value_stream)
+            }
+            .try_flatten_stream(),
+        )
     }
 
     /// Lists the docker images on the current docker host
@@ -203,7 +211,7 @@ impl<'a> Images<'a> {
     pub fn pull(
         &self,
         opts: &PullOptions,
-    ) -> impl Stream<Item = Result<Value>> + 'a {
+    ) -> impl Stream<Item = Result<Value>> + Unpin + 'a {
         let mut path = vec!["/images/create".to_owned()];
         if let Some(query) = opts.serialize() {
             path.push(query);
@@ -212,11 +220,14 @@ impl<'a> Images<'a> {
             .auth_header()
             .map(|a| iter::once(("X-Registry-Auth", a)));
 
-        self.docker
-            .stream_post(path.join("?"), None, headers)
-            // todo: give this a proper enum type
-            .map_ok(|chunk| serde_json::from_slice(&chunk[..]).unwrap())
-            .map_err(Error::from)
+        Box::pin(
+            self.docker
+                .stream_post(path.join("?"), None, headers)
+                .and_then(async move |chunk| {
+                    // todo: give this a proper enum type
+                    serde_json::from_slice(&chunk).map_err(Error::from)
+                }),
+        )
     }
 
     /// exports a collection of named images,
@@ -239,21 +250,27 @@ impl<'a> Images<'a> {
     pub fn import(
         self,
         mut tarball: Box<dyn Read>,
-    ) -> Result<impl Stream<Item = Result<Value>> + 'a> {
-        let mut bytes = Vec::default();
+    ) -> impl Stream<Item = Result<Value>> + Unpin + 'a {
+        Box::pin(
+            async move {
+                let mut bytes = Vec::default();
 
-        tarball.read_to_end(&mut bytes)?;
+                tarball.read_to_end(&mut bytes)?;
 
-        let chunk_stream = self.docker.stream_post(
-            "/images/load",
-            Some((Body::from(bytes), tar())),
-            None::<iter::Empty<_>>,
-        );
+                let chunk_stream = self.docker.stream_post(
+                    "/images/load",
+                    Some((Body::from(bytes), tar())),
+                    None::<iter::Empty<_>>,
+                );
 
-        let value_stream = chunk_stream
-            .and_then(|chunk| async move { serde_json::from_slice(&chunk).map_err(Error::from) });
+                let value_stream = chunk_stream.and_then(|chunk| {
+                    async move { serde_json::from_slice(&chunk).map_err(Error::from) }
+                });
 
-        Ok(value_stream)
+                Ok(value_stream)
+            }
+            .try_flatten_stream(),
+        )
     }
 }
 
@@ -309,7 +326,7 @@ impl<'a> Container<'a> {
     pub fn logs(
         &self,
         opts: &LogsOptions,
-    ) -> impl Stream<Item = Result<tty::TtyChunk>> + 'a {
+    ) -> impl Stream<Item = Result<tty::TtyChunk>> + Unpin + 'a {
         let mut path = vec![format!("/containers/{}/logs", self.id)];
         if let Some(query) = opts.serialize() {
             path.push(query)
@@ -335,7 +352,7 @@ impl<'a> Container<'a> {
     }
 
     /// Returns a stream of stats specific to this container instance
-    pub fn stats(&'a self) -> impl Stream<Item = Result<Stats>> + 'a {
+    pub fn stats(&'a self) -> impl Stream<Item = Result<Stats>> + Unpin + 'a {
         let codec = futures_codec::LinesCodec {};
 
         let reader = Box::pin(
@@ -345,11 +362,13 @@ impl<'a> Container<'a> {
         )
         .into_async_read();
 
-        futures_codec::FramedRead::new(reader, codec)
-            .map_err(Error::IO)
-            .and_then(
-                |s: String| async move { serde_json::from_str(&s).map_err(Error::SerdeJsonError) },
-            )
+        Box::pin(
+            futures_codec::FramedRead::new(reader, codec)
+                .map_err(Error::IO)
+                .and_then(|s: String| {
+                    async move { serde_json::from_str(&s).map_err(Error::SerdeJsonError) }
+                }),
+        )
     }
 
     /// Start the container instance
@@ -513,12 +532,14 @@ impl<'a> Container<'a> {
     pub fn exec(
         &'a self,
         opts: &'a ExecContainerOptions,
-    ) -> impl Stream<Item = Result<tty::TtyChunk>> + 'a {
-        async move {
-            let id = self.exec_create(opts).await?;
-            Ok(self.exec_start(id))
-        }
-        .try_flatten_stream()
+    ) -> impl Stream<Item = Result<tty::TtyChunk>> + Unpin + 'a {
+        Box::pin(
+            async move {
+                let id = self.exec_create(opts).await?;
+                Ok(self.exec_start(id))
+            }
+            .try_flatten_stream(),
+        )
     }
 
     /// Copy a file/folder from the container.  The resulting stream is a tarball of the extracted
@@ -990,7 +1011,7 @@ impl Docker {
     pub fn events<'a>(
         &'a self,
         opts: &'a EventsOptions,
-    ) -> impl Stream<Item = Result<Event>> + 'a {
+    ) -> impl Stream<Item = Result<Event>> + Unpin + 'a {
         let mut path = vec!["/events".to_owned()];
         if let Some(query) = opts.serialize() {
             path.push(query);
@@ -1003,11 +1024,13 @@ impl Docker {
 
         let codec = futures_codec::LinesCodec {};
 
-        futures_codec::FramedRead::new(reader, codec)
-            .map_err(Error::IO)
-            .and_then(
-                |s: String| async move { serde_json::from_str(&s).map_err(Error::SerdeJsonError) },
-            )
+        Box::pin(
+            futures_codec::FramedRead::new(reader, codec)
+                .map_err(Error::IO)
+                .and_then(|s: String| {
+                    async move { serde_json::from_str(&s).map_err(Error::SerdeJsonError) }
+                }),
+        )
     }
 
     //
@@ -1093,7 +1116,7 @@ impl Docker {
 
     fn stream_get<'a>(
         &'a self,
-        endpoint: impl AsRef<str> + 'a,
+        endpoint: impl AsRef<str> + Unpin + 'a,
     ) -> impl Stream<Item = Result<hyper::Chunk>> + 'a {
         let headers = Some(Vec::default());
         self.transport

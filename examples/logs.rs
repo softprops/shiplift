@@ -1,4 +1,4 @@
-use futures::TryStreamExt;
+use futures::StreamExt;
 use shiplift::{tty::TtyChunk, Docker, LogsOptions};
 use std::env;
 
@@ -9,18 +9,23 @@ async fn main() {
         .nth(1)
         .expect("You need to specify a container id");
 
-    let result = docker
+    let mut logs_stream = docker
         .containers()
         .get(&id)
-        .logs(&LogsOptions::builder().stdout(true).stderr(true).build())
-        .try_for_each(|chunk| match chunk {
-            TtyChunk::StdOut(bytes) => println!("Stdout: {}", bytes.as_string_lossy()),
-            TtyChunk::StdErr(bytes) => println!("Stderr: {}", bytes.as_string_lossy()),
-            TtyChunk::Stdin(bytes) => unreachable!(),
-        })
-        .await;
+        .logs(&LogsOptions::builder().stdout(true).stderr(true).build());
 
-    if let Err(e) = result {
-        eprintln!("Error: {}", e)
+    while let Some(log_result) = logs_stream.next().await {
+        match log_result {
+            Ok(chunk) => print_chunk(chunk),
+            Err(e) => eprintln!("Error: {}", e),
+        }
+    }
+}
+
+fn print_chunk(chunk: TtyChunk) {
+    match chunk {
+        TtyChunk::StdOut(bytes) => println!("Stdout: {}", std::str::from_utf8(&bytes).unwrap()),
+        TtyChunk::StdErr(bytes) => eprintln!("Stdout: {}", std::str::from_utf8(&bytes).unwrap()),
+        TtyChunk::StdIn(_) => unreachable!(),
     }
 }

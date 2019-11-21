@@ -7,11 +7,15 @@ async fn main() {
     let network_name = env::args()
         .nth(1)
         .expect("You need to specify a network name");
-    match docker.networks().create(
-        &NetworkCreateOptions::builder(network_name.as_ref())
-            .driver("bridge")
-            .build(),
-    ) {
+    match docker
+        .networks()
+        .create(
+            &NetworkCreateOptions::builder(network_name.as_ref())
+                .driver("bridge")
+                .build(),
+        )
+        .await
+    {
         Ok(info) => println!("{:?}", info),
         Err(e) => eprintln!("Error: {}", e),
     }

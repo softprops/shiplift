@@ -1,4 +1,6 @@
-use futures::TryStreamExt;
+fn main() {}
+
+/* use futures::TryStreamExt;
 use shiplift::Docker;
 use std::{env, path};
 
@@ -20,10 +22,11 @@ async fn main() {
         .await
     {
         Ok(tar) => {
-            let mut archive = tar::Archive::new(&tar);
+            let mut archive = tar::Archive::new(tar);
             archive.unpack(env::current_dir().unwrap()).unwrap();
             Ok(())
         }
         Err(e) => eprintln!("Error: {}", e),
     }
 }
+ */

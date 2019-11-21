@@ -1,17 +1,15 @@
 use shiplift::Docker;
 use std::env;
-use tokio::prelude::Future;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let docker = Docker::new();
     let id = env::args()
         .nth(1)
         .expect("Usage: cargo run --example top -- <container>");
-    let fut = docker
-        .containers()
-        .get(&id)
-        .top(Default::default())
-        .map(|top| println!("{:#?}", top))
-        .map_err(|e| eprintln!("Error: {}", e));
-    tokio::run(fut);
+
+    match docker.containers().get(&id).top(Default::default()).await {
+        Ok(top) => println!("{:#?}", top),
+        Err(e) => eprintln!("Error: {}", e),
+    }
 }

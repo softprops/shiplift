@@ -41,7 +41,7 @@ where
     Some((Ok(chunk), stream))
 }
 
-pub fn chunks<S>(stream: S) -> impl futures::Stream<Item = Result<TtyChunk>>
+pub fn chunks<S>(stream: S) -> impl futures::Stream<Item = Result<TtyChunk>> + Unpin
 where
     S: Stream<Item = Result<hyper::Chunk>> + Unpin,
 {
@@ -49,5 +49,5 @@ where
         .map_err(|e| io::Error::new(io::ErrorKind::Other, e))
         .into_async_read();
 
-    futures::stream::unfold(stream, |stream| chunk(stream))
+    Box::pin(futures::stream::unfold(stream, |stream| chunk(stream)))
 }

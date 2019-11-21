@@ -1,4 +1,5 @@
 //  cargo run --example stats -- <container>
+use futures::StreamExt;
 use shiplift::Docker;
 use std::env;
 
@@ -10,7 +11,7 @@ async fn main() {
         .nth(1)
         .expect("Usage: cargo run --example stats -- <container>");
 
-    while let Some(result) = containers.get(&id).stats().next() {
+    while let Some(result) = containers.get(&id).stats().next().await {
         match result {
             Ok(stat) => println!("{:?}", stat),
             Err(e) => eprintln!("Error: {}", e),

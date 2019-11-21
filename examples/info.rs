@@ -1,12 +1,11 @@
 use shiplift::Docker;
-use tokio::prelude::Future;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let docker = Docker::new();
-    tokio::run(
-        docker
-            .info()
-            .map(|info| println!("info {:?}", info))
-            .map_err(|e| eprintln!("Error: {}", e)),
-    );
+
+    match docker.info().await {
+        Ok(info) => println!("info {:?}", info),
+        Err(e) => eprintln!("Error: {}", e),
+    }
 }

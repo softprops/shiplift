@@ -1,8 +1,9 @@
-use shiplift::{tty::StreamType, Docker, ExecContainerOptions};
-use std::env;
-use tokio::prelude::{Future, Stream};
+use futures::StreamExt;
+use shiplift::{tty::TtyChunk, Docker, ExecContainerOptions};
+use std::{env, str::from_utf8};
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let docker = Docker::new();
     let id = env::args()
         .nth(1)
@@ -18,19 +19,19 @@ fn main() {
         .attach_stdout(true)
         .attach_stderr(true)
         .build();
-    let fut = docker
-        .containers()
-        .get(&id)
-        .exec(&options)
-        .for_each(|chunk| {
-            match chunk.stream_type {
-                StreamType::StdOut => println!("Stdout: {}", chunk.as_string_lossy()),
-                StreamType::StdErr => eprintln!("Stderr: {}", chunk.as_string_lossy()),
-                StreamType::StdIn => unreachable!(),
-            }
-            Ok(())
-        })
-        .map_err(|e| eprintln!("Error: {}", e));
 
-    tokio::run(fut);
+    while let Some(exec_result) = docker.containers().get(&id).exec(&options).next().await {
+        match exec_result {
+            Ok(chunk) => print_chunk(chunk),
+            Err(e) => eprintln!("Error: {}", e),
+        }
+    }
+}
+
+fn print_chunk(chunk: TtyChunk) {
+    match chunk {
+        TtyChunk::StdOut(bytes) => println!("Stdout: {}", from_utf8(&bytes).unwrap()),
+        TtyChunk::StdErr(bytes) => eprintln!("Stdout: {}", from_utf8(&bytes).unwrap()),
+        TtyChunk::StdIn(_) => unreachable!(),
+    }
 }

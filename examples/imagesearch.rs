@@ -1,17 +1,16 @@
 use shiplift::Docker;
-use tokio::prelude::Future;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let docker = Docker::new();
     println!("remote docker images in stock");
-    let fut = docker
-        .images()
-        .search("rust")
-        .map(|results| {
+
+    match docker.images().search("rust").await {
+        Ok(results) => {
             for result in results {
                 println!("{} - {}", result.name, result.description);
             }
-        })
-        .map_err(|e| eprintln!("Error: {}", e));
-    tokio::run(fut);
+        }
+        Err(e) => eprintln!("Error: {}", e),
+    }
 }
