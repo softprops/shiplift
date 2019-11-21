@@ -16,10 +16,8 @@ async fn main() {
     let images = docker.images();
 
     while let Some(export_result) = images.get(&id).export().next().await {
-        match export_result {
-            Ok(bytes) => export_file
-                .write(&bytes)
-                .map(|n| println!("copied {} bytes", n)),
+        match export_result.and_then(|bytes| export_file.write(&bytes).map_err(Error::from)) {
+            Ok(n) => println!("copied {} bytes", n),
             Err(e) => eprintln!("Error: {}", e),
         }
     }

@@ -3,23 +3,25 @@
 //! # examples
 //!
 //! ```no_run
-//! use tokio::prelude::Future;
+//! #[tokio::main]
+//! async fn main() {
+//!     let docker = shiplift::Docker::new();
 //!
-//! let docker = shiplift::Docker::new();
-//! let fut = docker.images().list(&Default::default()).map(|images| {
-//!   println!("docker images in stock");
-//!   for i in images {
-//!     println!("{:?}", i.repo_tags);
-//!   }
-//! }).map_err(|e| eprintln!("Something bad happened! {}", e));
+//!     match docker.images().list(&Default::default()).await {
+//!         Ok(images) => {
+//!             for image in images {
+//!                 println!("{:?}", image.repo_tags);
+//!             }
+//!         },
+//!         Err(e) => eprintln!("Something bad happened! {}", e),
+//!     }
 //!
-//! tokio::run(fut);
+//! }
 //! ```
 #![feature(async_closure)]
 
 pub mod builder;
 pub mod errors;
-//pub mod read;
 pub mod rep;
 pub mod transport;
 pub mod tty;
