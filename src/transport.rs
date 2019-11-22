@@ -1,7 +1,7 @@
 //! Transports for communicating with the docker daemon
 
 use crate::{Error, Result};
-use futures::{Stream, TryFutureExt};
+use futures_util::{stream::Stream, TryFutureExt, TryStreamExt};
 use hyper::{
     client::{Client, HttpConnector},
     header, Body, Chunk, Method, Request, StatusCode,
@@ -58,8 +58,6 @@ impl fmt::Debug for Transport {
         }
     }
 }
-
-use futures::stream::TryStreamExt;
 
 impl Transport {
     /// Make a request and return the whole response in a `String`
@@ -302,7 +300,7 @@ struct ErrorResponse {
 }
 
 fn stream_body(body: Body) -> impl Stream<Item = Result<Chunk>> {
-    futures::stream::unfold(body, stream_body_unfold)
+    futures_util::stream::unfold(body, stream_body_unfold)
 }
 
 async fn stream_body_unfold(mut body: Body) -> Option<(Result<Chunk>, Body)> {

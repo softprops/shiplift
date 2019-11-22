@@ -1,6 +1,6 @@
 //! Representations of various client errors
 
-use futures::io::Error as IoError;
+use futures_util::io::Error as IoError;
 use http;
 use hyper::{self, StatusCode};
 use serde_json::Error as SerdeError;

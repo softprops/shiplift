@@ -1,6 +1,9 @@
 use crate::{Error, Result};
 use bytes::{BigEndian, ByteOrder};
-use futures::{AsyncRead, AsyncReadExt, Stream, TryStreamExt};
+use futures_util::{
+    io::{AsyncRead, AsyncReadExt},
+    stream::{Stream, TryStreamExt},
+};
 use std::io;
 
 #[derive(Debug, Clone)]
@@ -17,7 +20,7 @@ where
     let mut header_bytes = vec![0u8; 8];
 
     match stream.read_exact(&mut header_bytes).await {
-        Err(e) if e.kind() == futures::io::ErrorKind::UnexpectedEof => return None,
+        Err(e) if e.kind() == futures_util::io::ErrorKind::UnexpectedEof => return None,
         Err(e) => return Some((Err(Error::IO(e)), stream)),
         _ => (),
     }
@@ -41,7 +44,7 @@ where
     Some((Ok(chunk), stream))
 }
 
-pub fn chunks<S>(stream: S) -> impl futures::Stream<Item = Result<TtyChunk>> + Unpin
+pub fn chunks<S>(stream: S) -> impl Stream<Item = Result<TtyChunk>> + Unpin
 where
     S: Stream<Item = Result<hyper::Chunk>> + Unpin,
 {
@@ -49,5 +52,5 @@ where
         .map_err(|e| io::Error::new(io::ErrorKind::Other, e))
         .into_async_read();
 
-    Box::pin(futures::stream::unfold(stream, |stream| chunk(stream)))
+    Box::pin(futures_util::stream::unfold(stream, |stream| chunk(stream)))
 }

@@ -45,7 +45,7 @@ use crate::{
     },
     transport::{tar, Transport},
 };
-use futures::{Stream, TryFutureExt, TryStreamExt};
+use futures_util::{stream::Stream, TryFutureExt, TryStreamExt};
 use hyper::{client::HttpConnector, Body, Client, Method, Uri};
 #[cfg(feature = "tls")]
 use hyper_openssl::HttpsConnector;
@@ -226,7 +226,7 @@ impl<'a> Images<'a> {
                 .stream_post(path.join("?"), None, headers)
                 .and_then(move |chunk| {
                     // todo: give this a proper enum type
-                    futures::future::ready(serde_json::from_slice(&chunk).map_err(Error::from))
+                    futures_util::future::ready(serde_json::from_slice(&chunk).map_err(Error::from))
                 }),
         )
     }
