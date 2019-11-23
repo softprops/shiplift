@@ -61,12 +61,14 @@ impl fmt::Debug for Transport {
 
 impl Transport {
     /// Make a request and return the whole response in a `String`
-    pub async fn request(
+    pub async fn request<B>(
         &self,
         method: Method,
         endpoint: impl AsRef<str>,
-        body: Option<(Body, Mime)>,
-    ) -> Result<String> {
+        body: Option<(B, Mime)>,
+    ) -> Result<String> 
+    where B: Into<Body>,
+    {
         let chunk = self
             .stream_chunks(method, endpoint, body, None::<iter::Empty<_>>)
             .try_concat()
@@ -136,15 +138,16 @@ impl Transport {
         Ok(stream_body(body))
     }
 
-    pub fn stream_chunks<'a, H>(
+    pub fn stream_chunks<'a, H, B>(
         &'a self,
         method: Method,
         endpoint: impl AsRef<str> + 'a,
-        body: Option<(Body, Mime)>,
+        body: Option<(B, Mime)>,
         headers: Option<H>,
     ) -> impl Stream<Item = Result<Chunk>> + 'a
     where
         H: IntoIterator<Item = (&'static str, String)> + 'a,
+        B: Into<Body> + 'a,
     {
         self.x(method, endpoint, body, headers).try_flatten_stream()
     }
