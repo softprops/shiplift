@@ -66,8 +66,9 @@ impl Transport {
         method: Method,
         endpoint: impl AsRef<str>,
         body: Option<(B, Mime)>,
-    ) -> Result<String> 
-    where B: Into<Body>,
+    ) -> Result<String>
+    where
+        B: Into<Body>,
     {
         let chunk = self
             .stream_chunks(method, endpoint, body, None::<iter::Empty<_>>)
@@ -122,7 +123,7 @@ impl Transport {
         }
     }
 
-    async fn x<B, H>(
+    async fn get_chunk_stream<B, H>(
         &self,
         method: Method,
         endpoint: impl AsRef<str>,
@@ -149,63 +150,9 @@ impl Transport {
         H: IntoIterator<Item = (&'static str, String)> + 'a,
         B: Into<Body> + 'a,
     {
-        self.x(method, endpoint, body, headers).try_flatten_stream()
+        self.get_chunk_stream(method, endpoint, body, headers)
+            .try_flatten_stream()
     }
-
-    /*     /// Make a request and return a `Stream` of `Chunks` as they are returned.
-    pub fn stream_chunks<B, H>(
-        &self,
-        method: Method,
-        endpoint: &str,
-        body: Option<(B, Mime)>,
-        headers: Option<H>,
-    ) -> impl Stream<Item = Result<Chunk>>
-    where
-        B: Into<Body>,
-        H: IntoIterator<Item = (&'static str, String)>,
-    {
-        let req = self
-            .build_request(method, endpoint, body, headers, |_| ())
-            .expect("Failed to build request!");
-
-        self.send_request(req)
-            .and_then(|res| {
-                let status = res.status();
-                match status {
-                    // Success case: pass on the response
-                    StatusCode::OK
-                    | StatusCode::CREATED
-                    | StatusCode::SWITCHING_PROTOCOLS
-                    | StatusCode::NO_CONTENT => Either::A(future::ok(res)),
-                    // Error case: parse the body to try to extract the error message
-                    _ => Either::B(
-                        res.into_body()
-                            .concat2()
-                            .map_err(Error::Hyper)
-                            .and_then(|v| {
-                                String::from_utf8(v.into_iter().collect::<Vec<u8>>())
-                                    .map_err(Error::Encoding)
-                            })
-                            .and_then(move |body| {
-                                future::err(Error::Fault {
-                                    code: status,
-                                    message: Self::get_error_message(&body).unwrap_or_else(|| {
-                                        status
-                                            .canonical_reason()
-                                            .unwrap_or_else(|| "unknown error code")
-                                            .to_owned()
-                                    }),
-                                })
-                            }),
-                    ),
-                }
-            })
-            .map(|r| {
-                // Convert the response body into a stream of chunks
-                r.into_body().map_err(Error::Hyper)
-            })
-            .flatten_stream()
-    } */
 
     /// Builds an HTTP request.
     fn build_request<B, H>(
@@ -237,7 +184,7 @@ impl Transport {
             }
             #[cfg(feature = "unix-socket")]
             Transport::Unix { ref path, .. } => {
-                let uri: hyper::Uri = DomainUri::new(&path, endpoint).into();
+                let uri: hyper::Uri = DomainUri::new(&path, endpoint.as_ref()).into();
                 builder.method(method).uri(&uri.to_string())
             }
         };
@@ -303,13 +250,13 @@ struct ErrorResponse {
 }
 
 fn stream_body(body: Body) -> impl Stream<Item = Result<Chunk>> {
-    futures_util::stream::unfold(body, stream_body_unfold)
-}
+    async fn unfold(mut body: Body) -> Option<(Result<Chunk>, Body)> {
+        let chunk_result = body.next().await?.map_err(Error::from);
 
-async fn stream_body_unfold(mut body: Body) -> Option<(Result<Chunk>, Body)> {
-    let chunk_result = body.next().await?.map_err(Error::from);
+        Some((chunk_result, body))
+    }
 
-    Some((chunk_result, body))
+    futures_util::stream::unfold(body, unfold)
 }
 
 async fn concat_chunks(body: Body) -> Result<Chunk> {

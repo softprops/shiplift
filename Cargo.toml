@@ -25,7 +25,7 @@ flate2 = "1.0.13"
 http = "0.1.19"
 hyper = "0.13.0-alpha.4"
 hyper-openssl = { version = "0.8.0-alpha.4", optional = true }
-#hyperlocal = { version = "0.6", optional = true }
+hyperlocal = { git="https://github.com/danieleades/hyperlocal", branch="update-hyper", optional = true }
 log = "0.4.8"
 mime = "0.3.14"
 openssl = { version = "0.10.25", optional = true, features = ["vendored"] }
@@ -42,7 +42,6 @@ tokio = "0.2.0-alpha.6"
 futures = "0.3.1"
 
 [features]
-#default = ["chrono", "unix-socket", "tls"]
-default = ["chrono", "tls"]
-#unix-socket = ["hyperlocal"]
+default = ["chrono", "unix-socket", "tls"]
+unix-socket = ["hyperlocal"]
 tls = ["openssl", "hyper-openssl"]

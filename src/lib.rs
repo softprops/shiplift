@@ -465,7 +465,10 @@ impl<'a> Container<'a> {
     /// Wait until the container stops
     pub async fn wait(&self) -> Result<Exit> {
         self.docker
-            .post_json(format!("/containers/{}/wait", self.id), Option::<(Body, Mime)>::None)
+            .post_json(
+                format!("/containers/{}/wait", self.id),
+                Option::<(Body, Mime)>::None,
+            )
             .await
     }
 
@@ -558,9 +561,9 @@ impl<'a> Container<'a> {
         let path_arg = form_urlencoded::Serializer::new(String::new())
             .append_pair("path", &path.to_string_lossy())
             .finish();
-        self.docker
-            .stream_get(format!("/containers/{}/archive?{}", self.id, path_arg))
-            .map_ok(|c| c.to_vec())
+
+        let endpoint = format!("/containers/{}/archive?{}", self.id, path_arg);
+        self.docker.stream_get(endpoint).map_ok(|c| c.to_vec())
     }
 
     /// Copy a byte slice as file into (see `bytes`) the container.
@@ -655,10 +658,7 @@ impl<'a> Containers<'a> {
         }
 
         self.docker
-            .post_json(
-                &path.join("?"),
-                Some((body, mime::APPLICATION_JSON)),
-            )
+            .post_json(&path.join("?"), Some((body, mime::APPLICATION_JSON)))
             .await
     }
 }
@@ -703,10 +703,7 @@ impl<'a> Networks<'a> {
         let path = vec!["/networks/create".to_owned()];
 
         self.docker
-            .post_json(
-                &path.join("?"),
-                Some((body, mime::APPLICATION_JSON)),
-            )
+            .post_json(&path.join("?"), Some((body, mime::APPLICATION_JSON)))
             .await
     }
 }
@@ -804,10 +801,7 @@ impl<'a> Volumes<'a> {
         let path = vec!["/volumes/create".to_owned()];
 
         self.docker
-            .post_json(
-                &path.join("?"),
-                Some((body, mime::APPLICATION_JSON)),
-            )
+            .post_json(&path.join("?"), Some((body, mime::APPLICATION_JSON)))
             .await
     }
 
@@ -1042,14 +1036,19 @@ impl Docker {
         &self,
         endpoint: &str,
     ) -> Result<String> {
-        self.transport.request(Method::GET, endpoint, Option::<(Body, Mime)>::None).await
+        self.transport
+            .request(Method::GET, endpoint, Option::<(Body, Mime)>::None)
+            .await
     }
 
     async fn get_json<T: serde::de::DeserializeOwned>(
         &self,
         endpoint: &str,
     ) -> Result<T> {
-        let raw_string = self.transport.request(Method::GET, endpoint, Option::<(Body, Mime)>::None).await?;
+        let raw_string = self
+            .transport
+            .request(Method::GET, endpoint, Option::<(Body, Mime)>::None)
+            .await?;
 
         Ok(serde_json::from_str::<T>(&raw_string)?)
     }
@@ -1088,7 +1087,9 @@ impl Docker {
         &self,
         endpoint: &str,
     ) -> Result<String> {
-        self.transport.request(Method::DELETE, endpoint, Option::<(Body, Mime)>::None).await
+        self.transport
+            .request(Method::DELETE, endpoint, Option::<(Body, Mime)>::None)
+            .await
     }
 
     async fn delete_json<T: serde::de::DeserializeOwned>(
