@@ -1662,7 +1662,7 @@ mod tests {
         assert_eq!(
             r#"{"HostConfig":{"RestartPolicy":{"MaximumRetryCount":10,"Name":"on-failure"}},"Image":"test_image"}"#,
             options.serialize().unwrap()
-       );
+        );
 
         options = ContainerOptionsBuilder::new("test_image")
             .restart_policy("always", 0)
@@ -1707,7 +1707,9 @@ mod tests {
             .server_address("https://example.org")
             .build();
         assert_eq!(
-            base64::encode(r#"{"username":"user_abc","password":"password_abc","email":"email_abc","serveraddress":"https://example.org"}"#),
+            base64::encode(
+                r#"{"username":"user_abc","password":"password_abc","email":"email_abc","serveraddress":"https://example.org"}"#
+            ),
             options.serialize()
         );
     }
