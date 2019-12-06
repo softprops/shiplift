@@ -885,6 +885,16 @@ fn get_docker_for_tcp(tcp_host_str: String) -> Docker {
             connector.set_ca_file(&Path::new(ca)).unwrap();
         }
 
+        // If we are attempting to connec to the docker daemon via tcp
+        // we need to convert the scheme to `https` to let hyper connect.
+        // Otherwise, hyper will reject the connection since it does not
+        // recongnize `tcp` as a valid `http` scheme.
+        let tcp_host_str = if tcp_host_str.contains("tcp://") {
+            tcp_host_str.replace("tcp://", "https://")
+        } else {
+            tcp_host_str
+        };
+
         Docker {
             transport: Transport::EncryptedTcp {
                 client: Client::builder()
