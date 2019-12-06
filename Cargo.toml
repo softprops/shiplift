@@ -18,8 +18,8 @@ coveralls = { repository = "softprops/shipflit" }
 maintenance = { status = "actively-developed" }
 
 [dependencies]
-base64 = "0.10"
-byteorder = "1.3.1"
+base64 = "0.11"
+byteorder = "1.3"
 bytes = "0.4"
 chrono = { version = "0.4", optional = true, features = ["serde"] }
 flate2 = "1.0"
@@ -28,8 +28,8 @@ http = "0.1"
 hyper = "0.12"
 hyper-openssl = { version = "0.7", optional = true }
 hyperlocal = { version = "0.6", optional = true }
-log = "0.4.6"
-mime = "0.3.13"
+log = "0.4"
+mime = "0.3"
 openssl = { version = "0.10", optional = true, features = ["vendored"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
@@ -37,7 +37,7 @@ tar = "0.4"
 tokio = "0.1"
 tokio-codec = "0.1"
 tokio-io = "0.1"
-url = "1.7"
+url = "2.1"
 
 [dev-dependencies]
 env_logger = "0.6"
