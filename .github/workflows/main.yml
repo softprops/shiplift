@@ -27,6 +27,9 @@ jobs:
   compile:
     runs-on: ubuntu-latest
     steps:
+      - name: Set up Rust
+        uses: hecrj/setup-rust-action@v1
+      - uses: actions/checkout@master
       - name: Cache cargo registry
         uses: actions/cache@v1
         with:
@@ -42,9 +45,6 @@ jobs:
         with:
           path: target
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-      - name: Set up Rust
-        uses: hecrj/setup-rust-action@v1
-      - uses: actions/checkout@master
       - run: cargo check --all
 
   test:
@@ -55,6 +55,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Setup Rust
+      uses: hecrj/setup-rust-action@v1
+      with:
+        rust-version: ${{ matrix.rust }}
+    - name: Checkout
+      uses: actions/checkout@v1
     - name: Cache cargo registry
       uses: actions/cache@v1
       with:
@@ -70,12 +76,6 @@ jobs:
       with:
         path: target
         key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-    - name: Setup Rust
-      uses: hecrj/setup-rust-action@v1
-      with:
-        rust-version: ${{ matrix.rust }}
-    - name: Checkout
-      uses: actions/checkout@v1
     - name: Test
       run: cargo test
     - name: Coverage
@@ -96,6 +96,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test]
     steps:
+      - name: Set up Rust
+        uses: hecrj/setup-rust-action@v1
+      - uses: actions/checkout@v1
       - name: Cache cargo registry
         uses: actions/cache@v1
         with:
@@ -111,9 +114,6 @@ jobs:
         with:
           path: target
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-      - name: Set up Rust
-        uses: hecrj/setup-rust-action@v1
-      - uses: actions/checkout@v1
       - name: Generate Docs
         shell: bash
         run: |
@@ -133,6 +133,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test]
     steps:
+      - name: Set up Rust
+        uses: hecrj/setup-rust-action@v1
+      - uses: actions/checkout@v1
       - name: Cache cargo registry
         uses: actions/cache@v1
         with:
@@ -148,15 +151,6 @@ jobs:
         with:
           path: target
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-      - name: Set up Rust
-        uses: hecrj/setup-rust-action@v1
-      - uses: actions/checkout@v1
       - name: Publish
         shell: bash
-        run: |
-          pushd dynomite-derive
-          cargo publish --token ${{ secrets.CRATES_TOKEN }}
-          popd
-          pushd dynomite
-          cargo publish --token ${{ secrets.CRATES_TOKEN }}
-          popd
+        run: cargo publish --token ${{ secrets.CRATES_TOKEN }}
