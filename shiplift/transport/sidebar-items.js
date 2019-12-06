@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Transport","Transports are types which define the means of communication with the docker daemon"]],"fn":[["tar",""]]});
