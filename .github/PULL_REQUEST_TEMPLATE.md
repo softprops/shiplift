@@ -1,7 +1,7 @@
 <!--
 1. If there is a breaking or notable change please call that out as these will need to be added to the CHANGELOG.md file in this repository.
 2. This repository tries to stick with the community style conventions using [rustfmt](https://github.com/rust-lang-nursery/rustfmt#quick-start) with the *default* settings. If you have custom settings you may find that rustfmt
-clutter the diff of your change with unrelated changes. Please apply formatting with `cargo fmt` before submitting a pr.
+clutter the diff of your change with unrelated changes. Please apply formatting with `cargo +nightly fmt --all` before submitting a pr.
 -->
 
 ## What did you implement:
