@@ -40,7 +40,7 @@ tokio-io = "0.1"
 url = "2.1"
 
 [dev-dependencies]
-env_logger = "0.6"
+env_logger = "0.7"
 
 [features]
 default = ["chrono", "unix-socket", "tls"]
