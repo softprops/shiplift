@@ -35,11 +35,14 @@ tar = "0.4.26"
 url = "2.1.0"
 futures_codec = "0.3.1"
 futures-util = "0.3.1"
+pin-project = "0.4.6"
+tokio-io = "0.2.0-alpha.6"
+
 
 [dev-dependencies]
 env_logger = "0.7.1"
-tokio = "0.2.0-alpha.6"
 futures = "0.3.1"
+tokio = "0.2.0-alpha.6"
 
 [features]
 default = ["chrono", "unix-socket", "tls"]

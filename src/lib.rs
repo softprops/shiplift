@@ -44,8 +44,13 @@ use crate::{
         Volume as VolumeRep, VolumeCreateInfo, Volumes as VolumesRep,
     },
     transport::{tar, Transport},
+    tty::Multiplexer as TtyMultiPlexer,
 };
-use futures_util::{stream::Stream, TryFutureExt, TryStreamExt};
+use futures_util::{
+    io::{AsyncRead, AsyncWrite},
+    stream::Stream,
+    TryFutureExt, TryStreamExt,
+};
 use hyper::{client::HttpConnector, Body, Client, Method, Uri};
 #[cfg(feature = "tls")]
 use hyper_openssl::HttpsConnector;
@@ -335,7 +340,31 @@ impl<'a> Container<'a> {
 
         let stream = Box::pin(self.docker.stream_get(path.join("?")));
 
-        tty::chunks(stream)
+        Box::pin(tty::decode(stream))
+    }
+
+    /// Attaches a multiplexed TCP stream to the container that can be used to read Stdout, Stderr and write Stdin.
+    async fn attach_raw(&self) -> Result<impl AsyncRead + AsyncWrite + 'a> {
+        self.docker
+            .stream_post_upgrade(
+                format!(
+                    "/containers/{}/attach?stream=1&stdout=1&stderr=1&stdin=1",
+                    self.id
+                ),
+                None,
+            )
+            .await
+    }
+
+    /// Attaches a `[TtyMultiplexer]` to the container.
+    ///
+    /// The `[TtyMultiplexer]` implements Stream for returning Stdout and Stderr chunks. It also implements `[AsyncWrite]` for writing to Stdin.
+    ///
+    /// The multiplexer can be split into its read and write halves with the `[split](TtyMultiplexer::split)` method
+    pub async fn attach(&self) -> Result<TtyMultiPlexer<'a>> {
+        let tcp_stream = self.attach_raw().await?;
+
+        Ok(TtyMultiPlexer::new(tcp_stream))
     }
 
     /// Returns a set of changes made to the container instance
@@ -522,7 +551,7 @@ impl<'a> Container<'a> {
         &self,
         id: String,
     ) -> impl Stream<Item = Result<tty::TtyChunk>> + 'a {
-        let bytes = "{}".as_bytes();
+        let bytes: &[u8] = b"{}";
 
         let stream = Box::pin(self.docker.stream_post(
             format!("/exec/{}/start", id),
@@ -530,7 +559,7 @@ impl<'a> Container<'a> {
             None::<iter::Empty<_>>,
         ));
 
-        tty::chunks(stream)
+        tty::decode(stream)
     }
 
     pub fn exec(
@@ -812,7 +841,7 @@ impl<'a> Volumes<'a> {
         let volumes = self.docker.get_json::<VolumesRep>(&path.join("?")).await?;
 
         Ok(match volumes.volumes {
-            Some(volumes) => volumes.clone(),
+            Some(volumes) => volumes,
             None => vec![],
         })
     }
@@ -1124,6 +1153,16 @@ impl Docker {
         let headers = Some(Vec::default());
         self.transport
             .stream_chunks(Method::GET, endpoint, Option::<(Body, Mime)>::None, headers)
+    }
+
+    async fn stream_post_upgrade<'a>(
+        &'a self,
+        endpoint: impl AsRef<str> + 'a,
+        body: Option<(Body, Mime)>,
+    ) -> Result<impl futures_util::io::AsyncRead + futures_util::io::AsyncWrite + 'a> {
+        self.transport
+            .stream_upgrade(Method::POST, endpoint, body)
+            .await
     }
 }
 

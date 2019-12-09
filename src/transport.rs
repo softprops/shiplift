@@ -1,7 +1,11 @@
 //! Transports for communicating with the docker daemon
 
 use crate::{Error, Result};
-use futures_util::{stream::Stream, TryFutureExt, TryStreamExt};
+use futures_util::{
+    io::{AsyncRead, AsyncWrite},
+    stream::Stream,
+    TryFutureExt, TryStreamExt,
+};
 use hyper::{
     client::{Client, HttpConnector},
     header, Body, Chunk, Method, Request, StatusCode,
@@ -13,9 +17,14 @@ use hyperlocal::UnixConnector;
 #[cfg(feature = "unix-socket")]
 use hyperlocal::Uri as DomainUri;
 use mime::Mime;
+use pin_project::pin_project;
 use serde::{Deserialize, Serialize};
 use serde_json;
-use std::{fmt, iter};
+use std::{
+    fmt, io, iter,
+    pin::Pin,
+    task::{Context, Poll},
+};
 
 pub fn tar() -> Mime {
     "application/tar".parse().unwrap()
@@ -184,7 +193,7 @@ impl Transport {
             }
             #[cfg(feature = "unix-socket")]
             Transport::Unix { ref path, .. } => {
-                let uri: hyper::Uri = DomainUri::new(&path, endpoint.as_ref()).into();
+                let uri: hyper::Uri = DomainUri::new(&path, endpoint.as_ref())?.into();
                 builder.method(method).uri(&uri.to_string())
             }
         };
@@ -218,29 +227,108 @@ impl Transport {
         }
     }
 
-    /*     /// Makes an HTTP request, upgrading the connection to a TCP
-       /// stream on success.
-       ///
-       /// This method can be used for operations such as viewing
-       /// docker container logs interactively.
-       pub async fn stream_upgrade<B>(
-           &self,
-           method: Method,
-           endpoint: &str,
-           body: Option<(B, Mime)>,
-       ) -> Result<impl AsyncRead + AsyncWrite>
-       where
-           B: Into<Body>,
-       {
-           unimplemented!()
-       }
-    */
+    /// Makes an HTTP request, upgrading the connection to a TCP
+    /// stream on success.
+    ///
+    /// This method can be used for operations such as viewing
+    /// docker container logs interactively.
+    async fn stream_upgrade_tokio<B>(
+        &self,
+        method: Method,
+        endpoint: impl AsRef<str>,
+        body: Option<(B, Mime)>,
+    ) -> Result<hyper::upgrade::Upgraded>
+    where
+        B: Into<Body>,
+    {
+        match self {
+            Transport::Tcp { .. } => (),
+            #[cfg(feature = "tls")]
+            Transport::EncryptedTcp { .. } => (),
+            #[cfg(feature = "unix-socket")]
+            Transport::Unix { .. } => panic!("connection streaming is only supported over TCP"),
+        };
+
+        let req = self
+            .build_request(method, endpoint, body, None::<iter::Empty<_>>, |builder| {
+                builder
+                    .header(header::CONNECTION, "Upgrade")
+                    .header(header::UPGRADE, "tcp");
+            })
+            .expect("Failed to build request!");
+
+        let response = self.send_request(req).await?;
+
+        match response.status() {
+            StatusCode::SWITCHING_PROTOCOLS => Ok(response.into_body().on_upgrade().await?),
+            _ => Err(Error::ConnectionNotUpgraded),
+        }
+    }
+
+    pub async fn stream_upgrade<B>(
+        &self,
+        method: Method,
+        endpoint: impl AsRef<str>,
+        body: Option<(B, Mime)>,
+    ) -> Result<impl AsyncRead + AsyncWrite>
+    where
+        B: Into<Body>,
+    {
+        let tokio_multiplexer = self.stream_upgrade_tokio(method, endpoint, body).await?;
+
+        Ok(Compat { tokio_multiplexer })
+    }
+
     /// Extract the error message content from an HTTP response that
     /// contains a Docker JSON error structure.
     fn get_error_message(body: &str) -> Option<String> {
         serde_json::from_str::<ErrorResponse>(body)
             .map(|e| e.message)
             .ok()
+    }
+}
+
+#[pin_project]
+struct Compat<S> {
+    #[pin]
+    tokio_multiplexer: S,
+}
+
+impl<S> AsyncRead for Compat<S>
+where
+    S: tokio_io::AsyncRead,
+{
+    fn poll_read(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+        buf: &mut [u8],
+    ) -> Poll<io::Result<usize>> {
+        self.project().tokio_multiplexer.poll_read(cx, buf)
+    }
+}
+
+impl<S> AsyncWrite for Compat<S>
+where
+    S: tokio_io::AsyncWrite,
+{
+    fn poll_write(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+        buf: &[u8],
+    ) -> Poll<io::Result<usize>> {
+        self.project().tokio_multiplexer.poll_write(cx, buf)
+    }
+    fn poll_flush(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+    ) -> Poll<io::Result<()>> {
+        self.project().tokio_multiplexer.poll_flush(cx)
+    }
+    fn poll_close(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+    ) -> Poll<io::Result<()>> {
+        self.project().tokio_multiplexer.poll_shutdown(cx)
     }
 }
 
