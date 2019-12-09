@@ -1,3 +1,5 @@
+//! Types for working with docker TTY streams
+
 use crate::{Error, Result};
 use bytes::{BigEndian, ByteOrder};
 use futures_util::{
@@ -7,11 +9,45 @@ use futures_util::{
 use pin_project::pin_project;
 use std::io;
 
+/// An enum representing a chunk of TTY text streamed from a Docker container.
+///
+/// For convenience, this type can deref to the contained `Vec<u8>`.
 #[derive(Debug, Clone)]
 pub enum TtyChunk {
     StdIn(Vec<u8>),
     StdOut(Vec<u8>),
     StdErr(Vec<u8>),
+}
+
+impl From<TtyChunk> for Vec<u8> {
+    fn from(tty_chunk: TtyChunk) -> Self {
+        match tty_chunk {
+            TtyChunk::StdIn(bytes) | TtyChunk::StdOut(bytes) | TtyChunk::StdErr(bytes) => bytes,
+        }
+    }
+}
+
+impl AsRef<Vec<u8>> for TtyChunk {
+    fn as_ref(&self) -> &Vec<u8> {
+        match self {
+            TtyChunk::StdIn(bytes) | TtyChunk::StdOut(bytes) | TtyChunk::StdErr(bytes) => bytes,
+        }
+    }
+}
+
+impl std::ops::Deref for TtyChunk {
+    type Target = Vec<u8>;
+    fn deref(&self) -> &Self::Target {
+        self.as_ref()
+    }
+}
+
+impl std::ops::DerefMut for TtyChunk {
+    fn deref_mut(&mut self) -> &mut Vec<u8> {
+        match self {
+            TtyChunk::StdIn(bytes) | TtyChunk::StdOut(bytes) | TtyChunk::StdErr(bytes) => bytes,
+        }
+    }
 }
 
 async fn decode_chunk<S>(mut stream: S) -> Option<(Result<TtyChunk>, S)>
@@ -61,7 +97,7 @@ type TtyWriter<'a> = Pin<Box<dyn AsyncWrite + 'a>>;
 
 /// TTY multiplexer returned by the `attach` method.
 ///
-/// This object can emit a stream of `[TtyChunk]`s and also implements `[AsyncWrite]` for streaming bytes to Stdin.
+/// This object can emit a stream of `TtyChunk`s and also implements `AsyncWrite` for streaming bytes to Stdin.
 #[pin_project]
 pub struct Multiplexer<'a> {
     #[pin]
@@ -124,6 +160,7 @@ impl<'a> AsyncWrite for Multiplexer<'a> {
 }
 
 impl<'a> Multiplexer<'a> {
+    /// Split the `Multiplexer` into the component `Stream` and `AsyncWrite` parts
     pub fn split(
         self
     ) -> (
