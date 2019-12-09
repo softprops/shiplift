@@ -45,7 +45,7 @@ where
     Some((Ok(chunk), stream))
 }
 
-pub fn decode<S>(hyper_chunk_stream: S) -> impl Stream<Item = Result<TtyChunk>>
+pub(crate) fn decode<S>(hyper_chunk_stream: S) -> impl Stream<Item = Result<TtyChunk>>
 where
     S: Stream<Item = Result<hyper::Chunk>> + Unpin,
 {
@@ -61,7 +61,7 @@ type TtyWriter<'a> = Pin<Box<dyn AsyncWrite + 'a>>;
 
 /// TTY multiplexer returned by the `attach` method.
 ///
-/// This object can emit a stream of `[TtyChunk]`s and also implements AsyncRead for streaming bytes to Stdin.
+/// This object can emit a stream of `[TtyChunk]`s and also implements `[AsyncWrite]` for streaming bytes to Stdin.
 #[pin_project]
 pub struct Multiplexer<'a> {
     #[pin]
