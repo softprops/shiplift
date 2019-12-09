@@ -1,11 +1,10 @@
-fn main() {}
-
-/* use futures::TryStreamExt;
+use futures::TryStreamExt;
 use shiplift::Docker;
 use std::{env, path};
+use tar::Archive;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let docker = Docker::new();
     let id = env::args()
         .nth(1)
@@ -14,19 +13,15 @@ async fn main() {
         .nth(2)
         .expect("Usage: cargo run --example containercopyfrom -- <container> <path in container>");
 
-    match docker
+    let bytes = docker
         .containers()
         .get(&id)
         .copy_from(path::Path::new(&path))
         .try_concat()
-        .await
-    {
-        Ok(tar) => {
-            let mut archive = tar::Archive::new(tar);
-            archive.unpack(env::current_dir().unwrap()).unwrap();
-            Ok(())
-        }
-        Err(e) => eprintln!("Error: {}", e),
-    }
+        .await?;
+
+    let mut archive = Archive::new(&bytes[..]);
+    archive.unpack(env::current_dir()?)?;
+
+    Ok(())
 }
- */

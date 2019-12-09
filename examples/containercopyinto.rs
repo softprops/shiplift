@@ -1,5 +1,5 @@
 use shiplift::Docker;
-use std::env;
+use std::{env, fs::File, io::Read};
 
 #[tokio::main]
 async fn main() {
@@ -10,8 +10,6 @@ async fn main() {
     let id = env::args()
         .nth(2)
         .expect("Usage: cargo run --example containercopyinto -- <local path> <container>");
-
-    use std::{fs::File, io::prelude::*};
 
     let mut file = File::open(&path).unwrap();
     let mut bytes = Vec::new();
