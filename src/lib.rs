@@ -3,20 +3,18 @@
 //! # examples
 //!
 //! ```no_run
-//! #[tokio::main]
-//! async fn main() {
-//!     let docker = shiplift::Docker::new();
+//! # async {
+//! let docker = shiplift::Docker::new();
 //!
-//!     match docker.images().list(&Default::default()).await {
-//!         Ok(images) => {
-//!             for image in images {
-//!                 println!("{:?}", image.repo_tags);
-//!             }
-//!         },
-//!         Err(e) => eprintln!("Something bad happened! {}", e),
-//!     }
-//!
+//! match docker.images().list(&Default::default()).await {
+//!     Ok(images) => {
+//!         for image in images {
+//!             println!("{:?}", image.repo_tags);
+//!         }
+//!     },
+//!     Err(e) => eprintln!("Something bad happened! {}", e),
 //! }
+//! # };
 //! ```
 
 pub mod builder;
