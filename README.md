@@ -15,26 +15,6 @@ shiplift = "0.6"
 
 ## usage
 
-### communicating with hosts
-
-To use shiplift, you must first have a docker daemon readily accessible. Typically this daemon process
-is resolvable via a url specified by an env var named `DOCKER_HOST`.
-
-```rust
-let docker = shiplift::Docker::new();
-```
-
-If you wish to be more explicit you can provide a host in the form of a `url.Url`.
-
-```rust
-use shiplift::Docker;
-use url::Url;
-
-let docker = Docker::host(Url::parse("http://yourhost").unwrap());
-```
-
-### Examples
-
 Many small runnable example programs can be found in this repository's [examples directory](https://github.com/softprops/shiplift/tree/master/examples).
 
 ## planned changes
