@@ -148,7 +148,7 @@ impl Transport {
         endpoint: &str,
         body: Option<(B, Mime)>,
         headers: Option<H>,
-        f: impl FnOnce(&mut ::http::request::Builder),
+        f: impl FnOnce(&mut ::hyper::http::request::Builder),
     ) -> Result<Request<Body>>
     where
         B: Into<Body>,

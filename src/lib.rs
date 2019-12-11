@@ -46,7 +46,8 @@ use crate::{
     tty::TtyDecoder,
 };
 use futures::{future::Either, Future, IntoFuture, Stream};
-use hyper::{client::HttpConnector, Body, Client, Method, Uri};
+pub use hyper::Uri;
+use hyper::{client::HttpConnector, Body, Client, Method};
 #[cfg(feature = "tls")]
 use hyper_openssl::HttpsConnector;
 #[cfg(feature = "unix-socket")]
