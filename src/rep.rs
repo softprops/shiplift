@@ -403,8 +403,6 @@ pub struct Top {
 pub struct Version {
     pub version: String,
     pub api_version: String,
-    #[serde(rename = "MinAPIVersion")]
-    pub min_api_version: String,
     pub git_commit: String,
     pub go_version: String,
     pub os: String,
