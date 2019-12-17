@@ -402,9 +402,18 @@ pub struct Top {
 #[serde(rename_all = "PascalCase")]
 pub struct Version {
     pub api_version: String,
+    #[serde(rename = "MinAPIVersion")]
+    pub min_api_version: String,
     pub version: String,
     pub git_commit: String,
     pub go_version: String,
+    pub os: String,
+    pub arch: String,
+    pub kernel_version: String,
+    #[cfg(feature = "chrono")]
+    pub build_time: DateTime<Utc>,
+    #[cfg(not(feature = "chrono"))]
+    pub build_time: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
