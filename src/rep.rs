@@ -60,9 +60,12 @@ pub struct Container {
     pub command: String,
     pub id: String,
     pub image: String,
+    #[serde(rename = "ImageID")]
+    pub image_id: String,
     pub labels: HashMap<String, String>,
     pub names: Vec<String>,
     pub ports: Vec<Port>,
+    pub state: String,
     pub status: String,
     pub size_rw: Option<u64>,
     pub size_root_fs: Option<u64>,
