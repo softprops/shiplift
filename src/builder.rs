@@ -642,6 +642,14 @@ impl ContainerOptionsBuilder {
         self
     }
 
+    /// enable all exposed ports on the container to be mapped to random, available, ports on the host
+    pub fn publish_all_ports(
+        &mut self,
+    ) -> &mut Self {
+        self.params.insert("HostConfig.PublishAllPorts", json!(true));
+        self
+    }
+
     pub fn expose(
         &mut self,
         srcport: u32,
@@ -1703,6 +1711,19 @@ mod tests {
             .build();
         assert_eq!(
             r#"{"ExposedPorts":{"80/tcp":{},"81/tcp":{}},"HostConfig":{},"Image":"test_image"}"#,
+            options.serialize().unwrap()
+        );
+    }
+
+    /// Test container option PublishAllPorts
+    #[test]
+    fn container_options_publish_all_ports() {
+        let options = ContainerOptionsBuilder::new("test_image")
+            .publish_all_ports()
+            .build();
+
+        assert_eq!(
+            r#"{"HostConfig":{"PublishAllPorts":true},"Image":"test_image"}"#,
             options.serialize().unwrap()
         );
     }
