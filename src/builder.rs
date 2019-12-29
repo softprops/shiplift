@@ -1,7 +1,7 @@
 //! Interfaces for building various structures
 
 use crate::{errors::Error, Result};
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 use serde_json::{self, json, map::Map, Value};
 use std::{
     cmp::Eq,
@@ -531,10 +531,10 @@ impl ContainerListOptionsBuilder {
 }
 
 /// Interface for building a new docker container from an existing image
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ContainerOptions {
     pub name: Option<String>,
-    params: HashMap<&'static str, Value>,
+    params: HashMap<String, Value>,
 }
 
 /// Function to insert a JSON value into a tree where the desired
@@ -915,7 +915,7 @@ impl ContainerOptionsBuilder {
     pub fn build(&self) -> ContainerOptions {
         ContainerOptions {
             name: self.name.clone(),
-            params: self.params.clone(),
+            params: self.params.iter().map(|(k, v)| (k.to_string(), v.clone())).collect(),
         }
     }
 }
