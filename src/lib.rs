@@ -975,12 +975,12 @@ impl Docker {
     pub fn host(host: Uri) -> Docker {
         let tcp_host_str = format!(
             "{}://{}:{}",
-            host.scheme_part().map(|s| s.as_str()).unwrap(),
+            host.scheme_str().unwrap(),
             host.host().unwrap().to_owned(),
             host.port_u16().unwrap_or(80)
         );
 
-        match host.scheme_part().map(|s| s.as_str()) {
+        match host.scheme_str() {
             #[cfg(feature = "unix-socket")]
             Some("unix") => Docker {
                 transport: Transport::Unix {
@@ -1136,7 +1136,7 @@ impl Docker {
         endpoint: impl AsRef<str> + 'a,
         body: Option<(Body, Mime)>,
         headers: Option<H>,
-    ) -> impl Stream<Item = Result<hyper::Chunk>> + 'a
+    ) -> impl Stream<Item = Result<hyper::body::Bytes>> + 'a
     where
         H: IntoIterator<Item = (&'static str, String)> + 'a,
     {
@@ -1147,7 +1147,7 @@ impl Docker {
     fn stream_get<'a>(
         &'a self,
         endpoint: impl AsRef<str> + Unpin + 'a,
-    ) -> impl Stream<Item = Result<hyper::Chunk>> + 'a {
+    ) -> impl Stream<Item = Result<hyper::body::Bytes>> + 'a {
         let headers = Some(Vec::default());
         self.transport
             .stream_chunks(Method::GET, endpoint, Option::<(Body, Mime)>::None, headers)

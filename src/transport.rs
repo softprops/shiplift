@@ -4,11 +4,12 @@ use crate::{Error, Result};
 use futures_util::{
     io::{AsyncRead, AsyncWrite},
     stream::Stream,
-    TryFutureExt, TryStreamExt,
+    TryFutureExt, StreamExt,
 };
 use hyper::{
+    body::Bytes,
     client::{Client, HttpConnector},
-    header, Body, Chunk, Method, Request, StatusCode,
+    header, Body, Method, Request, StatusCode,
 };
 #[cfg(feature = "tls")]
 use hyper_openssl::HttpsConnector;
@@ -79,12 +80,11 @@ impl Transport {
     where
         B: Into<Body>,
     {
-        let chunk = self
-            .stream_chunks(method, endpoint, body, None::<iter::Empty<_>>)
-            .try_concat()
+        let body = self
+            .get_body(method, endpoint, body, None::<iter::Empty<_>>)
             .await?;
-
-        let string = String::from_utf8(chunk.to_vec())?;
+        let bytes = hyper::body::to_bytes(body).await?;
+        let string = String::from_utf8(bytes.to_vec())?;
 
         Ok(string)
     }
@@ -101,7 +101,7 @@ impl Transport {
         H: IntoIterator<Item = (&'static str, String)>,
     {
         let req = self
-            .build_request(method, endpoint, body, headers, |_| ())
+            .build_request(method, endpoint, body, headers, |builder| builder)
             .expect("Failed to build request!");
 
         let response = self.send_request(req).await?;
@@ -115,9 +115,8 @@ impl Transport {
             | StatusCode::SWITCHING_PROTOCOLS
             | StatusCode::NO_CONTENT => Ok(response.into_body()),
             _ => {
-                let chunk = concat_chunks(response.into_body()).await?;
-
-                let message_body = String::from_utf8(chunk.into_bytes().into_iter().collect())?;
+                let bytes = hyper::body::to_bytes(response.into_body()).await?;
+                let message_body = String::from_utf8(bytes.to_vec())?;
 
                 Err(Error::Fault {
                     code: status,
@@ -138,7 +137,7 @@ impl Transport {
         endpoint: impl AsRef<str>,
         body: Option<(B, Mime)>,
         headers: Option<H>,
-    ) -> Result<impl Stream<Item = Result<Chunk>>>
+    ) -> Result<impl Stream<Item = Result<Bytes>>>
     where
         B: Into<Body>,
         H: IntoIterator<Item = (&'static str, String)>,
@@ -154,7 +153,7 @@ impl Transport {
         endpoint: impl AsRef<str> + 'a,
         body: Option<(B, Mime)>,
         headers: Option<H>,
-    ) -> impl Stream<Item = Result<Chunk>> + 'a
+    ) -> impl Stream<Item = Result<Bytes>> + 'a
     where
         H: IntoIterator<Item = (&'static str, String)> + 'a,
         B: Into<Body> + 'a,
@@ -164,20 +163,21 @@ impl Transport {
     }
 
     /// Builds an HTTP request.
-    fn build_request<B, H>(
+    fn build_request<B, H, F>(
         &self,
         method: Method,
         endpoint: impl AsRef<str>,
         body: Option<(B, Mime)>,
         headers: Option<H>,
-        f: impl FnOnce(&mut ::http::request::Builder),
+        f: F,
     ) -> Result<Request<Body>>
     where
         B: Into<Body>,
         H: IntoIterator<Item = (&'static str, String)>,
+        F: Fn(::http::request::Builder) -> ::http::request::Builder
     {
         let mut builder = Request::builder();
-        f(&mut builder);
+        builder = f(builder);
 
         let req = match *self {
             Transport::Tcp { ref host, .. } => {
@@ -193,15 +193,15 @@ impl Transport {
             }
             #[cfg(feature = "unix-socket")]
             Transport::Unix { ref path, .. } => {
-                let uri: hyper::Uri = DomainUri::new(&path, endpoint.as_ref())?.into();
-                builder.method(method).uri(&uri.to_string())
+                let uri = DomainUri::new(&path, endpoint.as_ref());
+                builder.method(method).uri(uri)
             }
         };
-        let req = req.header(header::HOST, "");
+        let mut req = req.header(header::HOST, "");
 
         if let Some(h) = headers {
             for (k, v) in h.into_iter() {
-                req.header(k, v);
+                req = req.header(k, v);
             }
         }
 
@@ -252,8 +252,8 @@ impl Transport {
         let req = self
             .build_request(method, endpoint, body, None::<iter::Empty<_>>, |builder| {
                 builder
-                    .header(header::CONNECTION, "Upgrade")
-                    .header(header::UPGRADE, "tcp");
+                    .header(header::CONNECTION.as_str(), "Upgrade")
+                    .header(header::UPGRADE.as_str(), "tcp")
             })
             .expect("Failed to build request!");
 
@@ -296,7 +296,7 @@ struct Compat<S> {
 
 impl<S> AsyncRead for Compat<S>
 where
-    S: tokio_io::AsyncRead,
+    S: tokio::io::AsyncRead,
 {
     fn poll_read(
         self: Pin<&mut Self>,
@@ -309,7 +309,7 @@ where
 
 impl<S> AsyncWrite for Compat<S>
 where
-    S: tokio_io::AsyncWrite,
+    S: tokio::io::AsyncWrite,
 {
     fn poll_write(
         self: Pin<&mut Self>,
@@ -337,8 +337,8 @@ struct ErrorResponse {
     message: String,
 }
 
-fn stream_body(body: Body) -> impl Stream<Item = Result<Chunk>> {
-    async fn unfold(mut body: Body) -> Option<(Result<Chunk>, Body)> {
+fn stream_body(body: Body) -> impl Stream<Item = Result<Bytes>> {
+    async fn unfold(mut body: Body) -> Option<(Result<Bytes>, Body)> {
         let chunk_result = body.next().await?.map_err(Error::from);
 
         Some((chunk_result, body))
@@ -347,6 +347,3 @@ fn stream_body(body: Body) -> impl Stream<Item = Result<Chunk>> {
     futures_util::stream::unfold(body, unfold)
 }
 
-async fn concat_chunks(body: Body) -> Result<Chunk> {
-    stream_body(body).try_concat().await
-}

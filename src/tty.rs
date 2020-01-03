@@ -83,7 +83,7 @@ where
 
 pub(crate) fn decode<S>(hyper_chunk_stream: S) -> impl Stream<Item = Result<TtyChunk>>
 where
-    S: Stream<Item = Result<hyper::Chunk>> + Unpin,
+    S: Stream<Item = Result<hyper::body::Bytes>> + Unpin,
 {
     let stream = hyper_chunk_stream
         .map_err(|e| io::Error::new(io::ErrorKind::Other, e))

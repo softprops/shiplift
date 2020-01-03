@@ -22,8 +22,8 @@ base64 = "0.11.0"
 bytes = "0.4.12"
 chrono = { version = "0.4.9", optional = true, features = ["serde"] }
 flate2 = "1.0.13"
-http = "0.1.19"
-hyper = "0.13.0-alpha.4"
+http = "0.2.0"
+hyper = "0.13.1"
 hyper-openssl = { version = "0.8.0-alpha.4", optional = true }
 hyperlocal = { git="https://github.com/danieleades/hyperlocal", branch="update-hyper", optional = true }
 log = "0.4.8"
@@ -36,13 +36,13 @@ url = "2.1.0"
 futures_codec = "0.3.1"
 futures-util = "0.3.1"
 pin-project = "0.4.6"
-tokio-io = "0.2.0-alpha.6"
+tokio = "0.2.6"
 
 
 [dev-dependencies]
 env_logger = "0.7.1"
 futures = "0.3.1"
-tokio = "0.2.0-alpha.6"
+tokio = { version = "0.2.6", features = ["macros"] }
 
 [features]
 default = ["chrono", "unix-socket", "tls"]
