@@ -1306,11 +1306,8 @@ impl ImageListOptionsBuilder {
         self
     }
 
-    pub fn all(
-        &mut self,
-        a: bool,
-    ) -> &mut Self {
-        self.params.insert("all", a.to_string());
+    pub fn all(&mut self) -> &mut Self {
+        self.params.insert("all", "true".to_owned());
         self
     }
 
