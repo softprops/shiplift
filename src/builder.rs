@@ -643,10 +643,9 @@ impl ContainerOptionsBuilder {
     }
 
     /// enable all exposed ports on the container to be mapped to random, available, ports on the host
-    pub fn publish_all_ports(
-        &mut self,
-    ) -> &mut Self {
-        self.params.insert("HostConfig.PublishAllPorts", json!(true));
+    pub fn publish_all_ports(&mut self) -> &mut Self {
+        self.params
+            .insert("HostConfig.PublishAllPorts", json!(true));
         self
     }
 
@@ -909,6 +908,14 @@ impl ContainerOptionsBuilder {
         set: bool,
     ) -> &mut Self {
         self.params.insert("HostConfig.Privileged", json!(set));
+        self
+    }
+
+    pub fn user(
+        &mut self,
+        user: &str,
+    ) -> &mut Self {
+        self.params.insert("User", json!(user));
         self
     }
 
@@ -1654,6 +1661,18 @@ mod tests {
 
         assert_eq!(
             r#"{"Env":["foo","bar"],"HostConfig":{},"Image":"test_image"}"#,
+            options.serialize().unwrap()
+        );
+    }
+
+    #[test]
+    fn container_options_user() {
+        let options = ContainerOptionsBuilder::new("test_image")
+            .user("alice")
+            .build();
+
+        assert_eq!(
+            r#"{"HostConfig":{},"Image":"test_image","User":"alice"}"#,
             options.serialize().unwrap()
         );
     }
