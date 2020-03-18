@@ -129,6 +129,7 @@ pub struct State {
     pub started_at: DateTime<Utc>,
     #[cfg(not(feature = "chrono"))]
     pub started_at: String,
+    pub status: String,
 }
 
 type PortDescription = HashMap<String, Option<Vec<HashMap<String, String>>>>;
