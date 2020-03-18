@@ -65,20 +65,7 @@ impl fmt::Display for Error {
 }
 
 impl StdError for Error {
-    fn description(&self) -> &str {
-        match self {
-            Error::SerdeJsonError(e) => e.description(),
-            Error::Hyper(e) => e.description(),
-            Error::Http(e) => e.description(),
-            Error::IO(e) => e.description(),
-            Error::Encoding(e) => e.description(),
-            Error::InvalidResponse(msg) => msg.as_str(),
-            Error::Fault { message, .. } => message.as_str(),
-            Error::ConnectionNotUpgraded => "connection not upgraded",
-        }
-    }
-
-    fn cause(&self) -> Option<&dyn StdError> {
+    fn source(&self) -> Option<&(dyn StdError + 'static)> {
         match self {
             Error::SerdeJsonError(ref err) => Some(err),
             Error::Http(ref err) => Some(err),
