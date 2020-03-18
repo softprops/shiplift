@@ -45,6 +45,8 @@ pub struct ImageDetails {
     pub id: String,
     pub os: String,
     pub parent: String,
+    pub repo_tags: Option<Vec<String>>,
+    pub repo_digests: Option<Vec<String>>,
     pub size: u64,
     pub virtual_size: u64,
 }
