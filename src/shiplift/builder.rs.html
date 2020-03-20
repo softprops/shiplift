@@ -1846,6 +1846,26 @@
 <span id="1846">1846</span>
 <span id="1847">1847</span>
 <span id="1848">1848</span>
+<span id="1849">1849</span>
+<span id="1850">1850</span>
+<span id="1851">1851</span>
+<span id="1852">1852</span>
+<span id="1853">1853</span>
+<span id="1854">1854</span>
+<span id="1855">1855</span>
+<span id="1856">1856</span>
+<span id="1857">1857</span>
+<span id="1858">1858</span>
+<span id="1859">1859</span>
+<span id="1860">1860</span>
+<span id="1861">1861</span>
+<span id="1862">1862</span>
+<span id="1863">1863</span>
+<span id="1864">1864</span>
+<span id="1865">1865</span>
+<span id="1866">1866</span>
+<span id="1867">1867</span>
+<span id="1868">1868</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Interfaces for building various structures</span>
 
@@ -2760,6 +2780,14 @@
         <span class="self">self</span>
     }
 
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">user</span>(
+        <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
+        <span class="ident">user</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
+        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;User&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">user</span>));
+        <span class="self">self</span>
+    }
+
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">ContainerOptions</span> {
         <span class="ident">ContainerOptions</span> {
             <span class="ident">name</span>: <span class="self">self</span>.<span class="ident">name</span>.<span class="ident">clone</span>(),
@@ -3502,6 +3530,18 @@
 
         <span class="macro">assert_eq</span><span class="macro">!</span>(
             <span class="string">r#&quot;{&quot;Env&quot;:[&quot;foo&quot;,&quot;bar&quot;],&quot;HostConfig&quot;:{},&quot;Image&quot;:&quot;test_image&quot;}&quot;#</span>,
+            <span class="ident">options</span>.<span class="ident">serialize</span>().<span class="ident">unwrap</span>()
+        );
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">container_options_user</span>() {
+        <span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">ContainerOptionsBuilder</span>::<span class="ident">new</span>(<span class="string">&quot;test_image&quot;</span>)
+            .<span class="ident">user</span>(<span class="string">&quot;alice&quot;</span>)
+            .<span class="ident">build</span>();
+
+        <span class="macro">assert_eq</span><span class="macro">!</span>(
+            <span class="string">r#&quot;{&quot;HostConfig&quot;:{},&quot;Image&quot;:&quot;test_image&quot;,&quot;User&quot;:&quot;alice&quot;}&quot;#</span>,
             <span class="ident">options</span>.<span class="ident">serialize</span>().<span class="ident">unwrap</span>()
         );
     }
