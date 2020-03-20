@@ -554,6 +554,8 @@
 <span id="554">554</span>
 <span id="555">555</span>
 <span id="556">556</span>
+<span id="557">557</span>
+<span id="558">558</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Rust representations of docker json structures</span>
 
@@ -602,6 +604,8 @@
     <span class="kw">pub</span> <span class="ident">id</span>: <span class="ident">String</span>,
     <span class="kw">pub</span> <span class="ident">os</span>: <span class="ident">String</span>,
     <span class="kw">pub</span> <span class="ident">parent</span>: <span class="ident">String</span>,
+    <span class="kw">pub</span> <span class="ident">repo_tags</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">repo_digests</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">size</span>: <span class="ident">u64</span>,
     <span class="kw">pub</span> <span class="ident">virtual_size</span>: <span class="ident">u64</span>,
 }
