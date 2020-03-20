@@ -815,7 +815,7 @@ impl<'a> Volumes<'a> {
         self.docker
             .get_json::<VolumesRep>(&path.join("?"))
             .map(|volumes: VolumesRep| match volumes.volumes {
-                Some(volumes) => volumes.clone(),
+                Some(volumes) => volumes,
                 None => vec![],
             })
     }
