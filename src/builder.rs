@@ -911,6 +911,14 @@ impl ContainerOptionsBuilder {
         self
     }
 
+    pub fn user(
+        &mut self,
+        user: &str,
+    ) -> &mut Self {
+        self.params.insert("User", json!(user));
+        self
+    }
+
     pub fn build(&self) -> ContainerOptions {
         ContainerOptions {
             name: self.name.clone(),
@@ -1653,6 +1661,18 @@ mod tests {
 
         assert_eq!(
             r#"{"Env":["foo","bar"],"HostConfig":{},"Image":"test_image"}"#,
+            options.serialize().unwrap()
+        );
+    }
+
+    #[test]
+    fn container_options_user() {
+        let options = ContainerOptionsBuilder::new("test_image")
+            .user("alice")
+            .build();
+
+        assert_eq!(
+            r#"{"HostConfig":{},"Image":"test_image","User":"alice"}"#,
             options.serialize().unwrap()
         );
     }
