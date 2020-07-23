@@ -45,6 +45,8 @@ pub struct ImageDetails {
     pub id: String,
     pub os: String,
     pub parent: String,
+    pub repo_tags: Option<Vec<String>>,
+    pub repo_digests: Option<Vec<String>>,
     pub size: u64,
     pub virtual_size: u64,
 }
@@ -60,9 +62,12 @@ pub struct Container {
     pub command: String,
     pub id: String,
     pub image: String,
+    #[serde(rename = "ImageID")]
+    pub image_id: String,
     pub labels: HashMap<String, String>,
     pub names: Vec<String>,
     pub ports: Vec<Port>,
+    pub state: String,
     pub status: String,
     pub size_rw: Option<u64>,
     pub size_root_fs: Option<u64>,
@@ -126,6 +131,7 @@ pub struct State {
     pub started_at: DateTime<Utc>,
     #[cfg(not(feature = "chrono"))]
     pub started_at: String,
+    pub status: String,
 }
 
 type PortDescription = HashMap<String, Option<Vec<HashMap<String, String>>>>;
@@ -401,10 +407,17 @@ pub struct Top {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct Version {
-    pub api_version: String,
     pub version: String,
+    pub api_version: String,
     pub git_commit: String,
     pub go_version: String,
+    pub os: String,
+    pub arch: String,
+    pub kernel_version: String,
+    #[cfg(feature = "chrono")]
+    pub build_time: DateTime<Utc>,
+    #[cfg(not(feature = "chrono"))]
+    pub build_time: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

@@ -1,16 +1,16 @@
 //! Representations of various client errors
 
-use futures_util::io::Error as IoError;
-use http;
-use hyper::{self, StatusCode};
+use hyper::{self, http, StatusCode};
 use serde_json::Error as SerdeError;
 use std::{error::Error as StdError, fmt, string::FromUtf8Error};
+
+use futures_util::io::Error as IoError;
 
 #[derive(Debug)]
 pub enum Error {
     SerdeJsonError(SerdeError),
     Hyper(hyper::Error),
-    Http(http::Error),
+    Http(hyper::http::Error),
     IO(IoError),
     Encoding(FromUtf8Error),
     InvalidResponse(String),
@@ -30,8 +30,8 @@ impl From<hyper::Error> for Error {
     }
 }
 
-impl From<http::Error> for Error {
-    fn from(error: http::Error) -> Error {
+impl From<hyper::http::Error> for Error {
+    fn from(error: hyper::http::Error) -> Error {
         Error::Http(error)
     }
 }
@@ -80,20 +80,7 @@ impl fmt::Display for Error {
 }
 
 impl StdError for Error {
-    fn description(&self) -> &str {
-        match self {
-            Error::SerdeJsonError(e) => e.description(),
-            Error::Hyper(e) => e.description(),
-            Error::Http(e) => e.description(),
-            Error::IO(e) => e.description(),
-            Error::Encoding(e) => e.description(),
-            Error::InvalidResponse(msg) => msg.as_str(),
-            Error::Fault { message, .. } => message.as_str(),
-            Error::ConnectionNotUpgraded => "connection not upgraded",
-        }
-    }
-
-    fn cause(&self) -> Option<&dyn StdError> {
+    fn source(&self) -> Option<&(dyn StdError + 'static)> {
         match self {
             Error::SerdeJsonError(ref err) => Some(err),
             Error::Http(ref err) => Some(err),

@@ -1,7 +1,15 @@
-# 0.6.0
+# 0.7.0
 
 * async-await support [#191](https://github.com/softprops/shiplift/pull/191)
-* add chrono as an optional feature [#190](https://github.com/softprops/shiplift/pull/190)
+
+# 0.6.0
+
+* add chrono as an optional feature, enabled by default [#190](https://github.com/softprops/shiplift/pull/190)
+* introduce new `vendored-ssl` cargo feature flag enabling the open ssl's crates `vendored`  feature [#197](https://github.com/softprops/shiplift/pull/197)
+* added publish method to expose a port [#198](https://github.com/softprops/shiplift/pull/198)
+* replace host str to use https if encrypted [#193](https://github.com/softprops/shiplift/pull/193)
+* added image tag feature [#187](https://github.com/softprops/shiplift/pull/187)
+* added image import feature [#165](https://github.com/softprops/shiplift/pull/165)
 
 # 0.5.0
 

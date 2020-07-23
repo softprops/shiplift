@@ -49,7 +49,9 @@ use futures_util::{
     stream::Stream,
     TryFutureExt, TryStreamExt,
 };
-use hyper::{client::HttpConnector, Body, Client, Method, Uri};
+// use futures::{future::Either, Future, IntoFuture, Stream};
+pub use hyper::Uri;
+use hyper::{client::HttpConnector, Body, Client, Method};
 #[cfg(feature = "tls")]
 use hyper_openssl::HttpsConnector;
 #[cfg(feature = "unix-socket")]
@@ -168,8 +170,8 @@ impl<'a> Images<'a> {
                     None::<iter::Empty<_>>,
                 );
 
-                let value_stream = chunk_stream.and_then(|chunk| {
-                    async move { serde_json::from_slice(&chunk).map_err(Error::from) }
+                let value_stream = chunk_stream.and_then(|chunk| async move {
+                    serde_json::from_slice(&chunk).map_err(Error::from)
                 });
 
                 Ok(value_stream)
@@ -267,8 +269,8 @@ impl<'a> Images<'a> {
                     None::<iter::Empty<_>>,
                 );
 
-                let value_stream = chunk_stream.and_then(|chunk| {
-                    async move { serde_json::from_slice(&chunk).map_err(Error::from) }
+                let value_stream = chunk_stream.and_then(|chunk| async move {
+                    serde_json::from_slice(&chunk).map_err(Error::from)
                 });
 
                 Ok(value_stream)
@@ -393,8 +395,8 @@ impl<'a> Container<'a> {
         Box::pin(
             futures_codec::FramedRead::new(reader, codec)
                 .map_err(Error::IO)
-                .and_then(|s: String| {
-                    async move { serde_json::from_str(&s).map_err(Error::SerdeJsonError) }
+                .and_then(|s: String| async move {
+                    serde_json::from_str(&s).map_err(Error::SerdeJsonError)
                 }),
         )
     }
@@ -836,9 +838,8 @@ impl<'a> Volumes<'a> {
     pub async fn list(&self) -> Result<Vec<VolumeRep>> {
         let path = vec!["/volumes".to_owned()];
 
-        let volumes = self.docker.get_json::<VolumesRep>(&path.join("?")).await?;
-
-        Ok(match volumes.volumes {
+        let volumes_rep = self.docker.get_json::<VolumesRep>(&path.join("?")).await?;
+        Ok(match volumes_rep.volumes {
             Some(volumes) => volumes,
             None => vec![],
         })
@@ -910,6 +911,16 @@ fn get_docker_for_tcp(tcp_host_str: String) -> Docker {
             let ca = &format!("{}/ca.pem", certs);
             connector.set_ca_file(&Path::new(ca)).unwrap();
         }
+
+        // If we are attempting to connec to the docker daemon via tcp
+        // we need to convert the scheme to `https` to let hyper connect.
+        // Otherwise, hyper will reject the connection since it does not
+        // recongnize `tcp` as a valid `http` scheme.
+        let tcp_host_str = if tcp_host_str.contains("tcp://") {
+            tcp_host_str.replace("tcp://", "https://")
+        } else {
+            tcp_host_str
+        };
 
         Docker {
             transport: Transport::EncryptedTcp {
@@ -1049,8 +1060,8 @@ impl Docker {
         Box::pin(
             futures_codec::FramedRead::new(reader, codec)
                 .map_err(Error::IO)
-                .and_then(|s: String| {
-                    async move { serde_json::from_str(&s).map_err(Error::SerdeJsonError) }
+                .and_then(|s: String| async move {
+                    serde_json::from_str(&s).map_err(Error::SerdeJsonError)
                 }),
         )
     }

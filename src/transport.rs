@@ -4,7 +4,7 @@ use crate::{Error, Result};
 use futures_util::{
     io::{AsyncRead, AsyncWrite},
     stream::Stream,
-    TryFutureExt, StreamExt,
+    StreamExt, TryFutureExt,
 };
 use hyper::{
     body::Bytes,
@@ -101,7 +101,7 @@ impl Transport {
         H: IntoIterator<Item = (&'static str, String)>,
     {
         let req = self
-            .build_request(method, endpoint, body, headers, |builder| builder)
+            .build_request(method, endpoint, body, headers, Request::builder())
             .expect("Failed to build request!");
 
         let response = self.send_request(req).await?;
@@ -163,22 +163,18 @@ impl Transport {
     }
 
     /// Builds an HTTP request.
-    fn build_request<B, H, F>(
+    fn build_request<B, H>(
         &self,
         method: Method,
         endpoint: impl AsRef<str>,
         body: Option<(B, Mime)>,
         headers: Option<H>,
-        f: F,
+        builder: hyper::http::request::Builder,
     ) -> Result<Request<Body>>
     where
         B: Into<Body>,
         H: IntoIterator<Item = (&'static str, String)>,
-        F: Fn(::http::request::Builder) -> ::http::request::Builder
     {
-        let mut builder = Request::builder();
-        builder = f(builder);
-
         let req = match *self {
             Transport::Tcp { ref host, .. } => {
                 builder
@@ -250,11 +246,15 @@ impl Transport {
         };
 
         let req = self
-            .build_request(method, endpoint, body, None::<iter::Empty<_>>, |builder| {
-                builder
-                    .header(header::CONNECTION.as_str(), "Upgrade")
-                    .header(header::UPGRADE.as_str(), "tcp")
-            })
+            .build_request(
+                method,
+                endpoint,
+                body,
+                None::<iter::Empty<_>>,
+                Request::builder()
+                    .header(header::CONNECTION, "Upgrade")
+                    .header(header::UPGRADE, "tcp"),
+            )
             .expect("Failed to build request!");
 
         let response = self.send_request(req).await?;
@@ -346,4 +346,3 @@ fn stream_body(body: Body) -> impl Stream<Item = Result<Bytes>> {
 
     futures_util::stream::unfold(body, unfold)
 }
-
