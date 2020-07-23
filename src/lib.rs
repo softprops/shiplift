@@ -342,7 +342,7 @@ impl<'a> Container<'a> {
     }
 
     /// Attaches a multiplexed TCP stream to the container that can be used to read Stdout, Stderr and write Stdin.
-    async fn attach_raw(&self) -> Result<impl AsyncRead + AsyncWrite + 'a> {
+    async fn attach_raw(&self) -> Result<impl AsyncRead + AsyncWrite + Send + 'a> {
         self.docker
             .stream_post_upgrade(
                 format!(

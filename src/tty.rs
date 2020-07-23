@@ -92,8 +92,8 @@ where
     futures_util::stream::unfold(stream, decode_chunk)
 }
 
-type TtyReader<'a> = Pin<Box<dyn Stream<Item = Result<TtyChunk>> + 'a>>;
-type TtyWriter<'a> = Pin<Box<dyn AsyncWrite + 'a>>;
+type TtyReader<'a> = Pin<Box<dyn Stream<Item = Result<TtyChunk>> + Send + 'a>>;
+type TtyWriter<'a> = Pin<Box<dyn AsyncWrite + Send + 'a>>;
 
 /// TTY multiplexer returned by the `attach` method.
 ///
@@ -109,7 +109,7 @@ pub struct Multiplexer<'a> {
 impl<'a> Multiplexer<'a> {
     pub(crate) fn new<T>(tcp_connection: T) -> Self
     where
-        T: AsyncRead + AsyncWrite + 'a,
+        T: AsyncRead + AsyncWrite + Send + 'a,
     {
         let (reader, writer) = tcp_connection.split();
 
@@ -165,7 +165,7 @@ impl<'a> Multiplexer<'a> {
         self
     ) -> (
         impl Stream<Item = Result<TtyChunk>> + 'a,
-        impl AsyncWrite + 'a,
+        impl AsyncWrite + Send + 'a,
     ) {
         (self.reader, self.writer)
     }
