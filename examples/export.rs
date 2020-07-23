@@ -1,6 +1,7 @@
 use futures::StreamExt;
-use shiplift::{errors::Error, Docker};
 use std::{env, fs::OpenOptions, io::Write};
+
+use shiplift::{errors::Error, Docker};
 
 #[tokio::main]
 async fn main() {

@@ -1,13 +1,10 @@
-use futures::Future;
 use shiplift::Docker;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let docker = Docker::host("http://yourhost".parse().unwrap());
-
-    let fut = docker
-        .ping()
-        .map(|pong| println!("Ping: {}", pong))
-        .map_err(|e| eprintln!("Error: {}", e));
-
-    tokio::run(fut);
+    match docker.ping().await {
+        Ok(pong) => println!("Ping: {}", pong),
+        Err(e) => eprintln!("Error: {}", e),
+    }
 }

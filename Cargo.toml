@@ -40,6 +40,9 @@ url = "2.1"
 
 [dev-dependencies]
 env_logger = "0.7"
+# Required for examples to run
+futures = "0.3.1"
+tokio = { version = "0.2.6", features = ["macros"] }
 
 [features]
 default = ["chrono", "unix-socket", "tls"]
