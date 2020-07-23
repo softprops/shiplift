@@ -976,7 +976,9 @@ impl Docker {
     {
         Docker {
             transport: Transport::Unix {
-                client: Client::builder().keep_alive(false).build(UnixConnector),
+                client: Client::builder()
+                    .pool_max_idle_per_host(0)
+                    .build(UnixConnector),
                 path: socket_path.into(),
             },
         }

@@ -20,7 +20,6 @@ use hyperlocal::Uri as DomainUri;
 use mime::Mime;
 use pin_project::pin_project;
 use serde::{Deserialize, Serialize};
-use serde_json;
 use std::{
     fmt, io, iter,
     pin::Pin,
