@@ -75,12 +75,29 @@
 <span id="75">75</span>
 <span id="76">76</span>
 <span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
+<span id="80">80</span>
+<span id="81">81</span>
+<span id="82">82</span>
+<span id="83">83</span>
+<span id="84">84</span>
+<span id="85">85</span>
+<span id="86">86</span>
+<span id="87">87</span>
+<span id="88">88</span>
+<span id="89">89</span>
+<span id="90">90</span>
+<span id="91">91</span>
+<span id="92">92</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Representations of various client errors</span>
 
-<span class="kw">use</span> <span class="ident">hyper</span>::{<span class="self">self</span>, <span class="ident">StatusCode</span>};
+<span class="kw">use</span> <span class="ident">hyper</span>::{<span class="self">self</span>, <span class="ident">http</span>, <span class="ident">StatusCode</span>};
 <span class="kw">use</span> <span class="ident">serde_json</span>::<span class="ident">Error</span> <span class="kw">as</span> <span class="ident">SerdeError</span>;
-<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">error</span>::<span class="ident">Error</span> <span class="kw">as</span> <span class="ident">StdError</span>, <span class="ident">fmt</span>, <span class="ident">io</span>::<span class="ident">Error</span> <span class="kw">as</span> <span class="ident">IoError</span>, <span class="ident">string</span>::<span class="ident">FromUtf8Error</span>};
+<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">error</span>::<span class="ident">Error</span> <span class="kw">as</span> <span class="ident">StdError</span>, <span class="ident">fmt</span>, <span class="ident">string</span>::<span class="ident">FromUtf8Error</span>};
+
+<span class="kw">use</span> <span class="ident">futures_util</span>::<span class="ident">io</span>::<span class="ident">Error</span> <span class="kw">as</span> <span class="ident">IoError</span>;
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Error</span> {
@@ -112,9 +129,22 @@
     }
 }
 
+<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">http</span>::<span class="ident">uri</span>::<span class="ident">InvalidUri</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Error</span> {
+    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">error</span>: <span class="ident">http</span>::<span class="ident">uri</span>::<span class="ident">InvalidUri</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="kw">let</span> <span class="ident">http_error</span>: <span class="ident">http</span>::<span class="ident">Error</span> <span class="op">=</span> <span class="ident">error</span>.<span class="ident">into</span>();
+        <span class="ident">http_error</span>.<span class="ident">into</span>()
+    }
+}
+
 <span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">IoError</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Error</span> {
     <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">error</span>: <span class="ident">IoError</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Error</span> {
         <span class="ident">Error</span>::<span class="ident">IO</span>(<span class="ident">error</span>)
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">FromUtf8Error</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Error</span> {
+    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">error</span>: <span class="ident">FromUtf8Error</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Error</span> {
+        <span class="ident">Error</span>::<span class="ident">Encoding</span>(<span class="ident">error</span>)
     }
 }
 
@@ -154,4 +184,4 @@
     }
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "shiplift";</script><script src="../../aliases.js"></script><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>
+</section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "shiplift";</script><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>

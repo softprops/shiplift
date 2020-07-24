@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["StreamReader","Reads from a stream of chunks asynchronously."]]});
