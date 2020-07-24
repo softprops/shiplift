@@ -1,13 +1,14 @@
 use shiplift::Docker;
-use tokio::prelude::Future;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let docker = Docker::new();
     println!("docker images in stock");
-    let fut = docker
-        .images()
-        .list(&Default::default())
-        .map(|images| {
+
+    let result = docker.images().list(&Default::default()).await;
+
+    match result {
+        Ok(images) => {
             for i in images {
                 println!(
                     "{} {} {:?}",
@@ -16,7 +17,7 @@ fn main() {
                     i.repo_tags.unwrap_or_else(|| vec!["none".into()])
                 );
             }
-        })
-        .map_err(|e| eprintln!("Error: {}", e));
-    tokio::run(fut);
+        }
+        Err(e) => eprintln!("Error: {}", e),
+    }
 }

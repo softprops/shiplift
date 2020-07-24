@@ -1,25 +1,26 @@
 use futures::StreamExt;
-use shiplift::{tty::TtyChunk, Docker, LogsOptions};
+use shiplift::{tty::TtyChunk, Docker};
 use std::env;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let docker = Docker::new();
     let id = env::args()
         .nth(1)
         .expect("You need to specify a container id");
 
-    let mut logs_stream = docker
-        .containers()
-        .get(&id)
-        .logs(&LogsOptions::builder().stdout(true).stderr(true).build());
+    let tty_multiplexer = docker.containers().get(&id).attach().await?;
 
-    while let Some(log_result) = logs_stream.next().await {
-        match log_result {
+    let (mut reader, _writer) = tty_multiplexer.split();
+
+    while let Some(tty_result) = reader.next().await {
+        match tty_result {
             Ok(chunk) => print_chunk(chunk),
             Err(e) => eprintln!("Error: {}", e),
         }
     }
+
+    Ok(())
 }
 
 fn print_chunk(chunk: TtyChunk) {

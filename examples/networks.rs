@@ -1,17 +1,17 @@
 use shiplift::Docker;
-use tokio::prelude::Future;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     env_logger::init();
+
     let docker = Docker::new();
-    let fut = docker
-        .networks()
-        .list(&Default::default())
-        .map(|networks| {
+
+    match docker.networks().list(&Default::default()).await {
+        Ok(networks) => {
             for network in networks {
-                println!("network -> {:#?}", network);
+                println!("network -> {:#?}", network)
             }
-        })
-        .map_err(|e| eprintln!("Error: {}", e));
-    tokio::run(fut);
+        }
+        Err(e) => eprintln!("Error: {}", e),
+    }
 }

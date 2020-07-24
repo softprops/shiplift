@@ -2,9 +2,9 @@
 
 use shiplift::{Docker, Image, TagOptions};
 use std::env;
-use tokio::prelude::Future;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     env_logger::init();
     let docker = Docker::new();
     let img = env::args()
@@ -21,7 +21,7 @@ fn main() {
 
     let image = Image::new(&docker, img);
 
-    let fut = image.tag(&tag_opts).map_err(|e| eprintln!("Error: {}", e));
-
-    tokio::run(fut);
+    if let Err(e) = image.tag(&tag_opts).await {
+        eprintln!("Error: {}", e)
+    }
 }

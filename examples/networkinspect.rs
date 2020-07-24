@@ -1,17 +1,15 @@
 use shiplift::Docker;
 use std::env;
-use tokio::prelude::Future;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let docker = Docker::new();
     let id = env::args()
         .nth(1)
         .expect("You need to specify a network id");
-    let fut = docker
-        .networks()
-        .get(&id)
-        .inspect()
-        .map(|network| println!("{:#?}", network))
-        .map_err(|e| eprintln!("Error: {}", e));
-    tokio::run(fut);
+
+    match docker.networks().get(&id).inspect().await {
+        Ok(network_info) => println!("{:#?}", network_info),
+        Err(e) => eprintln!("Error: {}", e),
+    }
 }

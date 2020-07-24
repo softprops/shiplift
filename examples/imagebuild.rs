@@ -1,19 +1,22 @@
+use futures::StreamExt;
 use shiplift::{BuildOptions, Docker};
 use std::env;
-use tokio::prelude::{Future, Stream};
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let docker = Docker::new();
     let path = env::args().nth(1).expect("You need to specify a path");
 
-    let fut = docker
-        .images()
-        .build(&BuildOptions::builder(path).tag("shiplift_test").build())
-        .for_each(|output| {
-            println!("{:?}", output);
-            Ok(())
-        })
-        .map_err(|e| eprintln!("Error: {}", e));
+    let options = BuildOptions::builder(path).tag("shiplift_test").build();
 
-    tokio::run(fut);
+    let images = docker.images();
+
+    let mut stream = images.build(&options);
+
+    while let Some(build_result) = stream.next().await {
+        match build_result {
+            Ok(output) => println!("{:?}", output),
+            Err(e) => eprintln!("Error: {}", e),
+        }
+    }
 }

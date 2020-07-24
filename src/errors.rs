@@ -1,8 +1,10 @@
 //! Representations of various client errors
 
-use hyper::{self, StatusCode};
+use hyper::{self, http, StatusCode};
 use serde_json::Error as SerdeError;
-use std::{error::Error as StdError, fmt, io::Error as IoError, string::FromUtf8Error};
+use std::{error::Error as StdError, fmt, string::FromUtf8Error};
+
+use futures_util::io::Error as IoError;
 
 #[derive(Debug)]
 pub enum Error {
@@ -34,9 +36,22 @@ impl From<hyper::http::Error> for Error {
     }
 }
 
+impl From<http::uri::InvalidUri> for Error {
+    fn from(error: http::uri::InvalidUri) -> Self {
+        let http_error: http::Error = error.into();
+        http_error.into()
+    }
+}
+
 impl From<IoError> for Error {
     fn from(error: IoError) -> Error {
         Error::IO(error)
+    }
+}
+
+impl From<FromUtf8Error> for Error {
+    fn from(error: FromUtf8Error) -> Error {
+        Error::Encoding(error)
     }
 }
 

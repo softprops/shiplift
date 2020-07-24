@@ -1,3 +1,7 @@
+# 0.7.0
+
+* async-await support [#229](https://github.com/softprops/shiplift/pull/229)
+
 # 0.6.0
 
 * add chrono as an optional feature, enabled by default [#190](https://github.com/softprops/shiplift/pull/190)

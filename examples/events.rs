@@ -1,16 +1,15 @@
+use futures::StreamExt;
 use shiplift::Docker;
-use tokio::prelude::{Future, Stream};
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let docker = Docker::new();
     println!("listening for events");
 
-    let fut = docker
-        .events(&Default::default())
-        .for_each(|e| {
-            println!("event -> {:?}", e);
-            Ok(())
-        })
-        .map_err(|e| eprintln!("Error: {}", e));
-    tokio::run(fut);
+    while let Some(event_result) = docker.events(&Default::default()).next().await {
+        match event_result {
+            Ok(event) => println!("event -> {:?}", event),
+            Err(e) => eprintln!("Error: {}", e),
+        }
+    }
 }

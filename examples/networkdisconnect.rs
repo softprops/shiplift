@@ -1,18 +1,27 @@
 use shiplift::{ContainerConnectionOptions, Docker};
 use std::env;
-use tokio::prelude::Future;
 
-fn main() {
+async fn network_disconnect(
+    container_id: &str,
+    network_id: &str,
+) {
     let docker = Docker::new();
     let networks = docker.networks();
+
+    if let Err(e) = networks
+        .get(network_id)
+        .disconnect(&ContainerConnectionOptions::builder(container_id).build())
+        .await
+    {
+        eprintln!("Error: {}", e)
+    }
+}
+
+#[tokio::main]
+async fn main() {
     match (env::args().nth(1), env::args().nth(2)) {
         (Some(container_id), Some(network_id)) => {
-            let fut = networks
-                .get(&network_id)
-                .disconnect(&ContainerConnectionOptions::builder(&container_id).build())
-                .map(|v| println!("{:?}", v))
-                .map_err(|e| eprintln!("Error: {}", e));
-            tokio::run(fut);
+            network_disconnect(&container_id, &network_id).await;
         }
         _ => eprintln!("please provide a container_id and network_id"),
     }

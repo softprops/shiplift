@@ -1,18 +1,15 @@
 use shiplift::Docker;
-use tokio::prelude::Future;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     env_logger::init();
     let docker = Docker::new();
-    let fut = docker
-        .containers()
-        .list(&Default::default())
-        .map(|containers| {
+    match docker.containers().list(&Default::default()).await {
+        Ok(containers) => {
             for c in containers {
                 println!("container -> {:#?}", c)
             }
-        })
-        .map_err(|e| eprintln!("Error: {}", e));
-
-    tokio::run(fut);
+        }
+        Err(e) => eprintln!("Error: {}", e),
+    }
 }

@@ -1,8 +1,9 @@
+use futures::StreamExt;
 use shiplift::Docker;
 use std::{env, fs::File};
-use tokio::prelude::{Future, Stream};
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let docker = Docker::new();
     let path = env::args()
         .nth(1)
@@ -11,14 +12,12 @@ fn main() {
 
     let reader = Box::from(f);
 
-    let fut = docker
-        .images()
-        .import(reader)
-        .for_each(|output| {
-            println!("{:?}", output);
-            Ok(())
-        })
-        .map_err(|e| eprintln!("Error: {}", e));
+    let mut stream = docker.images().import(reader);
 
-    tokio::run(fut);
+    while let Some(import_result) = stream.next().await {
+        match import_result {
+            Ok(output) => println!("{:?}", output),
+            Err(e) => eprintln!("Error: {}", e),
+        }
+    }
 }
