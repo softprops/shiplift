@@ -1,6 +1,6 @@
 # 0.7.0
 
-* async-await support [#191](https://github.com/softprops/shiplift/pull/191)
+* async-await support [#229](https://github.com/softprops/shiplift/pull/229)
 
 # 0.6.0
 
