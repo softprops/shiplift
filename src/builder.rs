@@ -742,6 +742,16 @@ impl ContainerOptionsBuilder {
         self
     }
 
+    /// Total memory limit (memory + swap) in bytes. Set to -1 (default) to enable unlimited swap.
+    pub fn memory_swap(
+        &mut self,
+        memory_swap: i64,
+    ) -> &mut Self {
+        self.params
+            .insert("HostConfig.MemorySwap", json!(memory_swap));
+        self
+    }
+
     /// CPU quota in units of 10<sup>-9</sup> CPUs. Set to 0 (default) for there to be no limit.
     ///
     /// For example, setting `nano_cpus` to `500_000_000` results in the container being allocated
@@ -764,8 +774,8 @@ impl ContainerOptionsBuilder {
         self.nano_cpus((1_000_000_000.0 * cpus) as u64)
     }
 
-    /// Sets an integer value representing the container's
-    /// relative CPU weight versus other containers.
+    /// Sets an integer value representing the container's relative CPU weight versus other
+    /// containers.
     pub fn cpu_shares(
         &mut self,
         cpu_shares: u32,
