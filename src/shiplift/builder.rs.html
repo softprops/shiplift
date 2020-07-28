@@ -1866,6 +1866,38 @@
 <span id="1866">1866</span>
 <span id="1867">1867</span>
 <span id="1868">1868</span>
+<span id="1869">1869</span>
+<span id="1870">1870</span>
+<span id="1871">1871</span>
+<span id="1872">1872</span>
+<span id="1873">1873</span>
+<span id="1874">1874</span>
+<span id="1875">1875</span>
+<span id="1876">1876</span>
+<span id="1877">1877</span>
+<span id="1878">1878</span>
+<span id="1879">1879</span>
+<span id="1880">1880</span>
+<span id="1881">1881</span>
+<span id="1882">1882</span>
+<span id="1883">1883</span>
+<span id="1884">1884</span>
+<span id="1885">1885</span>
+<span id="1886">1886</span>
+<span id="1887">1887</span>
+<span id="1888">1888</span>
+<span id="1889">1889</span>
+<span id="1890">1890</span>
+<span id="1891">1891</span>
+<span id="1892">1892</span>
+<span id="1893">1893</span>
+<span id="1894">1894</span>
+<span id="1895">1895</span>
+<span id="1896">1896</span>
+<span id="1897">1897</span>
+<span id="1898">1898</span>
+<span id="1899">1899</span>
+<span id="1900">1900</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Interfaces for building various structures</span>
 
@@ -2611,8 +2643,40 @@
         <span class="self">self</span>
     }
 
-    <span class="doccomment">/// Sets an integer value representing the container&#39;s</span>
-    <span class="doccomment">/// relative CPU weight versus other containers.</span>
+    <span class="doccomment">/// Total memory limit (memory + swap) in bytes. Set to -1 (default) to enable unlimited swap.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">memory_swap</span>(
+        <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
+        <span class="ident">memory_swap</span>: <span class="ident">i64</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
+        <span class="self">self</span>.<span class="ident">params</span>
+            .<span class="ident">insert</span>(<span class="string">&quot;HostConfig.MemorySwap&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">memory_swap</span>));
+        <span class="self">self</span>
+    }
+
+    <span class="doccomment">/// CPU quota in units of 10&lt;sup&gt;-9&lt;/sup&gt; CPUs. Set to 0 (default) for there to be no limit.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// For example, setting `nano_cpus` to `500_000_000` results in the container being allocated</span>
+    <span class="doccomment">/// 50% of a single CPU, while `2_000_000_000` results in the container being allocated 2 CPUs.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">nano_cpus</span>(
+        <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
+        <span class="ident">nano_cpus</span>: <span class="ident">u64</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
+        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;HostConfig.NanoCpus&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">nano_cpus</span>));
+        <span class="self">self</span>
+    }
+
+    <span class="doccomment">/// CPU quota in units of CPUs. This is a wrapper around `nano_cpus` to do the unit conversion.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// See [`nano_cpus`](#method.nano_cpus).</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cpus</span>(
+        <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
+        <span class="ident">cpus</span>: <span class="ident">f64</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
+        <span class="self">self</span>.<span class="ident">nano_cpus</span>((<span class="number">1_000_000_000.0</span> <span class="op">*</span> <span class="ident">cpus</span>) <span class="kw">as</span> <span class="ident">u64</span>)
+    }
+
+    <span class="doccomment">/// Sets an integer value representing the container&#39;s relative CPU weight versus other</span>
+    <span class="doccomment">/// containers.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cpu_shares</span>(
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">cpu_shares</span>: <span class="ident">u32</span>,
