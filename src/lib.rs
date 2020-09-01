@@ -170,9 +170,18 @@ impl<'a> Images<'a> {
                     None::<iter::Empty<_>>,
                 );
 
-                let value_stream = chunk_stream.and_then(|chunk| async move {
-                    serde_json::from_slice(&chunk).map_err(Error::from)
-                });
+                let value_stream = chunk_stream
+                    .and_then(|chunk| async move {
+                        let stream = futures_util::stream::iter(
+                            serde_json::Deserializer::from_slice(&chunk)
+                                .into_iter()
+                                .collect::<Vec<_>>(),
+                        )
+                        .map_err(Error::from);
+
+                        Ok(stream)
+                    })
+                    .try_flatten();
 
                 Ok(value_stream)
             }
