@@ -17,6 +17,10 @@ shiplift = "0.6"
 
 Many small runnable example programs can be found in this repository's [examples directory](https://github.com/softprops/shiplift/tree/master/examples).
 
+run that examples with
+
+cargo run --example example_name
+
 ## planned changes
 
 * give image pull chunked json a proper type
