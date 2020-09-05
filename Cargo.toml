@@ -49,3 +49,135 @@ default = ["chrono", "unix-socket", "tls"]
 unix-socket = ["hyperlocal"]
 tls = ["openssl", "hyper-openssl"]
 vendored-ssl = ["tls", "openssl/vendored"]
+
+[[example]]
+name = "attach"
+path = "examples/attach.rs"
+
+[[example]]
+name = "containercopyfrom"
+path = "examples/containercopyfrom.rs"
+
+[[example]]
+name = "containercopyinto"
+path = "examples/containercopyinto.rs"
+
+[[example]]
+name = "containercreate"
+path = "examples/containercreate.rs"
+
+[[example]]
+name = "containerdelete"
+path = "examples/containerdelete.rs"
+
+[[example]]
+name = "containerexec"
+path = "examples/containerexec.rs"
+
+[[example]]
+name = "containerinspect"
+path = "examples/containerinspect.rs"
+
+[[example]]
+name = "containers"
+path = "examples/containers.rs"
+
+[[example]]
+name = "custom_host"
+path = "examples/custom_host.rs"
+
+[[example]]
+name = "events"
+path = "examples/events.rs"
+
+[[example]]
+name = "export"
+path = "examples/export.rs"
+
+[[example]]
+name = "imagebuild"
+path = "examples/imagebuild.rs"
+
+[[example]]
+name = "imagedelete"
+path = "examples/imagedelete.rs"
+
+[[example]]
+name = "imageinspect"
+path = "examples/imageinspect.rs"
+
+[[example]]
+name = "imagepull"
+path = "examples/imagepull.rs"
+
+[[example]]
+name = "imagepull_auth"
+path = "examples/imagepull_auth.rs"
+
+[[example]]
+name = "images"
+path = "examples/images.rs"
+
+[[example]]
+name = "imagesearch"
+path = "examples/imagesearch.rs"
+
+[[example]]
+name = "imagetag"
+path = "examples/imagetag.rs"
+
+[[example]]
+name = "import"
+path = "examples/import.rs"
+
+[[example]]
+name = "info"
+path = "examples/info.rs"
+
+[[example]]
+name = "logs"
+path = "examples/logs.rs"
+
+[[example]]
+name = "networkconnect"
+path = "examples/networkconnect.rs"
+
+[[example]]
+name = "networkcreate"
+path = "examples/networkcreate.rs"
+
+[[example]]
+name = "networkdelete"
+path = "examples/networkdelete.rs"
+
+[[example]]
+name = "networkdisconnect"
+path = "examples/networkdisconnect.rs"
+
+[[example]]
+name = "networks"
+path = "examples/networks.rs"
+
+[[example]]
+name = "stats"
+path = "examples/stats.rs"
+
+[[example]]
+name = "top"
+path = "examples/top.rs"
+
+[[example]]
+name = "version"
+path = "examples/version.rs"
+
+[[example]]
+name = "volumecreate"
+path = "examples/volumecreate.rs"
+
+[[example]]
+name = "volumedelete"
+path = "examples/volumedelete.rs"
+
+[[example]]
+name = "volumes"
+path = "examples/volumes.rs"
