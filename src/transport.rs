@@ -236,14 +236,6 @@ impl Transport {
     where
         B: Into<Body>,
     {
-        match self {
-            Transport::Tcp { .. } => (),
-            #[cfg(feature = "tls")]
-            Transport::EncryptedTcp { .. } => (),
-            #[cfg(feature = "unix-socket")]
-            Transport::Unix { .. } => panic!("connection streaming is only supported over TCP"),
-        };
-
         let req = self
             .build_request(
                 method,
