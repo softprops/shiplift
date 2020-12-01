@@ -164,24 +164,11 @@ impl<'a> Images<'a> {
 
                 tarball::dir(&mut bytes, &opts.path[..])?;
 
-                let chunk_stream = self.docker.stream_post(
+                let value_stream = self.docker.stream_post_into_values(
                     path.join("?"),
                     Some((Body::from(bytes), tar())),
                     None::<iter::Empty<_>>,
                 );
-
-                let value_stream = chunk_stream
-                    .and_then(|chunk| async move {
-                        let stream = futures_util::stream::iter(
-                            serde_json::Deserializer::from_slice(&chunk)
-                                .into_iter()
-                                .collect::<Vec<_>>(),
-                        )
-                        .map_err(Error::from);
-
-                        Ok(stream)
-                    })
-                    .try_flatten();
 
                 Ok(value_stream)
             }
@@ -237,11 +224,7 @@ impl<'a> Images<'a> {
 
         Box::pin(
             self.docker
-                .stream_post(path.join("?"), None, headers)
-                .and_then(move |chunk| {
-                    // todo: give this a proper enum type
-                    futures_util::future::ready(serde_json::from_slice(&chunk).map_err(Error::from))
-                }),
+                .stream_post_into_values(path.join("?"), None, headers),
         )
     }
 
@@ -272,16 +255,11 @@ impl<'a> Images<'a> {
 
                 tarball.read_to_end(&mut bytes)?;
 
-                let chunk_stream = self.docker.stream_post(
+                let value_stream = self.docker.stream_post_into_values(
                     "/images/load",
                     Some((Body::from(bytes), tar())),
                     None::<iter::Empty<_>>,
                 );
-
-                let value_stream = chunk_stream.and_then(|chunk| async move {
-                    serde_json::from_slice(&chunk).map_err(Error::from)
-                });
-
                 Ok(value_stream)
             }
             .try_flatten_stream(),
@@ -1164,6 +1142,29 @@ impl Docker {
     {
         self.transport
             .stream_chunks(Method::POST, endpoint, body, headers)
+    }
+
+    fn stream_post_into_values<'a, H>(
+        &'a self,
+        endpoint: impl AsRef<str> + 'a,
+        body: Option<(Body, Mime)>,
+        headers: Option<H>,
+    ) -> impl Stream<Item = Result<Value>> + 'a
+    where
+        H: IntoIterator<Item = (&'static str, String)> + 'a,
+    {
+        self.stream_post(endpoint, body, headers)
+            .and_then(|chunk| async move {
+                let stream = futures_util::stream::iter(
+                    serde_json::Deserializer::from_slice(&chunk)
+                        .into_iter()
+                        .collect::<Vec<_>>(),
+                )
+                .map_err(Error::from);
+
+                Ok(stream)
+            })
+            .try_flatten()
     }
 
     fn stream_get<'a>(
