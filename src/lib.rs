@@ -1131,6 +1131,9 @@ impl Docker {
         Ok(serde_json::from_str::<T>(&string)?)
     }
 
+    /// Send a streaming post request.
+    ///
+    /// Use stream_post_into_values if the endpoint returns JSON values
     fn stream_post<'a, H>(
         &'a self,
         endpoint: impl AsRef<str> + 'a,
@@ -1144,6 +1147,9 @@ impl Docker {
             .stream_chunks(Method::POST, endpoint, body, headers)
     }
 
+    /// Send a streaming post request that returns a stream of JSON values
+    ///
+    /// Assumes that each received chunk contains one or more JSON values
     fn stream_post_into_values<'a, H>(
         &'a self,
         endpoint: impl AsRef<str> + 'a,
