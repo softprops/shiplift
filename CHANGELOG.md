@@ -1,6 +1,7 @@
 # 0.7.0
 
 * async-await support [#229](https://github.com/softprops/shiplift/pull/229)
+* errors are now implemented using `thiserror` [#242](https://github.com/softprops/shiplift/pull/242)
 
 # 0.6.0
 
