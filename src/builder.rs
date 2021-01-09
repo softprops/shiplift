@@ -854,10 +854,13 @@ impl ContainerOptionsBuilder {
         self
     }
 
-    pub fn env(
+    pub fn env<E, S>(
         &mut self,
-        envs: Vec<&str>,
-    ) -> &mut Self {
+        envs: E,
+    ) -> &mut Self
+        where S: AsRef<str> + Serialize,
+              E: AsRef<[S]> + Serialize
+    {
         self.params.insert("Env", json!(envs));
         self
     }
@@ -1693,6 +1696,23 @@ mod tests {
 
         assert_eq!(
             r#"{"Env":["foo","bar"],"HostConfig":{},"Image":"test_image"}"#,
+            options.serialize().unwrap()
+        );
+    }
+
+    #[test]
+    fn container_options_env_dynamic() {
+        let env: Vec<String> = ["foo", "bar", "baz"]
+            .iter()
+            .map(|s| String::from(*s))
+            .collect();
+
+        let options = ContainerOptionsBuilder::new("test_image")
+            .env(&env)
+            .build();
+
+        assert_eq!(
+            r#"{"Env":["foo","bar","baz"],"HostConfig":{},"Image":"test_image"}"#,
             options.serialize().unwrap()
         );
     }
