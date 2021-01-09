@@ -636,7 +636,7 @@ impl<'a> Container<'a> {
 
     /// Copy a tarball (see `body`) to the container.
     ///
-    /// Tha tarball will be copied to the container and extracted at the given location (see `path`).
+    /// The tarball will be copied to the container and extracted at the given location (see `path`).
     pub async fn copy_to(
         &self,
         path: &Path,
