@@ -630,16 +630,28 @@ impl<'a> Container<'a> {
         .unwrap();
         let data = ar.into_inner().unwrap();
 
-        let body = Some((data, "application/x-tar".parse::<Mime>().unwrap()));
+        self.copy_to(Path::new("/"), data.into()).await?;
+        Ok(())
+    }
 
+    /// Copy a tarball (see `body`) to the container.
+    ///
+    /// The tarball will be copied to the container and extracted at the given location (see `path`).
+    pub async fn copy_to(
+        &self,
+        path: &Path,
+        body: Body,
+    ) -> Result<()> {
         let path_arg = form_urlencoded::Serializer::new(String::new())
-            .append_pair("path", "/")
+            .append_pair("path", &path.to_string_lossy())
             .finish();
+
+        let mime = "application/x-tar".parse::<Mime>().unwrap();
 
         self.docker
             .put(
                 &format!("/containers/{}/archive?{}", self.id, path_arg),
-                body.map(|(body, mime)| (body.into(), mime)),
+                Some((body, mime)),
             )
             .await?;
         Ok(())
