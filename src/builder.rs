@@ -858,8 +858,9 @@ impl ContainerOptionsBuilder {
         &mut self,
         envs: E,
     ) -> &mut Self
-        where S: AsRef<str> + Serialize,
-              E: AsRef<[S]> + Serialize
+    where
+        S: AsRef<str> + Serialize,
+        E: AsRef<[S]> + Serialize,
     {
         self.params.insert("Env", json!(envs));
         self
@@ -1707,9 +1708,7 @@ mod tests {
             .map(|s| String::from(*s))
             .collect();
 
-        let options = ContainerOptionsBuilder::new("test_image")
-            .env(&env)
-            .build();
+        let options = ContainerOptionsBuilder::new("test_image").env(&env).build();
 
         assert_eq!(
             r#"{"Env":["foo","bar","baz"],"HostConfig":{},"Image":"test_image"}"#,
