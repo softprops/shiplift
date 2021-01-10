@@ -1,3 +1,3 @@
 (function() {var implementors = {};
-implementors["shiplift"] = [{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/convert/trait.AsRef.html\" title=\"trait core::convert::AsRef\">AsRef</a>&lt;<a class=\"struct\" href=\"https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html\" title=\"struct alloc::vec::Vec\">Vec</a>&lt;<a class=\"primitive\" href=\"https://doc.rust-lang.org/nightly/std/primitive.u8.html\">u8</a>&gt;&gt; for <a class=\"enum\" href=\"shiplift/tty/enum.TtyChunk.html\" title=\"enum shiplift::tty::TtyChunk\">TtyChunk</a>","synthetic":false,"types":["shiplift::tty::TtyChunk"]}];
+implementors["shiplift"] = [{"text":"impl AsRef&lt;Vec&lt;u8&gt;&gt; for TtyChunk","synthetic":false,"types":[]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
