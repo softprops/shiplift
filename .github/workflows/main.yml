@@ -7,11 +7,13 @@ on:
       - '*.md'
     branches:
       - main
+      - master
   pull_request:
     paths-ignore:
       - '*.md'
     branches:
       - main
+      - master
 
 env:
   CARGO_TERM_COLOR:  always
