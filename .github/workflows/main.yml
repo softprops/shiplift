@@ -1,6 +1,22 @@
 name: Main
 
-on: push
+on:
+  workflow_dispatch:
+  push:
+    paths-ignore:
+      - '*.md'
+    branches:
+      - main
+      - master
+  pull_request:
+    paths-ignore:
+      - '*.md'
+    branches:
+      - main
+      - master
+
+env:
+  CARGO_TERM_COLOR:  always
 
 jobs:
   codestyle:
@@ -75,13 +91,10 @@ jobs:
           cargo doc --no-deps
           echo "<meta http-equiv=refresh content=0;url=`echo ${{ github.repository }} | cut -d / -f 2 | tr '-' '_'`/index.html>" > target/doc/index.html
       - name: Publish
-        uses: docker://peaceiris/gh-pages:v2.3.1
-        env:
-          PUBLISH_BRANCH: gh-pages
-          PUBLISH_DIR: ./target/doc
-          PERSONAL_TOKEN: ${{ secrets.GH_PAGES_TOKEN }}
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          emptyCommits: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./target/doc
 
   publish-crate:
     if: startsWith(github.ref, 'refs/tags/')
