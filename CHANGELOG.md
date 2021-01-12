@@ -1,6 +1,5 @@
 # 0.7.0
 
-
 * async-await support [#229](https://github.com/softprops/shiplift/pull/229)
 * add multiple fields to `shiplift::rep::Version` [#212](https://github.com/softprops/shiplift/pull/212)
 * add `image_id` and `state` fields to `shiplift::rep::Container` [#213](https://github.com/softprops/shiplift/pull/213)
@@ -15,6 +14,7 @@
 * allow attaching to containers when connecting to Docker daemon via UNIX socket [#238](https://github.com/softprops/shiplift/pull/238)
 * support for uploading tar to container [#239](https://github.com/softprops/shiplift/pull/239)
 * fix registry authentication to use URL-safe base64 encoding [#245](https://github.com/softprops/shiplift/pull/245)
+* add StopSignal and StopTimeout to ContainerOptionsBuilder [#248](https://github.com/softprops/shiplift/pull/248)
 
 # 0.6.0
 

@@ -8,6 +8,7 @@ use std::{
     collections::{BTreeMap, HashMap},
     hash::Hash,
     iter::{IntoIterator, Peekable},
+    time::Duration,
 };
 use url::form_urlencoded;
 
@@ -928,6 +929,33 @@ impl ContainerOptionsBuilder {
         set: bool,
     ) -> &mut Self {
         self.params.insert("HostConfig.AutoRemove", json!(set));
+        self
+    }
+
+    /// Signal to stop a container as a string. Default is "SIGTERM".
+    pub fn stop_signal(
+        &mut self,
+        sig: &str,
+    ) -> &mut Self {
+        self.params.insert("StopSignal", json!(sig));
+        self
+    }
+
+    /// Signal to stop a container as an integer. Default is 15 (SIGTERM).
+    pub fn stop_signal_num(
+        &mut self,
+        sig: u64,
+    ) -> &mut Self {
+        self.params.insert("StopSignal", json!(sig));
+        self
+    }
+
+    /// Timeout to stop a container. Only seconds are counted. Default is 10s
+    pub fn stop_timeout(
+        &mut self,
+        timeout: Duration,
+    ) -> &mut Self {
+        self.params.insert("StopTimeout", json!(timeout.as_secs()));
         self
     }
 
