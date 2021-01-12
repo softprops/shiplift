@@ -251,7 +251,7 @@ impl Transport {
         let response = self.send_request(req).await?;
 
         match response.status() {
-            StatusCode::SWITCHING_PROTOCOLS => Ok(response.into_body().on_upgrade().await?),
+            StatusCode::SWITCHING_PROTOCOLS => Ok(hyper::upgrade::on(response).await?),
             _ => Err(Error::ConnectionNotUpgraded),
         }
     }
@@ -294,7 +294,12 @@ where
         cx: &mut Context<'_>,
         buf: &mut [u8],
     ) -> Poll<io::Result<usize>> {
-        self.project().tokio_multiplexer.poll_read(cx, buf)
+        let mut readbuf = tokio::io::ReadBuf::new(buf);
+        match self.project().tokio_multiplexer.poll_read(cx, &mut readbuf) {
+            Poll::Pending => Poll::Pending,
+            Poll::Ready(Ok(())) => Poll::Ready(Ok(readbuf.filled().len())),
+            Poll::Ready(Err(e)) => Poll::Ready(Err(e)),
+        }
     }
 }
 
