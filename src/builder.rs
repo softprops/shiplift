@@ -50,7 +50,7 @@ impl RegistryAuth {
     /// serialize authentication as JSON in base64
     pub fn serialize(&self) -> String {
         serde_json::to_string(self)
-            .map(|c| base64::encode(&c))
+            .map(|c| base64::encode_config(&c, base64::URL_SAFE))
             .unwrap()
     }
 }
