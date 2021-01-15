@@ -6,8 +6,7 @@ use futures_util::{
     stream::{Stream, TryStreamExt},
 };
 use pin_project::pin_project;
-use std::convert::TryInto;
-use std::io;
+use std::{convert::TryInto, io};
 
 /// An enum representing a chunk of TTY text streamed from a Docker container.
 ///
