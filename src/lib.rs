@@ -956,6 +956,10 @@ impl Docker {
     pub fn new() -> Docker {
         match env::var("DOCKER_HOST").ok() {
             Some(host) => {
+                #[cfg(feature = "unix-socket")]
+                if let Some(path) = host.strip_prefix("unix://") {
+                    return Docker::unix(path);
+                }
                 let host = host.parse().expect("invalid url");
                 Docker::host(host)
             }
@@ -1208,5 +1212,35 @@ impl Docker {
 impl Default for Docker {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[cfg(feature = "unix-socket")]
+    #[test]
+    fn unix_host_env() {
+        use super::Docker;
+        use std::env;
+        env::set_var("DOCKER_HOST", "unix:///docker.sock");
+        let d = Docker::new();
+        match d.transport {
+            crate::transport::Transport::Unix { path, .. } => {
+                assert_eq!(path, "/docker.sock");
+            }
+            _ => {
+                panic!("Expected transport to be unix.");
+            }
+        }
+        env::set_var("DOCKER_HOST", "http://localhost:8000");
+        let d = Docker::new();
+        match d.transport {
+            crate::transport::Transport::Tcp { host, .. } => {
+                assert_eq!(host, "http://localhost:8000");
+            }
+            _ => {
+                panic!("Expected transport to be http.");
+            }
+        }
     }
 }

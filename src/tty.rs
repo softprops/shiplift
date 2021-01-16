@@ -1,13 +1,12 @@
 //! Types for working with docker TTY streams
 
 use crate::{Error, Result};
-use bytes::{BigEndian, ByteOrder};
 use futures_util::{
     io::{AsyncRead, AsyncReadExt, AsyncWrite},
     stream::{Stream, TryStreamExt},
 };
 use pin_project::pin_project;
-use std::io;
+use std::{convert::TryInto, io};
 
 /// An enum representing a chunk of TTY text streamed from a Docker container.
 ///
@@ -63,7 +62,7 @@ where
     }
 
     let size_bytes = &header_bytes[4..];
-    let data_length = BigEndian::read_u32(size_bytes);
+    let data_length = u32::from_be_bytes(size_bytes.try_into().unwrap());
 
     let mut data = vec![0u8; data_length as usize];
 
