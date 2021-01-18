@@ -1,6 +1,20 @@
 # 0.7.0
 
+
 * async-await support [#229](https://github.com/softprops/shiplift/pull/229)
+* add multiple fields to `shiplift::rep::Version` [#212](https://github.com/softprops/shiplift/pull/212)
+* add `image_id` and `state` fields to `shiplift::rep::Container` [#213](https://github.com/softprops/shiplift/pull/213)
+* add `ContainerOptionsBuilder::publish_all_ports()` [#215](https://github.com/softprops/shiplift/pull/215)
+* re-export `hyper::Uri` as `shiplift::Uri` [#209](https://github.com/softprops/shiplift/pull/209)
+* `shiplift::builder::ImageListOptionsBuilder::all()` no longer accepts an argument and always sets the option to true [#211](https://github.com/softprops/shiplift/pull/211)
+* add `repo_tags`, `repo_digests` fields to `ImageDetails` [#222](https://github.com/softprops/shiplift/pull/222)
+* add `status` field to container State [#221](https://github.com/softprops/shiplift/pull/221)
+* support for specifying user when creating container [#220](https://github.com/softprops/shiplift/pull/220)
+* add `nano_cpus` and `memory_swap` to `ContainerOptions` [#230](https://github.com/softprops/shiplift/pull/230)
+* `ContainerOptionsBuilder::env()` signature changed [#237](https://github.com/softprops/shiplift/pull/237)
+* allow attaching to containers when connecting to Docker daemon via UNIX socket [#238](https://github.com/softprops/shiplift/pull/238)
+* support for uploading tar to container [#239](https://github.com/softprops/shiplift/pull/239)
+* fix registry authentication to use URL-safe base64 encoding [#245](https://github.com/softprops/shiplift/pull/245)
 
 # 0.6.0
 
