@@ -1920,6 +1920,34 @@
 <span id="1917">1917</span>
 <span id="1918">1918</span>
 <span id="1919">1919</span>
+<span id="1920">1920</span>
+<span id="1921">1921</span>
+<span id="1922">1922</span>
+<span id="1923">1923</span>
+<span id="1924">1924</span>
+<span id="1925">1925</span>
+<span id="1926">1926</span>
+<span id="1927">1927</span>
+<span id="1928">1928</span>
+<span id="1929">1929</span>
+<span id="1930">1930</span>
+<span id="1931">1931</span>
+<span id="1932">1932</span>
+<span id="1933">1933</span>
+<span id="1934">1934</span>
+<span id="1935">1935</span>
+<span id="1936">1936</span>
+<span id="1937">1937</span>
+<span id="1938">1938</span>
+<span id="1939">1939</span>
+<span id="1940">1940</span>
+<span id="1941">1941</span>
+<span id="1942">1942</span>
+<span id="1943">1943</span>
+<span id="1944">1944</span>
+<span id="1945">1945</span>
+<span id="1946">1946</span>
+<span id="1947">1947</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Interfaces for building various structures</span>
 
@@ -1931,6 +1959,7 @@
     <span class="ident">collections</span>::{<span class="ident">BTreeMap</span>, <span class="ident">HashMap</span>},
     <span class="ident">hash</span>::<span class="ident">Hash</span>,
     <span class="ident">iter</span>::{<span class="ident">IntoIterator</span>, <span class="ident">Peekable</span>},
+    <span class="ident">time</span>::<span class="ident">Duration</span>,
 };
 <span class="kw">use</span> <span class="ident">url</span>::<span class="ident">form_urlencoded</span>;
 
@@ -2851,6 +2880,33 @@
         <span class="ident">set</span>: <span class="ident">bool</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
         <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;HostConfig.AutoRemove&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">set</span>));
+        <span class="self">self</span>
+    }
+
+    <span class="doccomment">/// Signal to stop a container as a string. Default is &quot;SIGTERM&quot;.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">stop_signal</span>(
+        <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
+        <span class="ident">sig</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
+        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;StopSignal&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">sig</span>));
+        <span class="self">self</span>
+    }
+
+    <span class="doccomment">/// Signal to stop a container as an integer. Default is 15 (SIGTERM).</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">stop_signal_num</span>(
+        <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
+        <span class="ident">sig</span>: <span class="ident">u64</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
+        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;StopSignal&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">sig</span>));
+        <span class="self">self</span>
+    }
+
+    <span class="doccomment">/// Timeout to stop a container. Only seconds are counted. Default is 10s</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">stop_timeout</span>(
+        <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
+        <span class="ident">timeout</span>: <span class="ident">Duration</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
+        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;StopTimeout&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">timeout</span>.<span class="ident">as_secs</span>()));
         <span class="self">self</span>
     }
 
