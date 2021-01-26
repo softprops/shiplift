@@ -245,10 +245,10 @@ impl<'a> Images<'a> {
 
     /// imports an image or set of images from a given tarball source
     /// source can be uncompressed on compressed via gzip, bzip2 or xz
-    pub fn import(
+    pub fn import<R: Read + Send + 'a>(
         self,
-        mut tarball: Box<dyn Read>,
-    ) -> impl Stream<Item = Result<Value>> + Unpin + 'a {
+        mut tarball: R,
+    ) -> impl Stream<Item = Result<Value>> + Send + Unpin + 'a {
         Box::pin(
             async move {
                 let mut bytes = Vec::default();
