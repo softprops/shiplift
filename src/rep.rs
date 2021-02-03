@@ -495,6 +495,33 @@ pub struct Event {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct ExecDetails {
+    pub can_remove: bool,
+    #[serde(rename = "ContainerID")]
+    pub container_id: String,
+    pub detach_keys: String,
+    pub exit_code: u64,
+    #[serde(rename = "ID")]
+    pub id: String,
+    pub open_stderr: bool,
+    pub open_stdin: bool,
+    pub open_stdout: bool,
+    pub process_config: ProcessConfig,
+    pub running: bool,
+    pub pid: u64,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ProcessConfig {
+    pub arguments: Vec<String>,
+    pub entrypoint: String,
+    pub privileged: bool,
+    pub tty: bool,
+    pub user: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Actor {
     #[serde(rename = "ID")]
     pub id: String,
