@@ -20,9 +20,7 @@ async fn main() {
         .build();
 
     let mut exec_id = String::new();
-    if let Some(_) = container.exec_with_id(&opts, &mut exec_id).next().await {
-        //handle output...
-    }
+    container.exec_with_id(&opts, &mut exec_id).next().await;
 
     // Inspect exec
     match container.exec_inspect(&exec_id).await {
