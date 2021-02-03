@@ -36,8 +36,8 @@ pub use crate::{
 };
 use crate::{
     rep::{
-        Change, Container as ContainerRep, ContainerCreateInfo, ContainerDetails, Event, Exit,
-        History, Image as ImageRep, ImageDetails, Info, NetworkCreateInfo,
+        Change, Container as ContainerRep, ContainerCreateInfo, ContainerDetails, Event,
+        ExecDetails, Exit, History, Image as ImageRep, ImageDetails, Info, NetworkCreateInfo,
         NetworkDetails as NetworkInfo, SearchResult, Stats, Status, Top, Version,
         Volume as VolumeRep, VolumeCreateInfo, Volumes as VolumesRep,
     },
@@ -549,6 +549,7 @@ impl<'a> Container<'a> {
         tty::decode(stream)
     }
 
+    /// Execute a command in this container
     pub fn exec(
         &'a self,
         opts: &'a ExecContainerOptions,
@@ -560,6 +561,34 @@ impl<'a> Container<'a> {
             }
             .try_flatten_stream(),
         )
+    }
+
+    /// Execute a command in this container. This method is functionally same as
+    /// [exec](Container::exec) but also assings id of created exec instance to a mutable reference
+    /// id.
+    pub fn exec_with_id(
+        &'a self,
+        opts: &'a ExecContainerOptions,
+        id: &'a mut String,
+    ) -> impl Stream<Item = Result<tty::TtyChunk>> + Unpin + 'a {
+        Box::pin(
+            async move {
+                let _id = self.exec_create(opts).await?;
+                *id = _id.clone();
+                Ok(self.exec_start(_id))
+            }
+            .try_flatten_stream(),
+        )
+    }
+
+    /// Inspect an exec instance
+    pub async fn exec_inspect(
+        &self,
+        id: &str,
+    ) -> Result<ExecDetails> {
+        self.docker
+            .get_json(&format!("/exec/{}/json", id)[..])
+            .await
     }
 
     /// Copy a file/folder from the container.  The resulting stream is a tarball of the extracted
