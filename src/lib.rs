@@ -81,9 +81,9 @@ pub struct Image<'a> {
 impl<'a> Image<'a> {
     /// Exports an interface for operations that may be performed against a named image
     pub fn new<S>(
-        docker: &'a Docker,
+        docker: &Docker,
         name: S,
-    ) -> Self
+    ) -> Image
     where
         S: Into<String>,
     {
@@ -189,10 +189,13 @@ impl<'a> Images<'a> {
     }
 
     /// Returns a reference to a set of operations available for a named image
-    pub fn get(
+    pub fn get<S>(
         &self,
-        name: &'a str,
-    ) -> Image<'a> {
+        name: S,
+    ) -> Image<'a>
+    where
+        S: Into<String>,
+    {
         Image::new(self.docker, name)
     }
 
@@ -662,10 +665,13 @@ impl<'a> Containers<'a> {
     }
 
     /// Returns a reference to a set of operations available to a specific container instance
-    pub fn get(
+    pub fn get<S>(
         &self,
-        name: &'a str,
-    ) -> Container<'a> {
+        name: S,
+    ) -> Container
+    where
+        S: Into<String>,
+    {
         Container::new(self.docker, name)
     }
 
@@ -698,7 +704,7 @@ pub struct Networks<'a> {
 
 impl<'a> Networks<'a> {
     /// Exports an interface for interacting with docker Networks
-    pub fn new(docker: &'a Docker) -> Networks<'a> {
+    pub fn new(docker: &Docker) -> Networks {
         Networks { docker }
     }
 
@@ -715,10 +721,13 @@ impl<'a> Networks<'a> {
     }
 
     /// Returns a reference to a set of operations available to a specific network instance
-    pub fn get(
+    pub fn get<S>(
         &self,
-        id: &str,
-    ) -> Network<'a> {
+        id: S,
+    ) -> Network
+    where
+        S: Into<String>,
+    {
         Network::new(self.docker, id)
     }
 
@@ -745,9 +754,9 @@ pub struct Network<'a> {
 impl<'a> Network<'a> {
     /// Exports an interface exposing operations against a network instance
     pub fn new<S>(
-        docker: &'a Docker,
+        docker: &Docker,
         id: S,
-    ) -> Network<'a>
+    ) -> Network
     where
         S: Into<String>,
     {
@@ -817,7 +826,7 @@ pub struct Volumes<'a> {
 
 impl<'a> Volumes<'a> {
     /// Exports an interface for interacting with docker volumes
-    pub fn new(docker: &'a Docker) -> Volumes<'a> {
+    pub fn new(docker: &Docker) -> Volumes {
         Volumes { docker }
     }
 
@@ -848,7 +857,7 @@ impl<'a> Volumes<'a> {
     pub fn get(
         &self,
         name: &str,
-    ) -> Volume<'a> {
+    ) -> Volume {
         Volume::new(self.docker, name)
     }
 }
@@ -862,9 +871,9 @@ pub struct Volume<'a> {
 impl<'a> Volume<'a> {
     /// Exports an interface for operations that may be performed against a named volume
     pub fn new<S>(
-        docker: &'a Docker,
+        docker: &Docker,
         name: S,
-    ) -> Volume<'a>
+    ) -> Volume
     where
         S: Into<String>,
     {
@@ -1018,7 +1027,7 @@ impl Docker {
     }
 
     /// Exports an interface for interacting with docker containers
-    pub fn containers(&self) -> Containers {
+    pub fn containers<'a>(&'a self) -> Containers<'a> {
         Containers::new(self)
     }
 
