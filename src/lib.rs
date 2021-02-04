@@ -1027,7 +1027,7 @@ impl Docker {
     }
 
     /// Exports an interface for interacting with docker containers
-    pub fn containers<'a>(&'a self) -> Containers<'a> {
+    pub fn containers(&self) -> Containers {
         Containers::new(self)
     }
 
@@ -1057,7 +1057,7 @@ impl Docker {
     /// Returns a stream of docker events
     pub fn events<'a>(
         &'a self,
-        opts: &'a EventsOptions,
+        opts: &EventsOptions,
     ) -> impl Stream<Item = Result<Event>> + Unpin + 'a {
         let mut path = vec!["/events".to_owned()];
         if let Some(query) = opts.serialize() {
