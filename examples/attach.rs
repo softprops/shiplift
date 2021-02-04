@@ -9,7 +9,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .nth(1)
         .expect("You need to specify a container id");
 
-    let tty_multiplexer = docker.containers().get(&id).attach().await?;
+    let containers = docker.containers();
+    let tty_multiplexer = containers.get(&id).attach().await?;
 
     let (mut reader, _writer) = tty_multiplexer.split();
 
