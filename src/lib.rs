@@ -310,13 +310,12 @@ impl<'a> Container<'a> {
     }
 
     /// Returns a `top` view of information about the container process
-    pub async fn top<S>(
+    pub async fn top(
         &self,
-        psargs: Option<S>,
-    ) -> Result<Top>
-    where
-        S: AsRef<str>,
-    {
+        // This field is not generic on purpose, see [Container::kill](Container::kill) for
+        // explanation
+        psargs: Option<&str>,
+    ) -> Result<Top> {
         let mut path = vec![format!("/containers/{}/top", self.id)];
         if let Some(ref args) = psargs {
             let encoded = form_urlencoded::Serializer::new(String::new())
@@ -444,14 +443,12 @@ impl<'a> Container<'a> {
     /// Kill the container instance
     pub async fn kill<S>(
         &self,
-        signal: Option<S>,
-    ) -> Result<()>
-    where
-        S: AsRef<str>,
-    {
+        signal: Option<&str>, // this field is not generic on purpose. If it is made generic
+                              // and caller want to pass a None they'd have to specify the
+                              // return type with f.e. x.kill(None::<&str>)
+    ) -> Result<()> {
         let mut path = vec![format!("/containers/{}/kill", self.id)];
         if let Some(sig) = signal {
-            let sig = sig.as_ref();
             let encoded = form_urlencoded::Serializer::new(String::new())
                 .append_pair("signal", &sig.to_owned())
                 .finish();
