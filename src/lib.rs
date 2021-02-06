@@ -712,7 +712,7 @@ impl<'a> Exec<'a> {
         tty::decode(stream)
     }
 
-    /// Creates a new exec instance that will be executed on a container with id == container_id
+    /// Creates a new exec instance that will be executed in a container with id == container_id
     pub async fn create(
         docker: &'a Docker,
         container_id: &str,
