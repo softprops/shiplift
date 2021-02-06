@@ -200,12 +200,15 @@ impl<'a> Images<'a> {
     }
 
     /// Search for docker images by term
-    pub async fn search(
+    pub async fn search<S>(
         &self,
-        term: &str,
-    ) -> Result<Vec<SearchResult>> {
+        term: S,
+    ) -> Result<Vec<SearchResult>>
+    where
+        S: AsRef<str>,
+    {
         let query = form_urlencoded::Serializer::new(String::new())
-            .append_pair("term", term)
+            .append_pair("term", term.as_ref())
             .finish();
         self.docker
             .get_json::<Vec<SearchResult>>(&format!("/images/search?{}", query)[..])
