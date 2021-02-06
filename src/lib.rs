@@ -28,9 +28,9 @@ mod tarball;
 pub use crate::{
     builder::{
         BuildOptions, ContainerConnectionOptions, ContainerFilter, ContainerListOptions,
-        ContainerOptions, EventsOptions, ExecContainerOptions, ImageFilter, ImageListOptions,
-        LogsOptions, NetworkCreateOptions, NetworkListOptions, PullOptions, RegistryAuth,
-        RmContainerOptions, TagOptions, VolumeCreateOptions,
+        ContainerOptions, EventsOptions, ExecContainerOptions, ExecResizeOptions, ImageFilter,
+        ImageListOptions, LogsOptions, NetworkCreateOptions, NetworkListOptions, PullOptions,
+        RegistryAuth, RmContainerOptions, TagOptions, VolumeCreateOptions,
     },
     errors::Error,
 };
@@ -761,6 +761,20 @@ impl<'a> Exec<'a> {
     pub async fn inspect(&self) -> Result<ExecDetails> {
         self.docker
             .get_json(&format!("/exec/{}/json", &self.id)[..])
+            .await
+    }
+
+    pub async fn resize(
+        &self,
+        opts: &ExecResizeOptions,
+    ) -> Result<()> {
+        let body: Body = opts.serialize()?.into();
+
+        self.docker
+            .post_json(
+                &format!("/exec/{}/resize", &self.id)[..],
+                Some((body, mime::APPLICATION_JSON)),
+            )
             .await
     }
 }
