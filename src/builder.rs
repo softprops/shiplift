@@ -617,28 +617,39 @@ impl ContainerOptionsBuilder {
         ContainerOptionsBuilder { name: None, params }
     }
 
-    pub fn name(
+    pub fn name<S>(
         &mut self,
-        name: &str,
-    ) -> &mut Self {
-        self.name = Some(name.to_owned());
+        name: S,
+    ) -> &mut Self
+    where
+        S: Into<String>,
+    {
+        self.name = Some(name.into());
         self
     }
 
     /// Specify the working dir (corresponds to the `-w` docker cli argument)
-    pub fn working_dir(
+    pub fn working_dir<S>(
         &mut self,
-        working_dir: &str,
-    ) -> &mut Self {
-        self.params.insert("WorkingDir", json!(working_dir));
+        working_dir: S,
+    ) -> &mut Self
+    where
+        S: AsRef<str>,
+    {
+        self.params
+            .insert("WorkingDir", json!(working_dir.as_ref()));
         self
     }
 
     /// Specify any bind mounts, taking the form of `/some/host/path:/some/container/path`
-    pub fn volumes(
+    pub fn volumes<I, S>(
         &mut self,
-        volumes: Vec<&str>,
-    ) -> &mut Self {
+        volumes: I,
+    ) -> &mut Self
+    where
+        I: IntoIterator<Item = S> + Serialize,
+        S: AsRef<str>,
+    {
         self.params.insert("HostConfig.Binds", json!(volumes));
         self
     }
@@ -650,12 +661,15 @@ impl ContainerOptionsBuilder {
         self
     }
 
-    pub fn expose(
+    pub fn expose<S>(
         &mut self,
         srcport: u32,
-        protocol: &str,
+        protocol: S,
         hostport: u32,
-    ) -> &mut Self {
+    ) -> &mut Self
+    where
+        S: AsRef<str>,
+    {
         let mut exposedport: HashMap<String, String> = HashMap::new();
         exposedport.insert("HostPort".to_string(), hostport.to_string());
 
@@ -674,7 +688,7 @@ impl ContainerOptionsBuilder {
             port_bindings.insert(key.to_string(), json!(val));
         }
         port_bindings.insert(
-            format!("{}/{}", srcport, protocol),
+            format!("{}/{}", srcport, protocol.as_ref()),
             json!(vec![exposedport]),
         );
 
@@ -694,11 +708,14 @@ impl ContainerOptionsBuilder {
     }
 
     /// Publish a port in the container without assigning a port on the host
-    pub fn publish(
+    pub fn publish<S>(
         &mut self,
         srcport: u32,
-        protocol: &str,
-    ) -> &mut Self {
+        protocol: S,
+    ) -> &mut Self
+    where
+        S: AsRef<str>,
+    {
         /* The idea here is to go thought the 'old' port binds
          * and to apply them to the local 'exposedport_bindings' variable,
          * add the bind we want and replace the 'old' value */
@@ -713,7 +730,7 @@ impl ContainerOptionsBuilder {
         {
             exposed_port_bindings.insert(key.to_string(), json!(val));
         }
-        exposed_port_bindings.insert(format!("{}/{}", srcport, protocol), json!({}));
+        exposed_port_bindings.insert(format!("{}/{}", srcport, protocol.as_ref()), json!({}));
 
         // Replicate the port bindings over to the exposed ports config
         let mut exposed_ports: HashMap<String, Value> = HashMap::new();
@@ -727,10 +744,14 @@ impl ContainerOptionsBuilder {
         self
     }
 
-    pub fn links(
+    pub fn links<I, S>(
         &mut self,
-        links: Vec<&str>,
-    ) -> &mut Self {
+        links: I,
+    ) -> &mut Self
+    where
+        I: IntoIterator<Item = S> + Serialize,
+        S: AsRef<str>,
+    {
         self.params.insert("HostConfig.Links", json!(links));
         self
     }
@@ -831,88 +852,121 @@ impl ContainerOptionsBuilder {
         self
     }
 
-    pub fn extra_hosts(
+    pub fn extra_hosts<I, S>(
         &mut self,
-        hosts: Vec<&str>,
-    ) -> &mut Self {
+        hosts: I,
+    ) -> &mut Self
+    where
+        I: IntoIterator<Item = S> + Serialize,
+        S: AsRef<str>,
+    {
         self.params.insert("HostConfig.ExtraHosts", json!(hosts));
         self
     }
 
-    pub fn volumes_from(
+    pub fn volumes_from<I, S>(
         &mut self,
-        volumes: Vec<&str>,
-    ) -> &mut Self {
+        volumes: I,
+    ) -> &mut Self
+    where
+        I: IntoIterator<Item = S> + Serialize,
+        S: AsRef<str>,
+    {
         self.params.insert("HostConfig.VolumesFrom", json!(volumes));
         self
     }
 
-    pub fn network_mode(
+    pub fn network_mode<S>(
         &mut self,
-        network: &str,
-    ) -> &mut Self {
-        self.params.insert("HostConfig.NetworkMode", json!(network));
+        network: S,
+    ) -> &mut Self
+    where
+        S: AsRef<str>,
+    {
+        self.params
+            .insert("HostConfig.NetworkMode", json!(network.as_ref()));
         self
     }
 
-    pub fn env<E, S>(
+    pub fn env<I, S>(
         &mut self,
-        envs: E,
+        envs: I,
     ) -> &mut Self
     where
-        S: AsRef<str> + Serialize,
-        E: AsRef<[S]> + Serialize,
+        I: IntoIterator<Item = S> + Serialize,
+        S: AsRef<str>,
     {
         self.params.insert("Env", json!(envs));
         self
     }
 
-    pub fn cmd(
+    pub fn cmd<I, S>(
         &mut self,
-        cmds: Vec<&str>,
-    ) -> &mut Self {
+        cmds: I,
+    ) -> &mut Self
+    where
+        I: IntoIterator<Item = S> + Serialize,
+        S: AsRef<str>,
+    {
         self.params.insert("Cmd", json!(cmds));
         self
     }
 
-    pub fn entrypoint(
+    pub fn entrypoint<S>(
         &mut self,
-        entrypoint: &str,
-    ) -> &mut Self {
-        self.params.insert("Entrypoint", json!(entrypoint));
+        entrypoint: S,
+    ) -> &mut Self
+    where
+        S: AsRef<str>,
+    {
+        self.params.insert("Entrypoint", json!(entrypoint.as_ref()));
         self
     }
 
-    pub fn capabilities(
+    pub fn capabilities<I, S>(
         &mut self,
-        capabilities: Vec<&str>,
-    ) -> &mut Self {
+        capabilities: I,
+    ) -> &mut Self
+    where
+        I: IntoIterator<Item = S> + Serialize,
+        S: AsRef<str>,
+    {
         self.params.insert("HostConfig.CapAdd", json!(capabilities));
         self
     }
 
-    pub fn devices(
+    pub fn devices<I>(
         &mut self,
-        devices: Vec<HashMap<String, String>>,
-    ) -> &mut Self {
+        devices: I,
+    ) -> &mut Self
+    where
+        I: IntoIterator<Item = HashMap<String, String>> + Serialize,
+    {
         self.params.insert("HostConfig.Devices", json!(devices));
         self
     }
 
-    pub fn log_driver(
+    pub fn log_driver<S>(
         &mut self,
-        log_driver: &str,
-    ) -> &mut Self {
+        log_driver: S,
+    ) -> &mut Self
+    where
+        S: AsRef<str>,
+    {
         self.params
-            .insert("HostConfig.LogConfig.Type", json!(log_driver));
+            .insert("HostConfig.LogConfig.Type", json!(log_driver.as_ref()));
         self
     }
 
-    pub fn restart_policy(
+    pub fn restart_policy<S>(
         &mut self,
-        name: &str,
+        name: S,
         maximum_retry_count: u64,
-    ) -> &mut Self {
+    ) -> &mut Self
+    where
+        S: AsRef<str>,
+    {
+        let name = name.as_ref();
         self.params
             .insert("HostConfig.RestartPolicy.Name", json!(name));
         if name == "on-failure" {
@@ -933,11 +987,14 @@ impl ContainerOptionsBuilder {
     }
 
     /// Signal to stop a container as a string. Default is "SIGTERM".
-    pub fn stop_signal(
+    pub fn stop_signal<S>(
         &mut self,
-        sig: &str,
-    ) -> &mut Self {
-        self.params.insert("StopSignal", json!(sig));
+        sig: S,
+    ) -> &mut Self
+    where
+        S: AsRef<str>,
+    {
+        self.params.insert("StopSignal", json!(sig.as_ref()));
         self
     }
 
@@ -959,11 +1016,15 @@ impl ContainerOptionsBuilder {
         self
     }
 
-    pub fn userns_mode(
+    pub fn userns_mode<S>(
         &mut self,
-        mode: &str,
-    ) -> &mut Self {
-        self.params.insert("HostConfig.UsernsMode", json!(mode));
+        mode: S,
+    ) -> &mut Self
+    where
+        S: AsRef<str>,
+    {
+        self.params
+            .insert("HostConfig.UsernsMode", json!(mode.as_ref()));
         self
     }
 
@@ -975,11 +1036,14 @@ impl ContainerOptionsBuilder {
         self
     }
 
-    pub fn user(
+    pub fn user<S>(
         &mut self,
-        user: &str,
-    ) -> &mut Self {
-        self.params.insert("User", json!(user));
+        user: S,
+    ) -> &mut Self
+    where
+        S: AsRef<str>,
+    {
+        self.params.insert("User", json!(user.as_ref()));
         self
     }
 
@@ -993,8 +1057,7 @@ impl ContainerOptionsBuilder {
 
 #[derive(Serialize, Debug)]
 pub struct ExecContainerOptions {
-    params: HashMap<&'static str, Vec<String>>,
-    params_bool: HashMap<&'static str, bool>,
+    params: HashMap<&'static str, Value>,
 }
 
 impl ExecContainerOptions {
@@ -1014,49 +1077,39 @@ impl ExecContainerOptions {
             );
         }
 
-        for (k, v) in &self.params_bool {
-            body.insert(
-                (*k).to_owned(),
-                serde_json::to_value(v).map_err(Error::SerdeJsonError)?,
-            );
-        }
-
         serde_json::to_string(&body).map_err(Error::from)
     }
 }
 
 #[derive(Default)]
 pub struct ExecContainerOptionsBuilder {
-    params: HashMap<&'static str, Vec<String>>,
-    params_bool: HashMap<&'static str, bool>,
+    params: HashMap<&'static str, Value>,
 }
 
 impl ExecContainerOptionsBuilder {
     /// Command to run, as an array of strings
-    pub fn cmd(
+    pub fn cmd<I, S>(
         &mut self,
-        cmds: Vec<&str>,
-    ) -> &mut Self {
-        for cmd in cmds {
-            self.params
-                .entry("Cmd")
-                .or_insert_with(Vec::new)
-                .push(cmd.to_owned());
-        }
+        cmds: I,
+    ) -> &mut Self
+    where
+        I: IntoIterator<Item = S> + Serialize,
+        S: Into<String>,
+    {
+        self.params.insert("Cmd", json!(cmds));
         self
     }
 
     /// A list of environment variables in the form "VAR=value"
-    pub fn env(
+    pub fn env<I, S>(
         &mut self,
-        envs: Vec<&str>,
-    ) -> &mut Self {
-        for env in envs {
-            self.params
-                .entry("Env")
-                .or_insert_with(Vec::new)
-                .push(env.to_owned());
-        }
+        envs: I,
+    ) -> &mut Self
+    where
+        I: IntoIterator<Item = S> + Serialize,
+        S: AsRef<str>,
+    {
+        self.params.insert("Env", json!(envs));
         self
     }
 
@@ -1065,7 +1118,7 @@ impl ExecContainerOptionsBuilder {
         &mut self,
         stdout: bool,
     ) -> &mut Self {
-        self.params_bool.insert("AttachStdout", stdout);
+        self.params.insert("AttachStdout", json!(stdout));
         self
     }
 
@@ -1074,14 +1127,13 @@ impl ExecContainerOptionsBuilder {
         &mut self,
         stderr: bool,
     ) -> &mut Self {
-        self.params_bool.insert("AttachStderr", stderr);
+        self.params.insert("AttachStderr", json!(stderr));
         self
     }
 
     pub fn build(&self) -> ExecContainerOptions {
         ExecContainerOptions {
             params: self.params.clone(),
-            params_bool: self.params_bool.clone(),
         }
     }
 }
@@ -1160,7 +1212,7 @@ impl EventsOptionsBuilder {
     /// Filter events since a given timestamp
     pub fn since(
         &mut self,
-        ts: &u64,
+        ts: u64,
     ) -> &mut Self {
         self.params.insert("since", ts.to_string());
         self
@@ -1169,16 +1221,19 @@ impl EventsOptionsBuilder {
     /// Filter events until a given timestamp
     pub fn until(
         &mut self,
-        ts: &u64,
+        ts: u64,
     ) -> &mut Self {
         self.params.insert("until", ts.to_string());
         self
     }
 
-    pub fn filter(
+    pub fn filter<I>(
         &mut self,
-        filters: Vec<EventFilter>,
-    ) -> &mut Self {
+        filters: I,
+    ) -> &mut Self
+    where
+        I: IntoIterator<Item = EventFilter>,
+    {
         let mut params = HashMap::new();
         for f in filters {
             match f {
@@ -1295,11 +1350,14 @@ impl LogsOptionsBuilder {
     }
 
     /// how_many can either be "all" or a to_string() of the number
-    pub fn tail(
+    pub fn tail<S>(
         &mut self,
-        how_many: &str,
-    ) -> &mut Self {
-        self.params.insert("tail", how_many.to_owned());
+        how_many: S,
+    ) -> &mut Self
+    where
+        S: Into<String>,
+    {
+        self.params.insert("tail", how_many.into());
         self
     }
 
@@ -1382,18 +1440,24 @@ impl ImageListOptionsBuilder {
         self
     }
 
-    pub fn filter_name(
+    pub fn filter_name<S>(
         &mut self,
-        name: &str,
-    ) -> &mut Self {
-        self.params.insert("filter", name.to_owned());
+        name: S,
+    ) -> &mut Self
+    where
+        S: Into<String>,
+    {
+        self.params.insert("filter", name.into());
         self
     }
 
-    pub fn filter(
+    pub fn filter<I>(
         &mut self,
-        filters: Vec<ImageFilter>,
-    ) -> &mut Self {
+        filters: I,
+    ) -> &mut Self
+    where
+        I: IntoIterator<Item = ImageFilter>,
+    {
         let mut param = HashMap::new();
         for f in filters {
             match f {
@@ -1501,7 +1565,10 @@ pub struct NetworkCreateOptions {
 
 impl NetworkCreateOptions {
     /// return a new instance of a builder for options
-    pub fn builder(name: &str) -> NetworkCreateOptionsBuilder {
+    pub fn builder<S>(name: S) -> NetworkCreateOptionsBuilder
+    where
+        S: AsRef<str>,
+    {
         NetworkCreateOptionsBuilder::new(name)
     }
 
@@ -1534,16 +1601,23 @@ pub struct NetworkCreateOptionsBuilder {
 }
 
 impl NetworkCreateOptionsBuilder {
-    pub(crate) fn new(name: &str) -> Self {
+    pub(crate) fn new<S>(name: S) -> Self
+    where
+        S: AsRef<str>,
+    {
         let mut params = HashMap::new();
-        params.insert("Name", json!(name));
+        params.insert("Name", json!(name.as_ref()));
         NetworkCreateOptionsBuilder { params }
     }
 
-    pub fn driver(
+    pub fn driver<S>(
         &mut self,
-        name: &str,
-    ) -> &mut Self {
+        name: S,
+    ) -> &mut Self
+    where
+        S: AsRef<str>,
+    {
+        let name = name.as_ref();
         if !name.is_empty() {
             self.params.insert("Driver", json!(name));
         }
@@ -1595,7 +1669,10 @@ impl ContainerConnectionOptions {
     }
 
     /// return a new instance of a builder for options
-    pub fn builder(container_id: &str) -> ContainerConnectionOptionsBuilder {
+    pub fn builder<S>(container_id: S) -> ContainerConnectionOptionsBuilder
+    where
+        S: AsRef<str>,
+    {
         ContainerConnectionOptionsBuilder::new(container_id)
     }
 }
@@ -1606,16 +1683,23 @@ pub struct ContainerConnectionOptionsBuilder {
 }
 
 impl ContainerConnectionOptionsBuilder {
-    pub(crate) fn new(container_id: &str) -> Self {
+    pub(crate) fn new<S>(container_id: S) -> Self
+    where
+        S: AsRef<str>,
+    {
         let mut params = HashMap::new();
-        params.insert("Container", json!(container_id));
+        params.insert("Container", json!(container_id.as_ref()));
         ContainerConnectionOptionsBuilder { params }
     }
 
-    pub fn aliases(
+    pub fn aliases<I, S>(
         &mut self,
-        aliases: Vec<&str>,
-    ) -> &mut Self {
+        aliases: I,
+    ) -> &mut Self
+    where
+        I: IntoIterator<Item = S> + Serialize,
+        S: AsRef<str>,
+    {
         self.params
             .insert("EndpointConfig", json!({ "Aliases": json!(aliases) }));
         self
@@ -1679,11 +1763,14 @@ impl VolumeCreateOptionsBuilder {
         VolumeCreateOptionsBuilder { params }
     }
 
-    pub fn name(
+    pub fn name<S>(
         &mut self,
-        name: &str,
-    ) -> &mut Self {
-        self.params.insert("Name", json!(name));
+        name: S,
+    ) -> &mut Self
+    where
+        S: AsRef<str>,
+    {
+        self.params.insert("Name", json!(name.as_ref()));
         self
     }
 
