@@ -1701,6 +1701,75 @@ impl VolumeCreateOptionsBuilder {
         }
     }
 }
+///
+/// Interface for creating volumes
+#[derive(Serialize, Debug)]
+pub struct ExecResizeOptions {
+    params: HashMap<&'static str, Value>,
+}
+
+impl ExecResizeOptions {
+    /// serialize options as a string. returns None if no options are defined
+    pub fn serialize(&self) -> Result<String> {
+        serde_json::to_string(&self.params).map_err(Error::from)
+    }
+
+    pub fn parse_from<'a, K, V>(
+        &self,
+        params: &'a HashMap<K, V>,
+        body: &mut BTreeMap<String, Value>,
+    ) where
+        &'a HashMap<K, V>: IntoIterator,
+        K: ToString + Eq + Hash,
+        V: Serialize,
+    {
+        for (k, v) in params.iter() {
+            let key = k.to_string();
+            let value = serde_json::to_value(v).unwrap();
+
+            body.insert(key, value);
+        }
+    }
+
+    /// return a new instance of a builder for options
+    pub fn builder() -> ExecResizeOptionsBuilder {
+        ExecResizeOptionsBuilder::new()
+    }
+}
+
+#[derive(Default)]
+pub struct ExecResizeOptionsBuilder {
+    params: HashMap<&'static str, Value>,
+}
+
+impl ExecResizeOptionsBuilder {
+    pub(crate) fn new() -> Self {
+        let params = HashMap::new();
+        ExecResizeOptionsBuilder { params }
+    }
+
+    pub fn height(
+        &mut self,
+        height: u64,
+    ) -> &mut Self {
+        self.params.insert("Name", json!(height));
+        self
+    }
+
+    pub fn width(
+        &mut self,
+        width: u64,
+    ) -> &mut Self {
+        self.params.insert("Name", json!(width));
+        self
+    }
+
+    pub fn build(&self) -> ExecResizeOptions {
+        ExecResizeOptions {
+            params: self.params.clone(),
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {

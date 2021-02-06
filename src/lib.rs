@@ -28,16 +28,16 @@ mod tarball;
 pub use crate::{
     builder::{
         BuildOptions, ContainerConnectionOptions, ContainerFilter, ContainerListOptions,
-        ContainerOptions, EventsOptions, ExecContainerOptions, ImageFilter, ImageListOptions,
-        LogsOptions, NetworkCreateOptions, NetworkListOptions, PullOptions, RegistryAuth,
-        RmContainerOptions, TagOptions, VolumeCreateOptions,
+        ContainerOptions, EventsOptions, ExecContainerOptions, ExecResizeOptions, ImageFilter,
+        ImageListOptions, LogsOptions, NetworkCreateOptions, NetworkListOptions, PullOptions,
+        RegistryAuth, RmContainerOptions, TagOptions, VolumeCreateOptions,
     },
     errors::Error,
 };
 use crate::{
     rep::{
-        Change, Container as ContainerRep, ContainerCreateInfo, ContainerDetails, Event, Exit,
-        History, Image as ImageRep, ImageDetails, Info, NetworkCreateInfo,
+        Change, Container as ContainerRep, ContainerCreateInfo, ContainerDetails, Event,
+        ExecDetails, Exit, History, Image as ImageRep, ImageDetails, Info, NetworkCreateInfo,
         NetworkDetails as NetworkInfo, SearchResult, Stats, Status, Top, Version,
         Volume as VolumeRep, VolumeCreateInfo, Volumes as VolumesRep,
     },
@@ -514,52 +514,15 @@ impl<'a> Container<'a> {
         Ok(())
     }
 
-    async fn exec_create(
-        &self,
-        opts: &ExecContainerOptions,
-    ) -> Result<String> {
-        #[derive(serde::Deserialize)]
-        #[serde(rename_all = "PascalCase")]
-        struct Response {
-            id: String,
-        }
-
-        let body: Body = opts.serialize()?.into();
-
-        let Response { id } = self
-            .docker
-            .post_json(
-                &format!("/containers/{}/exec", self.id)[..],
-                Some((body, mime::APPLICATION_JSON)),
-            )
-            .await?;
-
-        Ok(id)
-    }
-
-    fn exec_start(
-        &self,
-        id: String,
-    ) -> impl Stream<Item = Result<tty::TtyChunk>> + 'a {
-        let bytes: &[u8] = b"{}";
-
-        let stream = Box::pin(self.docker.stream_post(
-            format!("/exec/{}/start", id),
-            Some((bytes.into(), mime::APPLICATION_JSON)),
-            None::<iter::Empty<_>>,
-        ));
-
-        tty::decode(stream)
-    }
-
+    /// Execute a command in this container
     pub fn exec(
         &'a self,
         opts: &'a ExecContainerOptions,
     ) -> impl Stream<Item = Result<tty::TtyChunk>> + Unpin + 'a {
         Box::pin(
             async move {
-                let id = self.exec_create(opts).await?;
-                Ok(self.exec_start(id))
+                let id = Exec::create_id(&self.docker, &self.id, opts).await?;
+                Ok(Exec::_start(&self.docker, &id))
             }
             .try_flatten_stream(),
         )
@@ -690,6 +653,131 @@ impl<'a> Containers<'a> {
 
         self.docker
             .post_json(&path.join("?"), Some((body, mime::APPLICATION_JSON)))
+            .await
+    }
+}
+/// Interface for docker exec instance
+pub struct Exec<'a> {
+    docker: &'a Docker,
+    id: String,
+}
+
+impl<'a> Exec<'a> {
+    fn new<S>(
+        docker: &'a Docker,
+        id: S,
+    ) -> Exec<'a>
+    where
+        S: Into<String>,
+    {
+        Exec {
+            docker,
+            id: id.into(),
+        }
+    }
+
+    /// Creates an exec instance in docker and returns its id
+    pub(crate) async fn create_id(
+        docker: &'a Docker,
+        container_id: &str,
+        opts: &ExecContainerOptions,
+    ) -> Result<String> {
+        #[derive(serde::Deserialize)]
+        #[serde(rename_all = "PascalCase")]
+        struct Response {
+            id: String,
+        }
+
+        let body: Body = opts.serialize()?.into();
+
+        docker
+            .post_json(
+                &format!("/containers/{}/exec", container_id)[..],
+                Some((body, mime::APPLICATION_JSON)),
+            )
+            .await
+            .map(|resp: Response| resp.id)
+    }
+
+    /// Starts an exec instance with id exec_id
+    pub(crate) fn _start(
+        docker: &'a Docker,
+        exec_id: &str,
+    ) -> impl Stream<Item = Result<tty::TtyChunk>> + 'a {
+        let bytes: &[u8] = b"{}";
+
+        let stream = Box::pin(docker.stream_post(
+            format!("/exec/{}/start", &exec_id),
+            Some((bytes.into(), mime::APPLICATION_JSON)),
+            None::<iter::Empty<_>>,
+        ));
+
+        tty::decode(stream)
+    }
+
+    /// Creates a new exec instance that will be executed in a container with id == container_id
+    pub async fn create(
+        docker: &'a Docker,
+        container_id: &str,
+        opts: &ExecContainerOptions,
+    ) -> Result<Exec<'a>> {
+        Ok(Exec::new(
+            docker,
+            Exec::create_id(docker, container_id, opts).await?,
+        ))
+    }
+
+    /// Get a reference to a set of operations available to an already created exec instance.
+    ///
+    /// It's in callers responsibility to ensure that exec instance with specified id actually
+    /// exists. Use [Exec::create](Exec::create) to ensure that the exec instance is created
+    /// beforehand.
+    pub async fn get<S>(
+        docker: &'a Docker,
+        id: S,
+    ) -> Exec<'a>
+    where
+        S: Into<String>,
+    {
+        Exec::new(docker, id)
+    }
+
+    /// Starts this exec instance returning a multiplexed tty stream
+    pub fn start(&'a self) -> impl Stream<Item = Result<tty::TtyChunk>> + 'a {
+        Box::pin(
+            async move {
+                let bytes: &[u8] = b"{}";
+
+                let stream = Box::pin(self.docker.stream_post(
+                    format!("/exec/{}/start", &self.id),
+                    Some((bytes.into(), mime::APPLICATION_JSON)),
+                    None::<iter::Empty<_>>,
+                ));
+
+                Ok(tty::decode(stream))
+            }
+            .try_flatten_stream(),
+        )
+    }
+
+    /// Inspect this exec instance to aquire detailed information
+    pub async fn inspect(&self) -> Result<ExecDetails> {
+        self.docker
+            .get_json(&format!("/exec/{}/json", &self.id)[..])
+            .await
+    }
+
+    pub async fn resize(
+        &self,
+        opts: &ExecResizeOptions,
+    ) -> Result<()> {
+        let body: Body = opts.serialize()?.into();
+
+        self.docker
+            .post_json(
+                &format!("/exec/{}/resize", &self.id)[..],
+                Some((body, mime::APPLICATION_JSON)),
+            )
             .await
     }
 }
