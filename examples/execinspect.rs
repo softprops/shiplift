@@ -1,34 +1,32 @@
 use futures::StreamExt;
-use shiplift::{Docker, ExecContainerOptions};
+use shiplift::{Docker, Exec, ExecContainerOptions};
 use std::env;
 
 #[tokio::main]
 async fn main() {
     let docker = Docker::new();
-    let containers = docker.containers();
+    let mut args = env::args().skip(1);
 
-    let id = env::args()
-        .nth(1)
-        .expect("You need to specify a container id");
+    // First argument is container id
+    let id = args.next().expect("You need to specify a container id");
+    // Rest is command to run in the container
+    let cmd = args.collect::<Vec<String>>();
+    println!("{} {:?}", id, cmd);
 
-    let container = containers.get(&id);
-
+    // Create options with specified command
     let opts = ExecContainerOptions::builder()
-        .cmd(vec!["echo", "1"])
+        .cmd(cmd.iter().map(String::as_str).collect())
         .attach_stdout(true)
         .attach_stderr(true)
         .build();
 
-    let mut exec_id = String::new();
-    container.exec_with_id(&opts, &mut exec_id).next().await;
+    let exec = Exec::create(&docker, &id, &opts).await.unwrap();
 
-    // Inspect exec
-    match container.exec_inspect(&exec_id).await {
-        Ok(exec_info) => {
-            println!("{:#?}", exec_info);
-            //exit code
-            let _exit_code = exec_info.exit_code;
-        }
-        Err(e) => eprintln!("{:?}", e),
-    }
+    println!("{:#?}", exec.inspect().await.unwrap());
+
+    let mut stream = exec.start();
+
+    stream.next().await;
+
+    println!("{:#?}", exec.inspect().await.unwrap());
 }
