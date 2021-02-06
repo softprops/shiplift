@@ -1247,6 +1247,97 @@
 <span id="1244">1244</span>
 <span id="1245">1245</span>
 <span id="1246">1246</span>
+<span id="1247">1247</span>
+<span id="1248">1248</span>
+<span id="1249">1249</span>
+<span id="1250">1250</span>
+<span id="1251">1251</span>
+<span id="1252">1252</span>
+<span id="1253">1253</span>
+<span id="1254">1254</span>
+<span id="1255">1255</span>
+<span id="1256">1256</span>
+<span id="1257">1257</span>
+<span id="1258">1258</span>
+<span id="1259">1259</span>
+<span id="1260">1260</span>
+<span id="1261">1261</span>
+<span id="1262">1262</span>
+<span id="1263">1263</span>
+<span id="1264">1264</span>
+<span id="1265">1265</span>
+<span id="1266">1266</span>
+<span id="1267">1267</span>
+<span id="1268">1268</span>
+<span id="1269">1269</span>
+<span id="1270">1270</span>
+<span id="1271">1271</span>
+<span id="1272">1272</span>
+<span id="1273">1273</span>
+<span id="1274">1274</span>
+<span id="1275">1275</span>
+<span id="1276">1276</span>
+<span id="1277">1277</span>
+<span id="1278">1278</span>
+<span id="1279">1279</span>
+<span id="1280">1280</span>
+<span id="1281">1281</span>
+<span id="1282">1282</span>
+<span id="1283">1283</span>
+<span id="1284">1284</span>
+<span id="1285">1285</span>
+<span id="1286">1286</span>
+<span id="1287">1287</span>
+<span id="1288">1288</span>
+<span id="1289">1289</span>
+<span id="1290">1290</span>
+<span id="1291">1291</span>
+<span id="1292">1292</span>
+<span id="1293">1293</span>
+<span id="1294">1294</span>
+<span id="1295">1295</span>
+<span id="1296">1296</span>
+<span id="1297">1297</span>
+<span id="1298">1298</span>
+<span id="1299">1299</span>
+<span id="1300">1300</span>
+<span id="1301">1301</span>
+<span id="1302">1302</span>
+<span id="1303">1303</span>
+<span id="1304">1304</span>
+<span id="1305">1305</span>
+<span id="1306">1306</span>
+<span id="1307">1307</span>
+<span id="1308">1308</span>
+<span id="1309">1309</span>
+<span id="1310">1310</span>
+<span id="1311">1311</span>
+<span id="1312">1312</span>
+<span id="1313">1313</span>
+<span id="1314">1314</span>
+<span id="1315">1315</span>
+<span id="1316">1316</span>
+<span id="1317">1317</span>
+<span id="1318">1318</span>
+<span id="1319">1319</span>
+<span id="1320">1320</span>
+<span id="1321">1321</span>
+<span id="1322">1322</span>
+<span id="1323">1323</span>
+<span id="1324">1324</span>
+<span id="1325">1325</span>
+<span id="1326">1326</span>
+<span id="1327">1327</span>
+<span id="1328">1328</span>
+<span id="1329">1329</span>
+<span id="1330">1330</span>
+<span id="1331">1331</span>
+<span id="1332">1332</span>
+<span id="1333">1333</span>
+<span id="1334">1334</span>
+<span id="1335">1335</span>
+<span id="1336">1336</span>
+<span id="1337">1337</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Shiplift is a multi-transport utility for maneuvering [docker](https://www.docker.com/) containers</span>
 <span class="doccomment">//!</span>
@@ -1278,16 +1369,16 @@
 <span class="kw">pub</span> <span class="kw">use</span> <span class="kw">crate</span>::{
     <span class="ident">builder</span>::{
         <span class="ident">BuildOptions</span>, <span class="ident">ContainerConnectionOptions</span>, <span class="ident">ContainerFilter</span>, <span class="ident">ContainerListOptions</span>,
-        <span class="ident">ContainerOptions</span>, <span class="ident">EventsOptions</span>, <span class="ident">ExecContainerOptions</span>, <span class="ident">ImageFilter</span>, <span class="ident">ImageListOptions</span>,
-        <span class="ident">LogsOptions</span>, <span class="ident">NetworkCreateOptions</span>, <span class="ident">NetworkListOptions</span>, <span class="ident">PullOptions</span>, <span class="ident">RegistryAuth</span>,
-        <span class="ident">RmContainerOptions</span>, <span class="ident">TagOptions</span>, <span class="ident">VolumeCreateOptions</span>,
+        <span class="ident">ContainerOptions</span>, <span class="ident">EventsOptions</span>, <span class="ident">ExecContainerOptions</span>, <span class="ident">ExecResizeOptions</span>, <span class="ident">ImageFilter</span>,
+        <span class="ident">ImageListOptions</span>, <span class="ident">LogsOptions</span>, <span class="ident">NetworkCreateOptions</span>, <span class="ident">NetworkListOptions</span>, <span class="ident">PullOptions</span>,
+        <span class="ident">RegistryAuth</span>, <span class="ident">RmContainerOptions</span>, <span class="ident">TagOptions</span>, <span class="ident">VolumeCreateOptions</span>,
     },
     <span class="ident">errors</span>::<span class="ident">Error</span>,
 };
 <span class="kw">use</span> <span class="kw">crate</span>::{
     <span class="ident">rep</span>::{
-        <span class="ident">Change</span>, <span class="ident">Container</span> <span class="kw">as</span> <span class="ident">ContainerRep</span>, <span class="ident">ContainerCreateInfo</span>, <span class="ident">ContainerDetails</span>, <span class="ident">Event</span>, <span class="ident">Exit</span>,
-        <span class="ident">History</span>, <span class="ident">Image</span> <span class="kw">as</span> <span class="ident">ImageRep</span>, <span class="ident">ImageDetails</span>, <span class="ident">Info</span>, <span class="ident">NetworkCreateInfo</span>,
+        <span class="ident">Change</span>, <span class="ident">Container</span> <span class="kw">as</span> <span class="ident">ContainerRep</span>, <span class="ident">ContainerCreateInfo</span>, <span class="ident">ContainerDetails</span>, <span class="ident">Event</span>,
+        <span class="ident">ExecDetails</span>, <span class="ident">Exit</span>, <span class="ident">History</span>, <span class="ident">Image</span> <span class="kw">as</span> <span class="ident">ImageRep</span>, <span class="ident">ImageDetails</span>, <span class="ident">Info</span>, <span class="ident">NetworkCreateInfo</span>,
         <span class="ident">NetworkDetails</span> <span class="kw">as</span> <span class="ident">NetworkInfo</span>, <span class="ident">SearchResult</span>, <span class="ident">Stats</span>, <span class="ident">Status</span>, <span class="ident">Top</span>, <span class="ident">Version</span>,
         <span class="ident">Volume</span> <span class="kw">as</span> <span class="ident">VolumeRep</span>, <span class="ident">VolumeCreateInfo</span>, <span class="ident">Volumes</span> <span class="kw">as</span> <span class="ident">VolumesRep</span>,
     },
@@ -1495,10 +1586,13 @@
 
     <span class="doccomment">/// imports an image or set of images from a given tarball source</span>
     <span class="doccomment">/// source can be uncompressed on compressed via gzip, bzip2 or xz</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">import</span>(
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">import</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>(
         <span class="self">self</span>,
-        <span class="kw-2">mut</span> <span class="ident">tarball</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="ident">dyn</span> <span class="ident">Read</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Stream</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Value</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Unpin</span> <span class="op">+</span> <span class="lifetime">&#39;a</span> {
+        <span class="kw-2">mut</span> <span class="ident">tarball</span>: <span class="ident">R</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Stream</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Value</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Unpin</span> <span class="op">+</span> <span class="lifetime">&#39;a</span>
+    <span class="kw">where</span>
+        <span class="ident">R</span>: <span class="ident">Read</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="lifetime">&#39;a</span>,
+    {
         <span class="ident">Box</span>::<span class="ident">pin</span>(
             <span class="ident">async</span> <span class="kw">move</span> {
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">default</span>();
@@ -1761,52 +1855,15 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">exec_create</span>(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">ExecContainerOptions</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span> {
-        <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">serde</span>::<span class="ident">Deserialize</span>)]</span>
-        <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename_all</span> <span class="op">=</span> <span class="string">&quot;PascalCase&quot;</span>)]</span>
-        <span class="kw">struct</span> <span class="ident">Response</span> {
-            <span class="ident">id</span>: <span class="ident">String</span>,
-        }
-
-        <span class="kw">let</span> <span class="ident">body</span>: <span class="ident">Body</span> <span class="op">=</span> <span class="ident">opts</span>.<span class="ident">serialize</span>()<span class="question-mark">?</span>.<span class="ident">into</span>();
-
-        <span class="kw">let</span> <span class="ident">Response</span> { <span class="ident">id</span> } <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">docker</span>
-            .<span class="ident">post_json</span>(
-                <span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/containers/{}/exec&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>)[..],
-                <span class="prelude-val">Some</span>((<span class="ident">body</span>, <span class="ident">mime</span>::<span class="ident">APPLICATION_JSON</span>)),
-            )
-            .<span class="ident">await</span><span class="question-mark">?</span>;
-
-        <span class="prelude-val">Ok</span>(<span class="ident">id</span>)
-    }
-
-    <span class="kw">fn</span> <span class="ident">exec_start</span>(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">id</span>: <span class="ident">String</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Stream</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">tty</span>::<span class="ident">TtyChunk</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span> {
-        <span class="kw">let</span> <span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] <span class="op">=</span> <span class="string">b&quot;{}&quot;</span>;
-
-        <span class="kw">let</span> <span class="ident">stream</span> <span class="op">=</span> <span class="ident">Box</span>::<span class="ident">pin</span>(<span class="self">self</span>.<span class="ident">docker</span>.<span class="ident">stream_post</span>(
-            <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/exec/{}/start&quot;</span>, <span class="ident">id</span>),
-            <span class="prelude-val">Some</span>((<span class="ident">bytes</span>.<span class="ident">into</span>(), <span class="ident">mime</span>::<span class="ident">APPLICATION_JSON</span>)),
-            <span class="prelude-val">None</span>::<span class="op">&lt;</span><span class="ident">iter</span>::<span class="ident">Empty</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-        ));
-
-        <span class="ident">tty</span>::<span class="ident">decode</span>(<span class="ident">stream</span>)
-    }
-
+    <span class="doccomment">/// Execute a command in this container</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">exec</span>(
         <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>,
         <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">ExecContainerOptions</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Stream</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">tty</span>::<span class="ident">TtyChunk</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Unpin</span> <span class="op">+</span> <span class="lifetime">&#39;a</span> {
         <span class="ident">Box</span>::<span class="ident">pin</span>(
             <span class="ident">async</span> <span class="kw">move</span> {
-                <span class="kw">let</span> <span class="ident">id</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">exec_create</span>(<span class="ident">opts</span>).<span class="ident">await</span><span class="question-mark">?</span>;
-                <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">exec_start</span>(<span class="ident">id</span>))
+                <span class="kw">let</span> <span class="ident">id</span> <span class="op">=</span> <span class="ident">Exec</span>::<span class="ident">create_id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">docker</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">id</span>, <span class="ident">opts</span>).<span class="ident">await</span><span class="question-mark">?</span>;
+                <span class="prelude-val">Ok</span>(<span class="ident">Exec</span>::<span class="ident">_start</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">docker</span>, <span class="kw-2">&amp;</span><span class="ident">id</span>))
             }
             .<span class="ident">try_flatten_stream</span>(),
         )
@@ -1937,6 +1994,131 @@
 
         <span class="self">self</span>.<span class="ident">docker</span>
             .<span class="ident">post_json</span>(<span class="kw-2">&amp;</span><span class="ident">path</span>.<span class="ident">join</span>(<span class="string">&quot;?&quot;</span>), <span class="prelude-val">Some</span>((<span class="ident">body</span>, <span class="ident">mime</span>::<span class="ident">APPLICATION_JSON</span>)))
+            .<span class="ident">await</span>
+    }
+}
+<span class="doccomment">/// Interface for docker exec instance</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Exec</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+    <span class="ident">docker</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Docker</span>,
+    <span class="ident">id</span>: <span class="ident">String</span>,
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Exec</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">new</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>(
+        <span class="ident">docker</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Docker</span>,
+        <span class="ident">id</span>: <span class="ident">S</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Exec</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>
+    <span class="kw">where</span>
+        <span class="ident">S</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
+    {
+        <span class="ident">Exec</span> {
+            <span class="ident">docker</span>,
+            <span class="ident">id</span>: <span class="ident">id</span>.<span class="ident">into</span>(),
+        }
+    }
+
+    <span class="doccomment">/// Creates an exec instance in docker and returns its id</span>
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">create_id</span>(
+        <span class="ident">docker</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Docker</span>,
+        <span class="ident">container_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
+        <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">ExecContainerOptions</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span> {
+        <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">serde</span>::<span class="ident">Deserialize</span>)]</span>
+        <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename_all</span> <span class="op">=</span> <span class="string">&quot;PascalCase&quot;</span>)]</span>
+        <span class="kw">struct</span> <span class="ident">Response</span> {
+            <span class="ident">id</span>: <span class="ident">String</span>,
+        }
+
+        <span class="kw">let</span> <span class="ident">body</span>: <span class="ident">Body</span> <span class="op">=</span> <span class="ident">opts</span>.<span class="ident">serialize</span>()<span class="question-mark">?</span>.<span class="ident">into</span>();
+
+        <span class="ident">docker</span>
+            .<span class="ident">post_json</span>(
+                <span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/containers/{}/exec&quot;</span>, <span class="ident">container_id</span>)[..],
+                <span class="prelude-val">Some</span>((<span class="ident">body</span>, <span class="ident">mime</span>::<span class="ident">APPLICATION_JSON</span>)),
+            )
+            .<span class="ident">await</span>
+            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">resp</span>: <span class="ident">Response</span><span class="op">|</span> <span class="ident">resp</span>.<span class="ident">id</span>)
+    }
+
+    <span class="doccomment">/// Starts an exec instance with id exec_id</span>
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">_start</span>(
+        <span class="ident">docker</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Docker</span>,
+        <span class="ident">exec_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Stream</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">tty</span>::<span class="ident">TtyChunk</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span> {
+        <span class="kw">let</span> <span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] <span class="op">=</span> <span class="string">b&quot;{}&quot;</span>;
+
+        <span class="kw">let</span> <span class="ident">stream</span> <span class="op">=</span> <span class="ident">Box</span>::<span class="ident">pin</span>(<span class="ident">docker</span>.<span class="ident">stream_post</span>(
+            <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/exec/{}/start&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">exec_id</span>),
+            <span class="prelude-val">Some</span>((<span class="ident">bytes</span>.<span class="ident">into</span>(), <span class="ident">mime</span>::<span class="ident">APPLICATION_JSON</span>)),
+            <span class="prelude-val">None</span>::<span class="op">&lt;</span><span class="ident">iter</span>::<span class="ident">Empty</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+        ));
+
+        <span class="ident">tty</span>::<span class="ident">decode</span>(<span class="ident">stream</span>)
+    }
+
+    <span class="doccomment">/// Creates a new exec instance that will be executed in a container with id == container_id</span>
+    <span class="kw">pub</span> <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">create</span>(
+        <span class="ident">docker</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Docker</span>,
+        <span class="ident">container_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
+        <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">ExecContainerOptions</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Exec</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        <span class="prelude-val">Ok</span>(<span class="ident">Exec</span>::<span class="ident">new</span>(
+            <span class="ident">docker</span>,
+            <span class="ident">Exec</span>::<span class="ident">create_id</span>(<span class="ident">docker</span>, <span class="ident">container_id</span>, <span class="ident">opts</span>).<span class="ident">await</span><span class="question-mark">?</span>,
+        ))
+    }
+
+    <span class="doccomment">/// Get a reference to a set of operations available to an already created exec instance.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// It&#39;s in callers responsibility to ensure that exec instance with specified id actually</span>
+    <span class="doccomment">/// exists. Use [Exec::create](Exec::create) to ensure that the exec instance is created</span>
+    <span class="doccomment">/// beforehand.</span>
+    <span class="kw">pub</span> <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">get</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>(
+        <span class="ident">docker</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Docker</span>,
+        <span class="ident">id</span>: <span class="ident">S</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Exec</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>
+    <span class="kw">where</span>
+        <span class="ident">S</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
+    {
+        <span class="ident">Exec</span>::<span class="ident">new</span>(<span class="ident">docker</span>, <span class="ident">id</span>)
+    }
+
+    <span class="doccomment">/// Starts this exec instance returning a multiplexed tty stream</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">start</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Stream</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">tty</span>::<span class="ident">TtyChunk</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span> {
+        <span class="ident">Box</span>::<span class="ident">pin</span>(
+            <span class="ident">async</span> <span class="kw">move</span> {
+                <span class="kw">let</span> <span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] <span class="op">=</span> <span class="string">b&quot;{}&quot;</span>;
+
+                <span class="kw">let</span> <span class="ident">stream</span> <span class="op">=</span> <span class="ident">Box</span>::<span class="ident">pin</span>(<span class="self">self</span>.<span class="ident">docker</span>.<span class="ident">stream_post</span>(
+                    <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/exec/{}/start&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">id</span>),
+                    <span class="prelude-val">Some</span>((<span class="ident">bytes</span>.<span class="ident">into</span>(), <span class="ident">mime</span>::<span class="ident">APPLICATION_JSON</span>)),
+                    <span class="prelude-val">None</span>::<span class="op">&lt;</span><span class="ident">iter</span>::<span class="ident">Empty</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+                ));
+
+                <span class="prelude-val">Ok</span>(<span class="ident">tty</span>::<span class="ident">decode</span>(<span class="ident">stream</span>))
+            }
+            .<span class="ident">try_flatten_stream</span>(),
+        )
+    }
+
+    <span class="doccomment">/// Inspect this exec instance to aquire detailed information</span>
+    <span class="kw">pub</span> <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">inspect</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ExecDetails</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">docker</span>
+            .<span class="ident">get_json</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/exec/{}/json&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">id</span>)[..])
+            .<span class="ident">await</span>
+    }
+
+    <span class="kw">pub</span> <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">resize</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">ExecResizeOptions</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">body</span>: <span class="ident">Body</span> <span class="op">=</span> <span class="ident">opts</span>.<span class="ident">serialize</span>()<span class="question-mark">?</span>.<span class="ident">into</span>();
+
+        <span class="self">self</span>.<span class="ident">docker</span>
+            .<span class="ident">post_json</span>(
+                <span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/exec/{}/resize&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">id</span>)[..],
+                <span class="prelude-val">Some</span>((<span class="ident">body</span>, <span class="ident">mime</span>::<span class="ident">APPLICATION_JSON</span>)),
+            )
             .<span class="ident">await</span>
     }
 }

@@ -560,6 +560,33 @@
 <span id="557">557</span>
 <span id="558">558</span>
 <span id="559">559</span>
+<span id="560">560</span>
+<span id="561">561</span>
+<span id="562">562</span>
+<span id="563">563</span>
+<span id="564">564</span>
+<span id="565">565</span>
+<span id="566">566</span>
+<span id="567">567</span>
+<span id="568">568</span>
+<span id="569">569</span>
+<span id="570">570</span>
+<span id="571">571</span>
+<span id="572">572</span>
+<span id="573">573</span>
+<span id="574">574</span>
+<span id="575">575</span>
+<span id="576">576</span>
+<span id="577">577</span>
+<span id="578">578</span>
+<span id="579">579</span>
+<span id="580">580</span>
+<span id="581">581</span>
+<span id="582">582</span>
+<span id="583">583</span>
+<span id="584">584</span>
+<span id="585">585</span>
+<span id="586">586</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Rust representations of docker json structures</span>
 
@@ -1055,6 +1082,33 @@
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;chrono&quot;</span>))]</span>
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;timeNano&quot;</span>)]</span>
     <span class="kw">pub</span> <span class="ident">time_nano</span>: <span class="ident">u64</span>,
+}
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
+<span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename_all</span> <span class="op">=</span> <span class="string">&quot;PascalCase&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ExecDetails</span> {
+    <span class="kw">pub</span> <span class="ident">can_remove</span>: <span class="ident">bool</span>,
+    <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;ContainerID&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="ident">container_id</span>: <span class="ident">String</span>,
+    <span class="kw">pub</span> <span class="ident">detach_keys</span>: <span class="ident">String</span>,
+    <span class="kw">pub</span> <span class="ident">exit_code</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
+    <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;ID&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="ident">id</span>: <span class="ident">String</span>,
+    <span class="kw">pub</span> <span class="ident">open_stderr</span>: <span class="ident">bool</span>,
+    <span class="kw">pub</span> <span class="ident">open_stdin</span>: <span class="ident">bool</span>,
+    <span class="kw">pub</span> <span class="ident">open_stdout</span>: <span class="ident">bool</span>,
+    <span class="kw">pub</span> <span class="ident">process_config</span>: <span class="ident">ProcessConfig</span>,
+    <span class="kw">pub</span> <span class="ident">running</span>: <span class="ident">bool</span>,
+    <span class="kw">pub</span> <span class="ident">pid</span>: <span class="ident">u64</span>,
+}
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ProcessConfig</span> {
+    <span class="kw">pub</span> <span class="ident">arguments</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">entrypoint</span>: <span class="ident">String</span>,
+    <span class="kw">pub</span> <span class="ident">privileged</span>: <span class="ident">bool</span>,
+    <span class="kw">pub</span> <span class="ident">tty</span>: <span class="ident">bool</span>,
+    <span class="kw">pub</span> <span class="ident">user</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
