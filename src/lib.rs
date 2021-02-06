@@ -233,13 +233,16 @@ impl<'a> Images<'a> {
 
     /// exports a collection of named images,
     /// either by name, name:tag, or image id, into a tarball
-    pub fn export(
+    pub fn export<I, S>(
         &self,
-        names: Vec<&str>,
-    ) -> impl Stream<Item = Result<Vec<u8>>> + 'a {
-        let params = names.iter().map(|n| ("names", *n));
+        names: I,
+    ) -> impl Stream<Item = Result<Vec<u8>>> + 'a
+    where
+        I: IntoIterator<Item = S>,
+        S: Into<String>,
+    {
         let query = form_urlencoded::Serializer::new(String::new())
-            .extend_pairs(params)
+            .extend_pairs(names.into_iter().map(|n| ("names", n.into())))
             .finish();
         self.docker
             .stream_get(format!("/images/get?{}", query))
@@ -307,14 +310,17 @@ impl<'a> Container<'a> {
     }
 
     /// Returns a `top` view of information about the container process
-    pub async fn top(
+    pub async fn top<S>(
         &self,
-        psargs: Option<&str>,
-    ) -> Result<Top> {
+        psargs: Option<S>,
+    ) -> Result<Top>
+    where
+        S: AsRef<str>,
+    {
         let mut path = vec![format!("/containers/{}/top", self.id)];
         if let Some(ref args) = psargs {
             let encoded = form_urlencoded::Serializer::new(String::new())
-                .append_pair("ps_args", args)
+                .append_pair("ps_args", args.as_ref())
                 .finish();
             path.push(encoded)
         }
@@ -436,12 +442,16 @@ impl<'a> Container<'a> {
     }
 
     /// Kill the container instance
-    pub async fn kill(
+    pub async fn kill<S>(
         &self,
-        signal: Option<&str>,
-    ) -> Result<()> {
+        signal: Option<S>,
+    ) -> Result<()>
+    where
+        S: AsRef<str>,
+    {
         let mut path = vec![format!("/containers/{}/kill", self.id)];
         if let Some(sig) = signal {
+            let sig = sig.as_ref();
             let encoded = form_urlencoded::Serializer::new(String::new())
                 .append_pair("signal", &sig.to_owned())
                 .finish();
@@ -452,12 +462,15 @@ impl<'a> Container<'a> {
     }
 
     /// Rename the container instance
-    pub async fn rename(
+    pub async fn rename<S>(
         &self,
-        name: &str,
-    ) -> Result<()> {
+        name: S,
+    ) -> Result<()>
+    where
+        S: AsRef<str>,
+    {
         let query = form_urlencoded::Serializer::new(String::new())
-            .append_pair("name", name)
+            .append_pair("name", name.as_ref())
             .finish();
         self.docker
             .post(
@@ -525,7 +538,7 @@ impl<'a> Container<'a> {
         Box::pin(
             async move {
                 let id = Exec::create_id(&self.docker, &self.id, opts).await?;
-                Ok(Exec::_start(&self.docker, &id))
+                Ok(Exec::_start(&self.docker, id))
             }
             .try_flatten_stream(),
         )
@@ -539,12 +552,15 @@ impl<'a> Container<'a> {
     /// directory, `path` should end in `/` or `/`. (assuming a path separator of `/`). If `path`
     /// ends in `/.`  then this indicates that only the contents of the path directory should be
     /// copied.  A symlink is always resolved to its target.
-    pub fn copy_from(
+    pub fn copy_from<P>(
         &self,
-        path: &Path,
-    ) -> impl Stream<Item = Result<Vec<u8>>> + 'a {
+        path: P,
+    ) -> impl Stream<Item = Result<Vec<u8>>> + 'a
+    where
+        P: AsRef<Path>,
+    {
         let path_arg = form_urlencoded::Serializer::new(String::new())
-            .append_pair("path", &path.to_string_lossy())
+            .append_pair("path", &path.as_ref().to_string_lossy())
             .finish();
 
         let endpoint = format!("/containers/{}/archive?{}", self.id, path_arg);
@@ -555,12 +571,17 @@ impl<'a> Container<'a> {
     ///
     /// The file will be copied at the given location (see `path`) and will be owned by root
     /// with access mask 644.
-    pub async fn copy_file_into<P: AsRef<Path>>(
+    pub async fn copy_file_into<P, B>(
         &self,
         path: P,
-        bytes: &[u8],
-    ) -> Result<()> {
+        bytes: B,
+    ) -> Result<()>
+    where
+        P: AsRef<Path>,
+        B: AsRef<[u8]>,
+    {
         let path = path.as_ref();
+        let bytes = bytes.as_ref();
 
         let mut ar = tar::Builder::new(Vec::new());
         let mut header = tar::Header::new_gnu();
@@ -584,13 +605,16 @@ impl<'a> Container<'a> {
     /// Copy a tarball (see `body`) to the container.
     ///
     /// The tarball will be copied to the container and extracted at the given location (see `path`).
-    pub async fn copy_to(
+    pub async fn copy_to<P>(
         &self,
-        path: &Path,
+        path: P,
         body: Body,
-    ) -> Result<()> {
+    ) -> Result<()>
+    where
+        P: AsRef<Path>,
+    {
         let path_arg = form_urlencoded::Serializer::new(String::new())
-            .append_pair("path", &path.to_string_lossy())
+            .append_pair("path", &path.as_ref().to_string_lossy())
             .finish();
 
         let mime = "application/x-tar".parse::<Mime>().unwrap();
@@ -683,11 +707,14 @@ impl<'a> Exec<'a> {
     }
 
     /// Creates an exec instance in docker and returns its id
-    pub(crate) async fn create_id(
+    pub(crate) async fn create_id<S>(
         docker: &'a Docker,
-        container_id: &str,
+        container_id: S,
         opts: &ExecContainerOptions,
-    ) -> Result<String> {
+    ) -> Result<String>
+    where
+        S: AsRef<str>,
+    {
         #[derive(serde::Deserialize)]
         #[serde(rename_all = "PascalCase")]
         struct Response {
@@ -698,7 +725,7 @@ impl<'a> Exec<'a> {
 
         docker
             .post_json(
-                &format!("/containers/{}/exec", container_id)[..],
+                &format!("/containers/{}/exec", container_id.as_ref())[..],
                 Some((body, mime::APPLICATION_JSON)),
             )
             .await
@@ -706,14 +733,17 @@ impl<'a> Exec<'a> {
     }
 
     /// Starts an exec instance with id exec_id
-    pub(crate) fn _start(
+    pub(crate) fn _start<S>(
         docker: &'a Docker,
-        exec_id: &str,
-    ) -> impl Stream<Item = Result<tty::TtyChunk>> + 'a {
+        exec_id: S,
+    ) -> impl Stream<Item = Result<tty::TtyChunk>> + 'a
+    where
+        S: AsRef<str>,
+    {
         let bytes: &[u8] = b"{}";
 
         let stream = Box::pin(docker.stream_post(
-            format!("/exec/{}/start", &exec_id),
+            format!("/exec/{}/start", exec_id.as_ref()),
             Some((bytes.into(), mime::APPLICATION_JSON)),
             None::<iter::Empty<_>>,
         ));
@@ -722,11 +752,14 @@ impl<'a> Exec<'a> {
     }
 
     /// Creates a new exec instance that will be executed in a container with id == container_id
-    pub async fn create(
+    pub async fn create<S>(
         docker: &'a Docker,
-        container_id: &str,
+        container_id: S,
         opts: &ExecContainerOptions,
-    ) -> Result<Exec<'a>> {
+    ) -> Result<Exec<'a>>
+    where
+        S: AsRef<str>,
+    {
         Ok(Exec::new(
             docker,
             Exec::create_id(docker, container_id, opts).await?,
@@ -750,20 +783,7 @@ impl<'a> Exec<'a> {
 
     /// Starts this exec instance returning a multiplexed tty stream
     pub fn start(&'a self) -> impl Stream<Item = Result<tty::TtyChunk>> + 'a {
-        Box::pin(
-            async move {
-                let bytes: &[u8] = b"{}";
-
-                let stream = Box::pin(self.docker.stream_post(
-                    format!("/exec/{}/start", &self.id),
-                    Some((bytes.into(), mime::APPLICATION_JSON)),
-                    None::<iter::Empty<_>>,
-                ));
-
-                Ok(tty::decode(stream))
-            }
-            .try_flatten_stream(),
-        )
+        Box::pin(async move { Ok(Exec::_start(&self.docker, &self.id)) }.try_flatten_stream())
     }
 
     /// Inspect this exec instance to aquire detailed information
@@ -945,11 +965,14 @@ impl<'a> Volumes<'a> {
     }
 
     /// Returns a reference to a set of operations available for a named volume
-    pub fn get(
+    pub fn get<S>(
         &self,
-        name: &str,
-    ) -> Volume {
-        Volume::new(self.docker, name)
+        name: S,
+    ) -> Volume
+    where
+        S: AsRef<str>,
+    {
+        Volume::new(self.docker, name.as_ref())
     }
 }
 
