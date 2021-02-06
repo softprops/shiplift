@@ -60,7 +60,7 @@ use mime::Mime;
 #[cfg(feature = "tls")]
 use openssl::ssl::{SslConnector, SslFiletype, SslMethod};
 use serde_json::Value;
-use std::{borrow::Cow, env, io, io::Read, iter, path::Path, time::Duration};
+use std::{env, io, io::Read, iter, path::Path, time::Duration};
 use url::form_urlencoded;
 
 /// Represents the result of all docker operations
@@ -75,17 +75,17 @@ pub struct Docker {
 /// Interface for accessing and manipulating a named docker image
 pub struct Image<'a> {
     docker: &'a Docker,
-    name: Cow<'a, str>,
+    name: String,
 }
 
 impl<'a> Image<'a> {
     /// Exports an interface for operations that may be performed against a named image
     pub fn new<S>(
-        docker: &'a Docker,
+        docker: &Docker,
         name: S,
-    ) -> Self
+    ) -> Image
     where
-        S: Into<Cow<'a, str>>,
+        S: Into<String>,
     {
         Image {
             docker,
@@ -189,10 +189,13 @@ impl<'a> Images<'a> {
     }
 
     /// Returns a reference to a set of operations available for a named image
-    pub fn get(
+    pub fn get<S>(
         &self,
-        name: &'a str,
-    ) -> Image<'a> {
+        name: S,
+    ) -> Image<'a>
+    where
+        S: Into<String>,
+    {
         Image::new(self.docker, name)
     }
 
@@ -273,7 +276,7 @@ impl<'a> Images<'a> {
 /// Interface for accessing and manipulating a docker container
 pub struct Container<'a> {
     docker: &'a Docker,
-    id: Cow<'a, str>,
+    id: String,
 }
 
 impl<'a> Container<'a> {
@@ -283,7 +286,7 @@ impl<'a> Container<'a> {
         id: S,
     ) -> Self
     where
-        S: Into<Cow<'a, str>>,
+        S: Into<String>,
     {
         Container {
             docker,
@@ -628,10 +631,13 @@ impl<'a> Containers<'a> {
     }
 
     /// Returns a reference to a set of operations available to a specific container instance
-    pub fn get(
+    pub fn get<S>(
         &self,
-        name: &'a str,
-    ) -> Container<'a> {
+        name: S,
+    ) -> Container
+    where
+        S: Into<String>,
+    {
         Container::new(self.docker, name)
     }
 
@@ -789,7 +795,7 @@ pub struct Networks<'a> {
 
 impl<'a> Networks<'a> {
     /// Exports an interface for interacting with docker Networks
-    pub fn new(docker: &'a Docker) -> Networks<'a> {
+    pub fn new(docker: &Docker) -> Networks {
         Networks { docker }
     }
 
@@ -806,10 +812,13 @@ impl<'a> Networks<'a> {
     }
 
     /// Returns a reference to a set of operations available to a specific network instance
-    pub fn get<'b>(
+    pub fn get<S>(
         &self,
-        id: &'b str,
-    ) -> Network<'a, 'b> {
+        id: S,
+    ) -> Network
+    where
+        S: Into<String>,
+    {
         Network::new(self.docker, id)
     }
 
@@ -828,19 +837,19 @@ impl<'a> Networks<'a> {
 }
 
 /// Interface for accessing and manipulating a docker network
-pub struct Network<'a, 'b> {
+pub struct Network<'a> {
     docker: &'a Docker,
-    id: Cow<'b, str>,
+    id: String,
 }
 
-impl<'a, 'b> Network<'a, 'b> {
+impl<'a> Network<'a> {
     /// Exports an interface exposing operations against a network instance
     pub fn new<S>(
-        docker: &'a Docker,
+        docker: &Docker,
         id: S,
-    ) -> Network<'a, 'b>
+    ) -> Network
     where
-        S: Into<Cow<'b, str>>,
+        S: Into<String>,
     {
         Network {
             docker,
@@ -908,7 +917,7 @@ pub struct Volumes<'a> {
 
 impl<'a> Volumes<'a> {
     /// Exports an interface for interacting with docker volumes
-    pub fn new(docker: &'a Docker) -> Volumes<'a> {
+    pub fn new(docker: &Docker) -> Volumes {
         Volumes { docker }
     }
 
@@ -936,28 +945,28 @@ impl<'a> Volumes<'a> {
     }
 
     /// Returns a reference to a set of operations available for a named volume
-    pub fn get<'b>(
+    pub fn get(
         &self,
-        name: &'b str,
-    ) -> Volume<'a, 'b> {
+        name: &str,
+    ) -> Volume {
         Volume::new(self.docker, name)
     }
 }
 
 /// Interface for accessing and manipulating a named docker volume
-pub struct Volume<'a, 'b> {
+pub struct Volume<'a> {
     docker: &'a Docker,
-    name: Cow<'b, str>,
+    name: String,
 }
 
-impl<'a, 'b> Volume<'a, 'b> {
+impl<'a> Volume<'a> {
     /// Exports an interface for operations that may be performed against a named volume
     pub fn new<S>(
-        docker: &'a Docker,
+        docker: &Docker,
         name: S,
-    ) -> Volume<'a, 'b>
+    ) -> Volume
     where
-        S: Into<Cow<'b, str>>,
+        S: Into<String>,
     {
         Volume {
             docker,
@@ -1139,7 +1148,7 @@ impl Docker {
     /// Returns a stream of docker events
     pub fn events<'a>(
         &'a self,
-        opts: &'a EventsOptions,
+        opts: &EventsOptions,
     ) -> impl Stream<Item = Result<Event>> + Unpin + 'a {
         let mut path = vec!["/events".to_owned()];
         if let Some(query) = opts.serialize() {
