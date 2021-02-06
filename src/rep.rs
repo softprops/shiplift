@@ -501,7 +501,7 @@ pub struct ExecDetails {
     #[serde(rename = "ContainerID")]
     pub container_id: String,
     pub detach_keys: String,
-    pub exit_code: u64,
+    pub exit_code: Option<u64>,
     #[serde(rename = "ID")]
     pub id: String,
     pub open_stderr: bool,
