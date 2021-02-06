@@ -10,7 +10,7 @@ async fn main() {
     match docker
         .networks()
         .create(
-            &NetworkCreateOptions::builder(network_name.as_ref())
+            &NetworkCreateOptions::builder(&network_name)
                 .driver("bridge")
                 .build(),
         )

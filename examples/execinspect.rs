@@ -15,7 +15,7 @@ async fn main() {
 
     // Create options with specified command
     let opts = ExecContainerOptions::builder()
-        .cmd(cmd.iter().map(String::as_str).collect())
+        .cmd(cmd)
         .attach_stdout(true)
         .attach_stderr(true)
         .build();

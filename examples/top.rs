@@ -8,7 +8,7 @@ async fn main() {
         .nth(1)
         .expect("Usage: cargo run --example top -- <container>");
 
-    match docker.containers().get(&id).top(Default::default()).await {
+    match docker.containers().get(&id).top(None).await {
         Ok(top) => println!("{:#?}", top),
         Err(e) => eprintln!("Error: {}", e),
     }

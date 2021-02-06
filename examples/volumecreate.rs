@@ -16,7 +16,7 @@ async fn main() {
     match volumes
         .create(
             &VolumeCreateOptions::builder()
-                .name(volume_name.as_ref())
+                .name(&volume_name)
                 .labels(&labels)
                 .build(),
         )
