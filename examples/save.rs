@@ -8,7 +8,7 @@ async fn main() {
     let docker = Docker::new();
     let id = env::args().nth(1).expect("You need to specify an image id");
 
-    let mut export_file = OpenOptions::new()
+    let mut file = OpenOptions::new()
         .write(true)
         .create(true)
         .open(format!("{}.tar", &id))
@@ -16,8 +16,8 @@ async fn main() {
 
     let images = docker.images();
 
-    while let Some(export_result) = images.get(&id).export().next().await {
-        match export_result.and_then(|bytes| export_file.write(&bytes).map_err(Error::from)) {
+    while let Some(save_result) = images.get(&id).save().next().await {
+        match save_result.and_then(|bytes| file.write(&bytes).map_err(Error::from)) {
             Ok(n) => println!("copied {} bytes", n),
             Err(e) => eprintln!("Error: {}", e),
         }

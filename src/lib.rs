@@ -114,8 +114,17 @@ impl<'a> Image<'a> {
             .await
     }
 
-    /// Export this image to a tarball
+    /// Save this image as a tarball.
+    #[deprecated(
+        since = "0.7.0",
+        note = "Please use `save` instead. This will be removed in 0.8.0."
+    )]
     pub fn export(&self) -> impl Stream<Item = Result<Vec<u8>>> + Unpin + 'a {
+        self.save()
+    }
+
+    /// Save this image as a tarball.
+    pub fn save(&self) -> impl Stream<Item = Result<Vec<u8>>> + Unpin + 'a {
         Box::pin(
             self.docker
                 .stream_get(format!("/images/{}/get", self.name))
@@ -231,9 +240,20 @@ impl<'a> Images<'a> {
         )
     }
 
-    /// exports a collection of named images,
-    /// either by name, name:tag, or image id, into a tarball
+    /// Saves a collection of named images, either by name, name:tag, or image id, into a tarball.
+    #[deprecated(
+        since = "0.7.0",
+        note = "Please use `save` instead. This will be removed in 0.8.0."
+    )]
     pub fn export(
+        &self,
+        names: Vec<&str>,
+    ) -> impl Stream<Item = Result<Vec<u8>>> + 'a {
+        self.save(names)
+    }
+
+    /// Saves a collection of named images, either by name, name:tag, or image id, into a tarball.
+    pub fn save(
         &self,
         names: Vec<&str>,
     ) -> impl Stream<Item = Result<Vec<u8>>> + 'a {
