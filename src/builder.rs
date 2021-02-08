@@ -1,9 +1,10 @@
 //! Interfaces for building various structures
 
-use crate::rep::{
-    EndpointSpec, Mode, NetworkAttachmentConfig, RollbackConfig, TaskSpec, UpdateConfig,
+use crate::{
+    errors::Error,
+    rep::{EndpointSpec, Mode, NetworkAttachmentConfig, RollbackConfig, TaskSpec, UpdateConfig},
+    Result,
 };
-use crate::{errors::Error, Result};
 use serde::Serialize;
 use serde_json::{self, json, map::Map, Value};
 use std::{
