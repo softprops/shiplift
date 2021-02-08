@@ -36,10 +36,10 @@ impl RegistryAuth {
     /// return a new instance with token authentication
     pub fn token<S>(token: S) -> RegistryAuth
     where
-        S: Into<String>,
+        S: AsRef<str>,
     {
         RegistryAuth::Token {
-            identity_token: token.into(),
+            identity_token: token.as_ref().to_string(),
         }
     }
 
@@ -70,9 +70,9 @@ impl RegistryAuthBuilder {
         username: I,
     ) -> &mut Self
     where
-        I: Into<String>,
+        I: AsRef<str>,
     {
-        self.username = Some(username.into());
+        self.username = Some(username.as_ref().to_string());
         self
     }
 
@@ -81,9 +81,9 @@ impl RegistryAuthBuilder {
         password: I,
     ) -> &mut Self
     where
-        I: Into<String>,
+        I: AsRef<str>,
     {
-        self.password = Some(password.into());
+        self.password = Some(password.as_ref().to_string());
         self
     }
 
@@ -92,9 +92,9 @@ impl RegistryAuthBuilder {
         email: I,
     ) -> &mut Self
     where
-        I: Into<String>,
+        I: AsRef<str>,
     {
-        self.email = Some(email.into());
+        self.email = Some(email.as_ref().to_string());
         self
     }
 
@@ -103,9 +103,9 @@ impl RegistryAuthBuilder {
         server_address: I,
     ) -> &mut Self
     where
-        I: Into<String>,
+        I: AsRef<str>,
     {
-        self.server_address = Some(server_address.into());
+        self.server_address = Some(server_address.as_ref().to_string());
         self
     }
 
@@ -155,9 +155,9 @@ impl TagOptionsBuilder {
         r: R,
     ) -> &mut Self
     where
-        R: Into<String>,
+        R: AsRef<str>,
     {
-        self.params.insert("repo", r.into());
+        self.params.insert("repo", r.as_ref().to_string());
         self
     }
 
@@ -166,9 +166,9 @@ impl TagOptionsBuilder {
         t: T,
     ) -> &mut Self
     where
-        T: Into<String>,
+        T: AsRef<str>,
     {
-        self.params.insert("tag", t.into());
+        self.params.insert("tag", t.as_ref().to_string());
         self
     }
 
@@ -226,9 +226,9 @@ impl PullOptionsBuilder {
         img: I,
     ) -> &mut Self
     where
-        I: Into<String>,
+        I: AsRef<str>,
     {
-        self.params.insert("fromImage", img.into());
+        self.params.insert("fromImage", img.as_ref().to_string());
         self
     }
 
@@ -237,9 +237,9 @@ impl PullOptionsBuilder {
         s: S,
     ) -> &mut Self
     where
-        S: Into<String>,
+        S: AsRef<str>,
     {
-        self.params.insert("fromSrc", s.into());
+        self.params.insert("fromSrc", s.as_ref().to_string());
         self
     }
 
@@ -250,9 +250,9 @@ impl PullOptionsBuilder {
         r: R,
     ) -> &mut Self
     where
-        R: Into<String>,
+        R: AsRef<str>,
     {
-        self.params.insert("repo", r.into());
+        self.params.insert("repo", r.as_ref().to_string());
         self
     }
 
@@ -263,9 +263,9 @@ impl PullOptionsBuilder {
         t: T,
     ) -> &mut Self
     where
-        T: Into<String>,
+        T: AsRef<str>,
     {
-        self.params.insert("tag", t.into());
+        self.params.insert("tag", t.as_ref().to_string());
         self
     }
 
@@ -297,7 +297,7 @@ impl BuildOptions {
     /// describing how to build a Docker image
     pub fn builder<S>(path: S) -> BuildOptionsBuilder
     where
-        S: Into<String>,
+        S: AsRef<str>,
     {
         BuildOptionsBuilder::new(path)
     }
@@ -327,10 +327,10 @@ impl BuildOptionsBuilder {
     /// describing how to build a Docker image
     pub(crate) fn new<S>(path: S) -> Self
     where
-        S: Into<String>,
+        S: AsRef<str>,
     {
         BuildOptionsBuilder {
-            path: path.into(),
+            path: path.as_ref().to_string(),
             ..Default::default()
         }
     }
@@ -341,9 +341,9 @@ impl BuildOptionsBuilder {
         path: P,
     ) -> &mut Self
     where
-        P: Into<String>,
+        P: AsRef<str>,
     {
-        self.params.insert("dockerfile", path.into());
+        self.params.insert("dockerfile", path.as_ref().to_string());
         self
     }
 
@@ -353,9 +353,9 @@ impl BuildOptionsBuilder {
         t: T,
     ) -> &mut Self
     where
-        T: Into<String>,
+        T: AsRef<str>,
     {
-        self.params.insert("t", t.into());
+        self.params.insert("t", t.as_ref().to_string());
         self
     }
 
@@ -364,9 +364,9 @@ impl BuildOptionsBuilder {
         r: R,
     ) -> &mut Self
     where
-        R: Into<String>,
+        R: AsRef<str>,
     {
-        self.params.insert("remote", r.into());
+        self.params.insert("remote", r.as_ref().to_string());
         self
     }
 
@@ -401,9 +401,9 @@ impl BuildOptionsBuilder {
         t: T,
     ) -> &mut Self
     where
-        T: Into<String>,
+        T: AsRef<str>,
     {
-        self.params.insert("networkmode", t.into());
+        self.params.insert("networkmode", t.as_ref().to_string());
         self
     }
 
@@ -622,9 +622,9 @@ impl ContainerOptionsBuilder {
         name: S,
     ) -> &mut Self
     where
-        S: Into<String>,
+        S: AsRef<str>,
     {
-        self.name = Some(name.into());
+        self.name = Some(name.as_ref().to_string());
         self
     }
 
@@ -1094,7 +1094,7 @@ impl ExecContainerOptionsBuilder {
     ) -> &mut Self
     where
         I: IntoIterator<Item = S> + Serialize,
-        S: Into<String>,
+        S: AsRef<str>,
     {
         self.params.insert("Cmd", json!(cmds));
         self
@@ -1355,9 +1355,9 @@ impl LogsOptionsBuilder {
         how_many: S,
     ) -> &mut Self
     where
-        S: Into<String>,
+        S: AsRef<str>,
     {
-        self.params.insert("tail", how_many.into());
+        self.params.insert("tail", how_many.as_ref().to_string());
         self
     }
 
@@ -1445,9 +1445,9 @@ impl ImageListOptionsBuilder {
         name: S,
     ) -> &mut Self
     where
-        S: Into<String>,
+        S: AsRef<str>,
     {
-        self.params.insert("filter", name.into());
+        self.params.insert("filter", name.as_ref().to_string());
         self
     }
 

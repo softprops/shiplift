@@ -85,11 +85,11 @@ impl<'a> Image<'a> {
         name: S,
     ) -> Image
     where
-        S: Into<String>,
+        S: AsRef<str>,
     {
         Image {
             docker,
-            name: name.into(),
+            name: name.as_ref().to_string(),
         }
     }
 
@@ -194,7 +194,7 @@ impl<'a> Images<'a> {
         name: S,
     ) -> Image<'a>
     where
-        S: Into<String>,
+        S: AsRef<str>,
     {
         Image::new(self.docker, name)
     }
@@ -242,10 +242,10 @@ impl<'a> Images<'a> {
     ) -> impl Stream<Item = Result<Vec<u8>>> + 'a
     where
         I: IntoIterator<Item = S>,
-        S: Into<String>,
+        S: AsRef<str>,
     {
         let query = form_urlencoded::Serializer::new(String::new())
-            .extend_pairs(names.into_iter().map(|n| ("names", n.into())))
+            .extend_pairs(names.into_iter().map(|n| ("names", n.as_ref().to_string())))
             .finish();
         self.docker
             .stream_get(format!("/images/get?{}", query))
@@ -292,11 +292,11 @@ impl<'a> Container<'a> {
         id: S,
     ) -> Self
     where
-        S: Into<String>,
+        S: AsRef<str>,
     {
         Container {
             docker,
-            id: id.into(),
+            id: id.as_ref().to_string(),
         }
     }
 
@@ -660,7 +660,7 @@ impl<'a> Containers<'a> {
         name: S,
     ) -> Container
     where
-        S: Into<String>,
+        S: AsRef<str>,
     {
         Container::new(self.docker, name)
     }
@@ -698,11 +698,11 @@ impl<'a> Exec<'a> {
         id: S,
     ) -> Exec<'a>
     where
-        S: Into<String>,
+        S: AsRef<str>,
     {
         Exec {
             docker,
-            id: id.into(),
+            id: id.as_ref().to_string(),
         }
     }
 
@@ -776,7 +776,7 @@ impl<'a> Exec<'a> {
         id: S,
     ) -> Exec<'a>
     where
-        S: Into<String>,
+        S: AsRef<str>,
     {
         Exec::new(docker, id)
     }
@@ -837,7 +837,7 @@ impl<'a> Networks<'a> {
         id: S,
     ) -> Network
     where
-        S: Into<String>,
+        S: AsRef<str>,
     {
         Network::new(self.docker, id)
     }
@@ -869,11 +869,11 @@ impl<'a> Network<'a> {
         id: S,
     ) -> Network
     where
-        S: Into<String>,
+        S: AsRef<str>,
     {
         Network {
             docker,
-            id: id.into(),
+            id: id.as_ref().to_string(),
         }
     }
 
@@ -989,11 +989,11 @@ impl<'a> Volume<'a> {
         name: S,
     ) -> Volume
     where
-        S: Into<String>,
+        S: AsRef<str>,
     {
         Volume {
             docker,
-            name: name.into(),
+            name: name.as_ref().to_string(),
         }
     }
 
@@ -1098,14 +1098,14 @@ impl Docker {
     #[cfg(feature = "unix-socket")]
     pub fn unix<S>(socket_path: S) -> Docker
     where
-        S: Into<String>,
+        S: AsRef<str>,
     {
         Docker {
             transport: Transport::Unix {
                 client: Client::builder()
                     .pool_max_idle_per_host(0)
                     .build(UnixConnector),
-                path: socket_path.into(),
+                path: socket_path.as_ref().to_string(),
             },
         }
     }
