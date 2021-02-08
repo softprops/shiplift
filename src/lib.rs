@@ -38,8 +38,9 @@ use crate::{
     rep::{
         Change, Container as ContainerRep, ContainerCreateInfo, ContainerDetails, Event,
         ExecDetails, Exit, History, Image as ImageRep, ImageDetails, Info, NetworkCreateInfo,
-        NetworkDetails as NetworkInfo, SearchResult, Stats, Status, Top, Version,
-        Volume as VolumeRep, VolumeCreateInfo, Volumes as VolumesRep,
+        NetworkDetails as NetworkInfo, SearchResult, Service as ServiceRep,
+        Services as ServicesRep, Stats, Status, Top, Version, Volume as VolumeRep,
+        VolumeCreateInfo, Volumes as VolumesRep,
     },
     transport::{tar, Transport},
     tty::Multiplexer as TtyMultiPlexer,
@@ -983,6 +984,55 @@ impl<'a> Volume<'a> {
     }
 }
 
+/// Interface for docker services
+pub struct Services<'a> {
+    docker: &'a Docker,
+}
+
+impl<'a> Services<'a> {
+    /// Exports an interface for interacting with docker services
+    pub fn new(docker: &Docker) -> Services {
+        Services { docker }
+    }
+
+    /// Lists the docker services on the current docker host
+    pub async fn list(&self) -> Result<ServicesRep> {
+        let path = vec!["/services".to_owned()];
+
+        self.docker.get_json::<ServicesRep>(&path.join("?")).await
+    }
+
+    /// Returns a reference to a set of operations available for a named service
+    pub fn get(
+        &self,
+        name: &str,
+    ) -> Service {
+        Service::new(self.docker, name)
+    }
+}
+
+/// Interface for accessing and manipulating a named docker volume
+pub struct Service<'a> {
+    docker: &'a Docker,
+    name: String,
+}
+
+impl<'a> Service<'a> {
+    /// Exports an interface for operations that may be performed against a named service
+    pub fn new<S>(
+        docker: &Docker,
+        name: S,
+    ) -> Service
+    where
+        S: Into<String>,
+    {
+        Service {
+            docker,
+            name: name.into(),
+        }
+    }
+}
+
 fn get_http_connector() -> HttpConnector {
     let mut http = HttpConnector::new();
     http.enforce_http(false);
@@ -1120,6 +1170,11 @@ impl Docker {
     /// Exports an interface for interacting with docker containers
     pub fn containers(&self) -> Containers {
         Containers::new(self)
+    }
+
+    /// Exports an interface for interacting with docker services
+    pub fn services(&self) -> Services {
+        Services::new(self)
     }
 
     pub fn networks(&self) -> Networks {
