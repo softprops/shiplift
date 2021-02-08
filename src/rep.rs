@@ -614,10 +614,10 @@ pub struct EndpointSpec {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct EndpointPortConfig {
-    pub name: String,
+    pub name: Option<String>,
     pub protocol: String,
     pub publish_mode: String,
-    pub published_port: u64,
+    pub published_port: Option<u64>,
     pub target_port: u64,
 }
 
