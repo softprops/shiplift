@@ -39,7 +39,7 @@ use crate::{
     rep::{
         Change, Container as ContainerRep, ContainerCreateInfo, ContainerDetails, Event,
         ExecDetails, Exit, History, Image as ImageRep, ImageDetails, Info, NetworkCreateInfo,
-        NetworkDetails as NetworkInfo, SearchResult, Service as ServiceRep,
+        NetworkDetails as NetworkInfo, SearchResult, Service as ServiceRep, ServiceDetails,
         Services as ServicesRep, Stats, Status, Top, Version, Volume as VolumeRep,
         VolumeCreateInfo, Volumes as VolumesRep,
     },
@@ -1037,6 +1037,13 @@ impl<'a> Service<'a> {
             docker,
             name: name.into(),
         }
+    }
+
+    /// Inspects a named service's details
+    pub async fn inspect(&self) -> Result<ServiceDetails> {
+        self.docker
+            .get_json(&format!("/services/{}", self.name)[..])
+            .await
     }
 }
 
