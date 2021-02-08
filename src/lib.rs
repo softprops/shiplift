@@ -67,6 +67,7 @@ use url::form_urlencoded;
 /// Represents the result of all docker operations
 pub type Result<T> = std::result::Result<T, Error>;
 
+#[api_doc]
 /// Entrypoint interface for communicating with docker daemon
 #[derive(Clone)]
 pub struct Docker {
@@ -144,6 +145,7 @@ impl<'a> Image<'a> {
     }
 }
 
+#[api_doc("tag", "Image")]
 /// Interface for docker images
 pub struct Images<'a> {
     docker: &'a Docker,
@@ -155,6 +157,7 @@ impl<'a> Images<'a> {
         Images { docker }
     }
 
+    #[api_doc("operation", "ImageBuild")]
     /// Builds a new image build by reading a Dockerfile in a target directory
     pub fn build(
         &'a self,
@@ -183,6 +186,7 @@ impl<'a> Images<'a> {
         )
     }
 
+    #[api_doc("operation", "ImageList")]
     /// Lists the docker images on the current docker host
     pub async fn list(
         &self,
@@ -206,6 +210,7 @@ impl<'a> Images<'a> {
         Image::new(self.docker, name)
     }
 
+    #[api_doc("operation", "ImageSearch")]
     /// Search for docker images by term
     pub async fn search(
         &self,
@@ -219,6 +224,7 @@ impl<'a> Images<'a> {
             .await
     }
 
+    #[api_doc("operation", "ImagePull")]
     /// Pull and create a new docker images from an existing image
     pub fn pull(
         &self,
@@ -238,6 +244,7 @@ impl<'a> Images<'a> {
         )
     }
 
+    #[api_doc("operation", "ImageExport")]
     /// exports a collection of named images,
     /// either by name, name:tag, or image id, into a tarball
     pub fn export(
@@ -253,6 +260,7 @@ impl<'a> Images<'a> {
             .map_ok(|c| c.to_vec())
     }
 
+    #[api_doc("operation", "ImageImport")]
     /// imports an image or set of images from a given tarball source
     /// source can be uncompressed on compressed via gzip, bzip2 or xz
     pub fn import<R>(
@@ -280,6 +288,7 @@ impl<'a> Images<'a> {
     }
 }
 
+#[api_doc("tag", "Container")]
 /// Interface for accessing and manipulating a docker container
 pub struct Container<'a> {
     docker: &'a Docker,
@@ -306,6 +315,7 @@ impl<'a> Container<'a> {
         &self.id
     }
 
+    #[api_doc("operation", "ContainerInspect")]
     /// Inspects the current docker container instance's details
     pub async fn inspect(&self) -> Result<ContainerDetails> {
         self.docker
@@ -313,6 +323,7 @@ impl<'a> Container<'a> {
             .await
     }
 
+    #[api_doc("operation", "ContainerTop")]
     /// Returns a `top` view of information about the container process
     pub async fn top(
         &self,
@@ -328,6 +339,7 @@ impl<'a> Container<'a> {
         self.docker.get_json(&path.join("?")).await
     }
 
+    #[api_doc("operation", "ContainerLogs")]
     /// Returns a stream of logs emitted but the container instance
     pub fn logs(
         &self,
@@ -356,6 +368,7 @@ impl<'a> Container<'a> {
             .await
     }
 
+    #[api_doc("operation", "ContainerAttach")]
     /// Attaches a `[TtyMultiplexer]` to the container.
     ///
     /// The `[TtyMultiplexer]` implements Stream for returning Stdout and Stderr chunks. It also implements `[AsyncWrite]` for writing to Stdin.
@@ -367,6 +380,7 @@ impl<'a> Container<'a> {
         Ok(TtyMultiPlexer::new(tcp_stream))
     }
 
+    #[api_doc("operation", "ContainerChanges")]
     /// Returns a set of changes made to the container instance
     pub async fn changes(&self) -> Result<Vec<Change>> {
         self.docker
@@ -374,6 +388,7 @@ impl<'a> Container<'a> {
             .await
     }
 
+    #[api_doc("operation", "ContainerExport")]
     /// Exports the current docker container into a tarball
     pub fn export(&self) -> impl Stream<Item = Result<Vec<u8>>> + 'a {
         self.docker
@@ -381,6 +396,7 @@ impl<'a> Container<'a> {
             .map_ok(|c| c.to_vec())
     }
 
+    #[api_doc("operation", "ContainerStats")]
     /// Returns a stream of stats specific to this container instance
     pub fn stats(&'a self) -> impl Stream<Item = Result<Stats>> + Unpin + 'a {
         let codec = futures_codec::LinesCodec {};
@@ -401,6 +417,7 @@ impl<'a> Container<'a> {
         )
     }
 
+    #[api_doc("operation", "ContainerStart")]
     /// Start the container instance
     pub async fn start(&self) -> Result<()> {
         self.docker
@@ -409,6 +426,7 @@ impl<'a> Container<'a> {
         Ok(())
     }
 
+    #[api_doc("operation", "ContainerStop")]
     /// Stop the container instance
     pub async fn stop(
         &self,
@@ -426,6 +444,7 @@ impl<'a> Container<'a> {
         Ok(())
     }
 
+    #[api_doc("operation", "ContainerRestart")]
     /// Restart the container instance
     pub async fn restart(
         &self,
@@ -442,6 +461,7 @@ impl<'a> Container<'a> {
         Ok(())
     }
 
+    #[api_doc("operation", "ContainerKill")]
     /// Kill the container instance
     pub async fn kill(
         &self,
@@ -458,6 +478,7 @@ impl<'a> Container<'a> {
         Ok(())
     }
 
+    #[api_doc("operation", "ContainerRename")]
     /// Rename the container instance
     pub async fn rename(
         &self,
@@ -475,6 +496,7 @@ impl<'a> Container<'a> {
         Ok(())
     }
 
+    #[api_doc("operation", "ContainerPause")]
     /// Pause the container instance
     pub async fn pause(&self) -> Result<()> {
         self.docker
@@ -483,6 +505,7 @@ impl<'a> Container<'a> {
         Ok(())
     }
 
+    #[api_doc("operation", "ContainerUnpause")]
     /// Unpause the container instance
     pub async fn unpause(&self) -> Result<()> {
         self.docker
@@ -491,6 +514,7 @@ impl<'a> Container<'a> {
         Ok(())
     }
 
+    #[api_doc("operation", "ContainerWait")]
     /// Wait until the container stops
     pub async fn wait(&self) -> Result<Exit> {
         self.docker
@@ -501,6 +525,7 @@ impl<'a> Container<'a> {
             .await
     }
 
+    #[api_doc("operation", "ContainerDelete")]
     /// Delete the container instance
     ///
     /// Use remove instead to use the force/v options.
@@ -511,6 +536,7 @@ impl<'a> Container<'a> {
         Ok(())
     }
 
+    #[api_doc("operation", "ContainerDelete")]
     /// Delete the container instance (todo: force/v)
     pub async fn remove(
         &self,
@@ -524,6 +550,7 @@ impl<'a> Container<'a> {
         Ok(())
     }
 
+    #[api_doc("tag", "Exec")]
     /// Execute a command in this container
     pub fn exec(
         &'a self,
@@ -538,6 +565,7 @@ impl<'a> Container<'a> {
         )
     }
 
+    #[api_doc("operation", "ContainerArchive")]
     /// Copy a file/folder from the container.  The resulting stream is a tarball of the extracted
     /// files.
     ///
@@ -558,6 +586,7 @@ impl<'a> Container<'a> {
         self.docker.stream_get(endpoint).map_ok(|c| c.to_vec())
     }
 
+    #[api_doc("operation", "PutContainerArchive")]
     /// Copy a byte slice as file into (see `bytes`) the container.
     ///
     /// The file will be copied at the given location (see `path`) and will be owned by root
@@ -588,6 +617,7 @@ impl<'a> Container<'a> {
         Ok(())
     }
 
+    #[api_doc("operation", "PutContainerArchive")]
     /// Copy a tarball (see `body`) to the container.
     ///
     /// The tarball will be copied to the container and extracted at the given location (see `path`).
@@ -612,6 +642,7 @@ impl<'a> Container<'a> {
     }
 }
 
+#[api_doc("tag", "Container")]
 /// Interface for docker containers
 pub struct Containers<'a> {
     docker: &'a Docker,
@@ -623,6 +654,7 @@ impl<'a> Containers<'a> {
         Containers { docker }
     }
 
+    #[api_doc("operation", "ContainerList")]
     /// Lists the container instances on the docker host
     pub async fn list(
         &self,
@@ -648,6 +680,7 @@ impl<'a> Containers<'a> {
         Container::new(self.docker, name)
     }
 
+    #[api_doc("operation", "ContainerCreate")]
     /// Returns a builder interface for creating a new container instance
     pub async fn create(
         &self,
@@ -669,6 +702,8 @@ impl<'a> Containers<'a> {
             .await
     }
 }
+
+#[api_doc("tag", "Exec")]
 /// Interface for docker exec instance
 pub struct Exec<'a> {
     docker: &'a Docker,
@@ -728,6 +763,7 @@ impl<'a> Exec<'a> {
         tty::decode(stream)
     }
 
+    #[api_doc("operation", "ExecCreate")]
     /// Creates a new exec instance that will be executed in a container with id == container_id
     pub async fn create(
         docker: &'a Docker,
@@ -755,6 +791,7 @@ impl<'a> Exec<'a> {
         Exec::new(docker, id)
     }
 
+    #[api_doc("operation", "ExecStart")]
     /// Starts this exec instance returning a multiplexed tty stream
     pub fn start(&'a self) -> impl Stream<Item = Result<tty::TtyChunk>> + 'a {
         Box::pin(
@@ -773,6 +810,7 @@ impl<'a> Exec<'a> {
         )
     }
 
+    #[api_doc("operation", "ExecInspect")]
     /// Inspect this exec instance to aquire detailed information
     pub async fn inspect(&self) -> Result<ExecDetails> {
         self.docker
@@ -780,6 +818,9 @@ impl<'a> Exec<'a> {
             .await
     }
 
+    #[api_doc("operation", "ExecResize")]
+    /// Resize the TTY session used by an exec instance. This endpoint only works if
+    /// tty was specified as part of creating and starting the exec instance.
     pub async fn resize(
         &self,
         opts: &ExecResizeOptions,
@@ -795,6 +836,7 @@ impl<'a> Exec<'a> {
     }
 }
 
+#[api_doc("tag", "Network")]
 /// Interface for docker network
 pub struct Networks<'a> {
     docker: &'a Docker,
@@ -806,6 +848,7 @@ impl<'a> Networks<'a> {
         Networks { docker }
     }
 
+    #[api_doc("operation", "NetworkList")]
     /// List the docker networks on the current docker host
     pub async fn list(
         &self,
@@ -829,6 +872,7 @@ impl<'a> Networks<'a> {
         Network::new(self.docker, id)
     }
 
+    #[api_doc("operation", "NetworkCreate")]
     /// Create a new Network instance
     pub async fn create(
         &self,
@@ -843,6 +887,7 @@ impl<'a> Networks<'a> {
     }
 }
 
+#[api_doc("tag", "Network")]
 /// Interface for accessing and manipulating a docker network
 pub struct Network<'a> {
     docker: &'a Docker,
@@ -869,6 +914,7 @@ impl<'a> Network<'a> {
         &self.id
     }
 
+    #[api_doc("operation", "NetworkInspect")]
     /// Inspects the current docker network instance's details
     pub async fn inspect(&self) -> Result<NetworkInfo> {
         self.docker
@@ -876,6 +922,7 @@ impl<'a> Network<'a> {
             .await
     }
 
+    #[api_doc("operation", "NetworkDelete")]
     /// Delete the network instance
     pub async fn delete(&self) -> Result<()> {
         self.docker
@@ -884,6 +931,7 @@ impl<'a> Network<'a> {
         Ok(())
     }
 
+    #[api_doc("operation", "NetworkConnect")]
     /// Connect container to network
     pub async fn connect(
         &self,
@@ -892,6 +940,7 @@ impl<'a> Network<'a> {
         self.do_connection("connect", opts).await
     }
 
+    #[api_doc("operation", "NetworkDisconnect")]
     /// Disconnect container to network
     pub async fn disconnect(
         &self,
@@ -917,6 +966,7 @@ impl<'a> Network<'a> {
     }
 }
 
+#[api_doc("tag", "Volume")]
 /// Interface for docker volumes
 pub struct Volumes<'a> {
     docker: &'a Docker,
@@ -928,6 +978,7 @@ impl<'a> Volumes<'a> {
         Volumes { docker }
     }
 
+    #[api_doc("operation", "VolumeCreate")]
     pub async fn create(
         &self,
         opts: &VolumeCreateOptions,
@@ -940,6 +991,7 @@ impl<'a> Volumes<'a> {
             .await
     }
 
+    #[api_doc("operation", "VolumeList")]
     /// Lists the docker volumes on the current docker host
     pub async fn list(&self) -> Result<Vec<VolumeRep>> {
         let path = vec!["/volumes".to_owned()];
@@ -960,6 +1012,7 @@ impl<'a> Volumes<'a> {
     }
 }
 
+#[api_doc("tag", "Volume")]
 /// Interface for accessing and manipulating a named docker volume
 pub struct Volume<'a> {
     docker: &'a Docker,
@@ -981,6 +1034,7 @@ impl<'a> Volume<'a> {
         }
     }
 
+    #[api_doc("operation", "VolumeDelete")]
     /// Deletes a volume
     pub async fn delete(&self) -> Result<()> {
         self.docker
@@ -1056,7 +1110,6 @@ fn get_docker_for_tcp(tcp_host_str: String) -> Docker {
     }
 }
 
-// https://docs.docker.com/reference/api/docker_remote_api_v1.17/
 impl Docker {
     /// constructs a new Docker instance for a docker host listening at a url specified by an env var `DOCKER_HOST`,
     /// falling back on unix:///var/run/docker.sock
@@ -1119,39 +1172,47 @@ impl Docker {
         }
     }
 
+    #[api_doc("tag", "Image")]
     /// Exports an interface for interacting with docker images
     pub fn images(&self) -> Images {
         Images::new(self)
     }
 
+    #[api_doc("tag", "Container")]
     /// Exports an interface for interacting with docker containers
     pub fn containers(&self) -> Containers {
         Containers::new(self)
     }
 
+    #[api_doc("tag", "Network")]
     pub fn networks(&self) -> Networks {
         Networks::new(self)
     }
 
+    #[api_doc("tag", "Volume")]
     pub fn volumes(&self) -> Volumes {
         Volumes::new(self)
     }
 
+    #[api_doc("operation", "SystemVersion")]
     /// Returns version information associated with the docker daemon
     pub async fn version(&self) -> Result<Version> {
         self.get_json("/version").await
     }
 
+    #[api_doc("operation", "SystemInfo")]
     /// Returns information associated with the docker daemon
     pub async fn info(&self) -> Result<Info> {
         self.get_json("/info").await
     }
 
+    #[api_doc("operation", "SystemPing")]
     /// Returns a simple ping response indicating the docker daemon is accessible
     pub async fn ping(&self) -> Result<String> {
         self.get("/_ping").await
     }
 
+    #[api_doc("operation", "SystemEvents")]
     /// Returns a stream of docker events
     pub fn events<'a>(
         &'a self,
