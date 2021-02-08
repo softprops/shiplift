@@ -56,7 +56,6 @@ enum Item {
 
 impl Parse for Item {
     fn parse(input: ParseStream) -> Result<Self> {
-        //println!("{:#?}", input);
         let inp = input.fork();
 
         while let (Ok(_), Ok(_)) = (inp.parse::<Punct>(), inp.parse::<Group>()) {} //skip attributes
@@ -87,7 +86,6 @@ fn get_doc_attrs(attrs: Vec<Attribute>) -> (Vec<TokenStream>, Vec<Attribute>) {
 
     for attr in attrs {
         if let Some(path) = attr.path.segments.first() {
-            println!("{}", path.ident.to_string());
             if &path.ident.to_string() == "doc" {
                 docs.push(quote! { #attr }.into());
             } else {
