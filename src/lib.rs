@@ -60,6 +60,7 @@ use mime::Mime;
 #[cfg(feature = "tls")]
 use openssl::ssl::{SslConnector, SslFiletype, SslMethod};
 use serde_json::Value;
+use shiplift_macro::api_doc;
 use std::{env, io, io::Read, iter, path::Path, time::Duration};
 use url::form_urlencoded;
 
@@ -72,6 +73,7 @@ pub struct Docker {
     transport: Transport,
 }
 
+#[api_doc("tag", "Image")]
 /// Interface for accessing and manipulating a named docker image
 pub struct Image<'a> {
     docker: &'a Docker,
@@ -93,6 +95,7 @@ impl<'a> Image<'a> {
         }
     }
 
+    #[api_doc("operation", "ImageInspect")]
     /// Inspects a named image's details
     pub async fn inspect(&self) -> Result<ImageDetails> {
         self.docker
@@ -100,6 +103,7 @@ impl<'a> Image<'a> {
             .await
     }
 
+    #[api_doc("operation", "ImageHistory")]
     /// Lists the history of the images set of changes
     pub async fn history(&self) -> Result<Vec<History>> {
         self.docker
@@ -107,6 +111,7 @@ impl<'a> Image<'a> {
             .await
     }
 
+    #[api_doc("operation", "ImageDelete")]
     /// Deletes an image
     pub async fn delete(&self) -> Result<Vec<Status>> {
         self.docker
@@ -114,6 +119,7 @@ impl<'a> Image<'a> {
             .await
     }
 
+    #[api_doc("operation", "ImageExport")]
     /// Export this image to a tarball
     pub fn export(&self) -> impl Stream<Item = Result<Vec<u8>>> + Unpin + 'a {
         Box::pin(
@@ -123,6 +129,7 @@ impl<'a> Image<'a> {
         )
     }
 
+    #[api_doc("operation", "ImageTag")]
     /// Adds a tag to an image
     pub async fn tag(
         &self,
