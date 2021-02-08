@@ -684,7 +684,7 @@ pub struct ServiceSpec {
     pub mode: Mode,
     pub update_config: Option<UpdateConfig>,
     pub rollback_config: Option<RollbackConfig>,
-    pub networks: Option<Vec<NetworkAttechmentConfig>>,
+    pub networks: Option<Vec<NetworkAttachmentConfig>>,
     pub endpoint_spec: EndpointSpec,
 }
 
@@ -730,10 +730,18 @@ pub type RollbackConfig = UpdateConfig;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-pub struct NetworkAttechmentConfig {
+pub struct NetworkAttachmentConfig {
     pub target: String,
     pub aliases: Vec<String>,
     pub driver_opts: Option<serde_json::Value>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ServiceCreateInfo {
+    #[serde(rename = "ID")]
+    pub id: String,
+    #[serde(rename = "Warning")]
+    pub warning: Option<String>,
 }
 
 //################################################################################

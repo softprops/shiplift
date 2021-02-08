@@ -1,5 +1,8 @@
 //! Interfaces for building various structures
 
+use crate::rep::{
+    EndpointSpec, Mode, NetworkAttachmentConfig, RollbackConfig, TaskSpec, UpdateConfig,
+};
 use crate::{errors::Error, Result};
 use serde::Serialize;
 use serde_json::{self, json, map::Map, Value};
@@ -7,7 +10,7 @@ use std::{
     cmp::Eq,
     collections::{BTreeMap, HashMap},
     hash::Hash,
-    iter::{IntoIterator, Peekable},
+    iter::{IntoIterator, Iterator, Peekable},
     time::Duration,
 };
 use url::form_urlencoded;
@@ -1850,6 +1853,148 @@ impl ServiceListOptionsBuilder {
             params: self.params.clone(),
         }
     }
+}
+
+#[derive(Default, Debug)]
+pub struct ServiceOptions {
+    auth: Option<RegistryAuth>,
+    params: HashMap<&'static str, Value>,
+}
+
+impl ServiceOptions {
+    /// return a new instance of a builder for options
+    pub fn builder() -> ServiceOptionsBuilder {
+        ServiceOptionsBuilder::default()
+    }
+
+    /// serialize options as a string. returns None if no options are defined
+    pub fn serialize(&self) -> Result<String> {
+        serde_json::to_string(&self.params).map_err(Error::from)
+    }
+
+    pub(crate) fn auth_header(&self) -> Option<String> {
+        self.auth.clone().map(|a| a.serialize())
+    }
+}
+
+#[derive(Default)]
+pub struct ServiceOptionsBuilder {
+    auth: Option<RegistryAuth>,
+    params: HashMap<&'static str, Result<Value>>,
+}
+
+impl ServiceOptionsBuilder {
+    pub fn name<S>(
+        &mut self,
+        name: S,
+    ) -> &mut Self
+    where
+        S: AsRef<str>,
+    {
+        self.params.insert("Name", Ok(json!(name.as_ref())));
+        self
+    }
+
+    pub fn labels<I>(
+        &mut self,
+        labels: I,
+    ) -> &mut Self
+    where
+        I: IntoIterator<Item = (String, String)>,
+    {
+        self.params.insert(
+            "Labels",
+            Ok(json!(labels
+                .into_iter()
+                .collect::<HashMap<String, String>>())),
+        );
+        self
+    }
+
+    pub fn task_template(
+        &mut self,
+        spec: &TaskSpec,
+    ) -> &mut Self {
+        self.params.insert("TaskTemplate", to_json_value(spec));
+        self
+    }
+
+    pub fn mode(
+        &mut self,
+        mode: &Mode,
+    ) -> &mut Self {
+        self.params.insert("Mode", to_json_value(mode));
+        self
+    }
+
+    pub fn update_config(
+        &mut self,
+        conf: &UpdateConfig,
+    ) -> &mut Self {
+        self.params.insert("UpdateConfig", to_json_value(conf));
+        self
+    }
+
+    pub fn rollback_config(
+        &mut self,
+        conf: &RollbackConfig,
+    ) -> &mut Self {
+        self.params.insert("RollbackConfig", to_json_value(conf));
+        self
+    }
+
+    pub fn networks<I>(
+        &mut self,
+        networks: I,
+    ) -> &mut Self
+    where
+        I: IntoIterator<Item = NetworkAttachmentConfig>,
+    {
+        self.params.insert(
+            "Networks",
+            to_json_value(
+                networks
+                    .into_iter()
+                    .collect::<Vec<NetworkAttachmentConfig>>(),
+            ),
+        );
+        self
+    }
+
+    pub fn endpoint_spec(
+        &mut self,
+        spec: &EndpointSpec,
+    ) -> &mut Self {
+        self.params.insert("EndpointSpec", to_json_value(spec));
+        self
+    }
+
+    pub fn auth(
+        &mut self,
+        auth: RegistryAuth,
+    ) -> &mut Self {
+        self.auth = Some(auth);
+        self
+    }
+
+    pub fn build(&mut self) -> Result<ServiceOptions> {
+        let params = std::mem::take(&mut self.params);
+        let mut new_params = HashMap::new();
+        for (k, v) in params.into_iter() {
+            new_params.insert(k, v?);
+        }
+        Ok(ServiceOptions {
+            auth: self.auth.take(),
+            params: new_params,
+        })
+    }
+}
+
+fn to_json_value<T>(value: T) -> Result<Value>
+where
+    T: Serialize,
+{
+    Ok(serde_json::to_value(value)?)
 }
 
 //################################################################################
