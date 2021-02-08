@@ -1777,14 +1777,14 @@ impl ExecResizeOptionsBuilder {
 
 /// Options for filtering services list results
 #[derive(Default, Debug)]
-pub struct ServicesListOptions {
+pub struct ServiceListOptions {
     params: HashMap<&'static str, String>,
 }
 
-impl ServicesListOptions {
+impl ServiceListOptions {
     /// return a new instance of a builder for options
-    pub fn builder() -> ServicesListOptionsBuilder {
-        ServicesListOptionsBuilder::default()
+    pub fn builder() -> ServiceListOptionsBuilder {
+        ServiceListOptionsBuilder::default()
     }
 
     /// serialize options as a string. returns None if no options are defined
@@ -1812,11 +1812,11 @@ pub enum ServiceFilter {
 
 /// Builder interface for `ServicesListOptions`
 #[derive(Default)]
-pub struct ServicesListOptionsBuilder {
+pub struct ServiceListOptionsBuilder {
     params: HashMap<&'static str, String>,
 }
 
-impl ServicesListOptionsBuilder {
+impl ServiceListOptionsBuilder {
     pub fn filter(
         &mut self,
         filters: Vec<ServiceFilter>,
@@ -1845,8 +1845,8 @@ impl ServicesListOptionsBuilder {
         self
     }
 
-    pub fn build(&self) -> ServicesListOptions {
-        ServicesListOptions {
+    pub fn build(&self) -> ServiceListOptions {
+        ServiceListOptions {
             params: self.params.clone(),
         }
     }
