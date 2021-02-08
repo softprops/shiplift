@@ -1052,6 +1052,21 @@ impl<'a> Service<'a> {
             .delete_json(&format!("/services/{}", self.name)[..])
             .await
     }
+
+    /// Returns a stream of logs from a service
+    pub fn logs(
+        &self,
+        opts: &LogsOptions,
+    ) -> impl Stream<Item = Result<tty::TtyChunk>> + Unpin + 'a {
+        let mut path = vec![format!("/services/{}/logs", self.name)];
+        if let Some(query) = opts.serialize() {
+            path.push(query)
+        }
+
+        let stream = Box::pin(self.docker.stream_get(path.join("?")));
+
+        Box::pin(tty::decode(stream))
+    }
 }
 
 fn get_http_connector() -> HttpConnector {
