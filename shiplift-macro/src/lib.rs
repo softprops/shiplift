@@ -1,7 +1,7 @@
 use core::iter::Extend;
 use proc_macro::TokenStream;
 use proc_macro2::{Group, Punct};
-use quote::quote;
+use quote::{quote, ToTokens};
 use syn::{
     parse::{Parse, ParseStream},
     parse_macro_input,
@@ -82,6 +82,8 @@ impl Parse for Item {
     }
 }
 
+/// Extracts all `doc` attributes and returns them as first argument and
+/// returning rest of attributes as second argument
 fn get_doc_attrs(attrs: Vec<Attribute>) -> (Vec<TokenStream>, Vec<Attribute>) {
     let mut docs = Vec::<TokenStream>::new();
     let mut new_attrs = Vec::new();
@@ -99,7 +101,32 @@ fn get_doc_attrs(attrs: Vec<Attribute>) -> (Vec<TokenStream>, Vec<Attribute>) {
     (docs, new_attrs)
 }
 
+///  Produces a final TokenStream from extracted comments, url and item.
+fn doc_token_stream<T: ToTokens>(
+    url: &str,
+    docs: Vec<TokenStream>,
+    item: T,
+) -> TokenStream {
+    let mut tokens = TokenStream::new();
+    tokens.extend(docs);
+    tokens.extend::<Vec<TokenStream>>(vec![quote! {
+        #[doc = "\n"]
+        #[doc = #url]
+        #item
+    }
+    .into()]);
+
+    tokens
+}
+
 #[proc_macro_attribute]
+/// Annotates a function or struct with a doc comment hyperlink placed
+/// at the end of comments.
+///
+/// When both arguments are supplied f.e. `#[api_doc("tag", "Image")]` the url
+/// points to this specific category and section.
+///
+/// If not arguments are supplied like so `#[api_doc]`, an absolute link to api reference is added
 pub fn api_doc(
     attr: TokenStream,
     item: TokenStream,
@@ -110,33 +137,13 @@ pub fn api_doc(
     match item {
         Item::Fn(mut item) => {
             let (docs, attrs) = get_doc_attrs(item.attrs);
-            item.attrs = attrs;
-
-            let mut out = TokenStream::new();
-            out.extend(docs);
-            out.extend::<Vec<TokenStream>>(vec![quote! {
-                #[doc = "\n"]
-                #[doc = #url]
-                #item
-            }
-            .into()]);
-
-            out
+            item.attrs = attrs; // replace attrs so that extracted comments are not there
+            doc_token_stream(&url, docs, item)
         }
         Item::Struct(mut item) => {
             let (docs, attrs) = get_doc_attrs(item.attrs);
             item.attrs = attrs;
-
-            let mut out = TokenStream::new();
-            out.extend(docs);
-            out.extend::<Vec<TokenStream>>(vec![quote! {
-                #[doc = "\n"]
-                #[doc = #url]
-                #item
-            }
-            .into()]);
-
-            out
+            doc_token_stream(&url, docs, item)
         }
     }
 }
