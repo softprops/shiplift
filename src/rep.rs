@@ -563,6 +563,99 @@ pub struct Volume {
     pub scope: String,
 }
 
+//################################################################################
+// SERVICES
+//################################################################################
+
+pub type Services = Vec<Service>;
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct Service {
+    #[serde(rename = "ID")]
+    pub id: String,
+    pub version: ObjectVersion,
+    #[cfg(feature = "chrono")]
+    pub created_at: DateTime<Utc>,
+    #[cfg(not(feature = "chrono"))]
+    pub created_at: String,
+    #[cfg(feature = "chrono")]
+    pub updated_at: DateTime<Utc>,
+    #[cfg(not(feature = "chrono"))]
+    pub updated_at: String,
+    pub endpoint: Endpoint,
+    pub update_status: Option<UpdateStatus>,
+    pub service_status: Option<ServiceStatus>,
+    pub job_status: Option<JobStatus>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct ObjectVersion {
+    pub index: u64,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct Endpoint {
+    pub spec: EndpointSpec,
+    pub ports: Option<Vec<EndpointPortConfig>>,
+    #[serde(rename = "VirtualIPs")]
+    pub virtual_ips: Option<serde_json::Value>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct EndpointSpec {
+    pub mode: Option<String>,
+    pub ports: Option<Vec<EndpointPortConfig>>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct EndpointPortConfig {
+    pub name: String,
+    pub protocol: String,
+    pub publish_mode: String,
+    pub published_port: u64,
+    pub target_port: u64,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct UpdateStatus {
+    pub state: String,
+    #[cfg(feature = "chrono")]
+    pub started_at: DateTime<Utc>,
+    #[cfg(not(feature = "chrono"))]
+    pub started_at: String,
+    #[cfg(feature = "chrono")]
+    pub completed_at: DateTime<Utc>,
+    #[cfg(not(feature = "chrono"))]
+    pub completed_at: String,
+    pub message: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct ServiceStatus {
+    pub running_tasks: u64,
+    pub desired_tasks: u64,
+    pub completed_tasks: u64,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct JobStatus {
+    pub job_iteration: ObjectVersion,
+    #[cfg(feature = "chrono")]
+    pub last_execution: DateTime<Utc>,
+    #[cfg(not(feature = "chrono"))]
+    pub last_execution: String,
+}
+
+//################################################################################
+
 #[cfg(feature = "chrono")]
 fn datetime_from_unix_timestamp<'de, D>(deserializer: D) -> Result<DateTime<Utc>, D::Error>
 where
