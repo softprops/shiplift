@@ -1045,6 +1045,13 @@ impl<'a> Service<'a> {
             .get_json(&format!("/services/{}", self.name)[..])
             .await
     }
+
+    /// Deletes a service
+    pub async fn delete(&self) -> Result<()> {
+        self.docker
+            .delete_json(&format!("/services/{}", self.name)[..])
+            .await
+    }
 }
 
 fn get_http_connector() -> HttpConnector {
