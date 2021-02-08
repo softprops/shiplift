@@ -1771,6 +1771,89 @@ impl ExecResizeOptionsBuilder {
     }
 }
 
+//################################################################################
+// Services
+//################################################################################
+
+/// Options for filtering services list results
+#[derive(Default, Debug)]
+pub struct ServicesListOptions {
+    params: HashMap<&'static str, String>,
+}
+
+impl ServicesListOptions {
+    /// return a new instance of a builder for options
+    pub fn builder() -> ServicesListOptionsBuilder {
+        ServicesListOptionsBuilder::default()
+    }
+
+    /// serialize options as a string. returns None if no options are defined
+    pub fn serialize(&self) -> Option<String> {
+        if self.params.is_empty() {
+            None
+        } else {
+            Some(
+                form_urlencoded::Serializer::new(String::new())
+                    .extend_pairs(&self.params)
+                    .finish(),
+            )
+        }
+    }
+}
+
+/// Filter options for services listings
+pub enum ServiceFilter {
+    Id(String),
+    Label(String),
+    ReplicatedMode,
+    GlobalMode,
+    Name(String),
+}
+
+/// Builder interface for `ServicesListOptions`
+#[derive(Default)]
+pub struct ServicesListOptionsBuilder {
+    params: HashMap<&'static str, String>,
+}
+
+impl ServicesListOptionsBuilder {
+    pub fn filter(
+        &mut self,
+        filters: Vec<ServiceFilter>,
+    ) -> &mut Self {
+        let mut param = HashMap::new();
+        for f in filters {
+            match f {
+                ServiceFilter::Id(i) => param.insert("id", vec![i]),
+                ServiceFilter::Label(l) => param.insert("label", vec![l]),
+                ServiceFilter::ReplicatedMode => {
+                    param.insert("mode", vec!["replicated".to_string()])
+                }
+                ServiceFilter::GlobalMode => param.insert("mode", vec!["global".to_string()]),
+                ServiceFilter::Name(n) => param.insert("name", vec![n.to_string()]),
+            };
+        }
+        // structure is a a json encoded object mapping string keys to a list
+        // of string values
+        self.params
+            .insert("filters", serde_json::to_string(&param).unwrap());
+        self
+    }
+
+    pub fn enable_status(&mut self) -> &mut Self {
+        self.params.insert("status", "true".to_owned());
+        self
+    }
+
+    pub fn build(&self) -> ServicesListOptions {
+        ServicesListOptions {
+            params: self.params.clone(),
+        }
+    }
+}
+
+//################################################################################
+
 #[cfg(test)]
 mod tests {
     use super::{ContainerOptionsBuilder, LogsOptionsBuilder, RegistryAuth};

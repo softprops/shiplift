@@ -30,7 +30,8 @@ pub use crate::{
         BuildOptions, ContainerConnectionOptions, ContainerFilter, ContainerListOptions,
         ContainerOptions, EventsOptions, ExecContainerOptions, ExecResizeOptions, ImageFilter,
         ImageListOptions, LogsOptions, NetworkCreateOptions, NetworkListOptions, PullOptions,
-        RegistryAuth, RmContainerOptions, TagOptions, VolumeCreateOptions,
+        RegistryAuth, RmContainerOptions, ServiceFilter, ServicesListOptions, TagOptions,
+        VolumeCreateOptions,
     },
     errors::Error,
 };
@@ -996,8 +997,14 @@ impl<'a> Services<'a> {
     }
 
     /// Lists the docker services on the current docker host
-    pub async fn list(&self) -> Result<ServicesRep> {
-        let path = vec!["/services".to_owned()];
+    pub async fn list(
+        &self,
+        opts: &ServicesListOptions,
+    ) -> Result<ServicesRep> {
+        let mut path = vec!["/services".to_owned()];
+        if let Some(query) = opts.serialize() {
+            path.push(query);
+        }
 
         self.docker.get_json::<ServicesRep>(&path.join("?")).await
     }
