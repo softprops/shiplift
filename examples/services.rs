@@ -6,7 +6,7 @@ async fn main() {
     let docker = Docker::new();
     match docker
         .services()
-        .list(&ServicesListOptions::builder().enable_status().build())
+        .list(&ServiceListOptions::builder().enable_status().build())
         .await
     {
         Ok(services) => {
