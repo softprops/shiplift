@@ -30,8 +30,8 @@ pub use crate::{
         BuildOptions, ContainerConnectionOptions, ContainerFilter, ContainerListOptions,
         ContainerOptions, EventsOptions, ExecContainerOptions, ExecResizeOptions, ImageFilter,
         ImageListOptions, LogsOptions, NetworkCreateOptions, NetworkListOptions, PullOptions,
-        RegistryAuth, RmContainerOptions, ServiceFilter, ServiceListOptions, TagOptions,
-        VolumeCreateOptions,
+        RegistryAuth, RmContainerOptions, ServiceFilter, ServiceListOptions, ServiceOptions,
+        TagOptions, VolumeCreateOptions,
     },
     errors::Error,
 };
@@ -1037,6 +1037,27 @@ impl<'a> Service<'a> {
             docker,
             name: name.into(),
         }
+    }
+
+    /// Creates a new service from ServiceOptions
+    pub async fn create(
+        &self,
+        opts: &ServiceOptions,
+    ) -> Result<ServiceCreateInfo> {
+        let body: Body = opts.serialize()?.into();
+        let path = vec!["/service/create".to_owned()];
+
+        let headers = opts
+            .auth_header()
+            .map(|a| iter::once(("X-Registry-Auth", a)));
+
+        self.docker
+            .post_json_headers(
+                &path.join("?"),
+                Some((body, mime::APPLICATION_JSON)),
+                headers,
+            )
+            .await
     }
 
     /// Inspects a named service's details
