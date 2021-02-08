@@ -74,8 +74,10 @@ impl Parse for Item {
 
         if inp.peek(Token![fn]) {
             Ok(Item::Fn(input.parse()?))
-        } else {
+        } else if inp.peek(Token![struct]) {
             Ok(Item::Struct(input.parse()?))
+        } else {
+            Err(syn::Error::new(inp.span(), "unsupported token type"))
         }
     }
 }
