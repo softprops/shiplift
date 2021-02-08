@@ -1,5 +1,7 @@
 //! Rust representations of docker json structures
 
+// TODO: Move structs to their corresponding modules?
+
 #[cfg(feature = "chrono")]
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
