@@ -30,6 +30,9 @@ pub fn tar() -> Mime {
     "application/tar".parse().unwrap()
 }
 
+pub(crate) type Headers = Option<Vec<(&'static str, String)>>;
+pub(crate) type Payload = Option<(Body, Mime)>;
+
 /// Transports are types which define the means of communication
 /// with the docker daemon
 #[derive(Clone)]
@@ -70,18 +73,18 @@ impl fmt::Debug for Transport {
 
 impl Transport {
     /// Make a request and return the whole response in a `String`
-    pub async fn request<B>(
+    pub async fn request<'a, B, H>(
         &self,
         method: Method,
         endpoint: impl AsRef<str>,
         body: Option<(B, Mime)>,
+        headers: Option<H>,
     ) -> Result<String>
     where
         B: Into<Body>,
+        H: IntoIterator<Item = (&'static str, String)> + 'a,
     {
-        let body = self
-            .get_body(method, endpoint, body, None::<iter::Empty<_>>)
-            .await?;
+        let body = self.get_body(method, endpoint, body, headers).await?;
         let bytes = hyper::body::to_bytes(body).await?;
         let string = String::from_utf8(bytes.to_vec())?;
 

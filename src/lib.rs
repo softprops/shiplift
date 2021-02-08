@@ -39,11 +39,11 @@ use crate::{
     rep::{
         Change, Container as ContainerRep, ContainerCreateInfo, ContainerDetails, Event,
         ExecDetails, Exit, History, Image as ImageRep, ImageDetails, Info, NetworkCreateInfo,
-        NetworkDetails as NetworkInfo, SearchResult, Service as ServiceRep, ServiceDetails,
+        NetworkDetails as NetworkInfo, SearchResult, ServiceCreateInfo, ServiceDetails,
         Services as ServicesRep, Stats, Status, Top, Version, Volume as VolumeRep,
         VolumeCreateInfo, Volumes as VolumesRep,
     },
-    transport::{tar, Transport},
+    transport::{tar, Headers, Payload, Transport},
     tty::Multiplexer as TtyMultiPlexer,
 };
 use futures_util::{
@@ -1271,7 +1271,7 @@ impl Docker {
         endpoint: &str,
     ) -> Result<String> {
         self.transport
-            .request(Method::GET, endpoint, Option::<(Body, Mime)>::None)
+            .request(Method::GET, endpoint, Payload::None, Headers::None)
             .await
     }
 
@@ -1281,7 +1281,7 @@ impl Docker {
     ) -> Result<T> {
         let raw_string = self
             .transport
-            .request(Method::GET, endpoint, Option::<(Body, Mime)>::None)
+            .request(Method::GET, endpoint, Payload::None, Headers::None)
             .await?;
 
         Ok(serde_json::from_str::<T>(&raw_string)?)
@@ -1292,7 +1292,9 @@ impl Docker {
         endpoint: &str,
         body: Option<(Body, Mime)>,
     ) -> Result<String> {
-        self.transport.request(Method::POST, endpoint, body).await
+        self.transport
+            .request(Method::POST, endpoint, body, Headers::None)
+            .await
     }
 
     async fn put(
@@ -1300,7 +1302,9 @@ impl Docker {
         endpoint: &str,
         body: Option<(Body, Mime)>,
     ) -> Result<String> {
-        self.transport.request(Method::PUT, endpoint, body).await
+        self.transport
+            .request(Method::PUT, endpoint, body, Headers::None)
+            .await
     }
 
     async fn post_json<T, B>(
@@ -1312,7 +1316,29 @@ impl Docker {
         T: serde::de::DeserializeOwned,
         B: Into<Body>,
     {
-        let string = self.transport.request(Method::POST, endpoint, body).await?;
+        let string = self
+            .transport
+            .request(Method::POST, endpoint, body, Headers::None)
+            .await?;
+
+        Ok(serde_json::from_str::<T>(&string)?)
+    }
+
+    async fn post_json_headers<'a, T, B, H>(
+        &self,
+        endpoint: impl AsRef<str>,
+        body: Option<(B, Mime)>,
+        headers: Option<H>,
+    ) -> Result<T>
+    where
+        T: serde::de::DeserializeOwned,
+        B: Into<Body>,
+        H: IntoIterator<Item = (&'static str, String)> + 'a,
+    {
+        let string = self
+            .transport
+            .request(Method::POST, endpoint, body, headers)
+            .await?;
 
         Ok(serde_json::from_str::<T>(&string)?)
     }
@@ -1322,7 +1348,7 @@ impl Docker {
         endpoint: &str,
     ) -> Result<String> {
         self.transport
-            .request(Method::DELETE, endpoint, Option::<(Body, Mime)>::None)
+            .request(Method::DELETE, endpoint, Payload::None, Headers::None)
             .await
     }
 
@@ -1332,7 +1358,7 @@ impl Docker {
     ) -> Result<T> {
         let string = self
             .transport
-            .request(Method::DELETE, endpoint, Option::<(Body, Mime)>::None)
+            .request(Method::DELETE, endpoint, Payload::None, Headers::None)
             .await?;
 
         Ok(serde_json::from_str::<T>(&string)?)
