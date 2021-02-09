@@ -30,7 +30,8 @@ pub use crate::{
         BuildOptions, ContainerConnectionOptions, ContainerFilter, ContainerListOptions,
         ContainerOptions, EventsOptions, ExecContainerOptions, ExecResizeOptions, ImageFilter,
         ImageListOptions, LogsOptions, NetworkCreateOptions, NetworkListOptions, PullOptions,
-        RegistryAuth, RmContainerOptions, TagOptions, VolumeCreateOptions,
+        RegistryAuth, RmContainerOptions, ServiceFilter, ServiceListOptions, ServiceOptions,
+        TagOptions, VolumeCreateOptions,
     },
     errors::Error,
 };
@@ -38,10 +39,11 @@ use crate::{
     rep::{
         Change, Container as ContainerRep, ContainerCreateInfo, ContainerDetails, Event,
         ExecDetails, Exit, History, Image as ImageRep, ImageDetails, Info, NetworkCreateInfo,
-        NetworkDetails as NetworkInfo, SearchResult, Stats, Status, Top, Version,
-        Volume as VolumeRep, VolumeCreateInfo, Volumes as VolumesRep,
+        NetworkDetails as NetworkInfo, SearchResult, ServiceCreateInfo, ServiceDetails,
+        Services as ServicesRep, Stats, Status, Top, Version, Volume as VolumeRep,
+        VolumeCreateInfo, Volumes as VolumesRep,
     },
-    transport::{tar, Transport},
+    transport::{tar, Headers, Payload, Transport},
     tty::Multiplexer as TtyMultiPlexer,
 };
 use futures_util::{
@@ -983,6 +985,111 @@ impl<'a> Volume<'a> {
     }
 }
 
+/// Interface for docker services
+pub struct Services<'a> {
+    docker: &'a Docker,
+}
+
+impl<'a> Services<'a> {
+    /// Exports an interface for interacting with docker services
+    pub fn new(docker: &Docker) -> Services {
+        Services { docker }
+    }
+
+    /// Lists the docker services on the current docker host
+    pub async fn list(
+        &self,
+        opts: &ServiceListOptions,
+    ) -> Result<ServicesRep> {
+        let mut path = vec!["/services".to_owned()];
+        if let Some(query) = opts.serialize() {
+            path.push(query);
+        }
+
+        self.docker.get_json::<ServicesRep>(&path.join("?")).await
+    }
+
+    /// Returns a reference to a set of operations available for a named service
+    pub fn get(
+        &self,
+        name: &str,
+    ) -> Service {
+        Service::new(self.docker, name)
+    }
+}
+
+/// Interface for accessing and manipulating a named docker volume
+pub struct Service<'a> {
+    docker: &'a Docker,
+    name: String,
+}
+
+impl<'a> Service<'a> {
+    /// Exports an interface for operations that may be performed against a named service
+    pub fn new<S>(
+        docker: &Docker,
+        name: S,
+    ) -> Service
+    where
+        S: Into<String>,
+    {
+        Service {
+            docker,
+            name: name.into(),
+        }
+    }
+
+    /// Creates a new service from ServiceOptions
+    pub async fn create(
+        &self,
+        opts: &ServiceOptions,
+    ) -> Result<ServiceCreateInfo> {
+        let body: Body = opts.serialize()?.into();
+        let path = vec!["/service/create".to_owned()];
+
+        let headers = opts
+            .auth_header()
+            .map(|a| iter::once(("X-Registry-Auth", a)));
+
+        self.docker
+            .post_json_headers(
+                &path.join("?"),
+                Some((body, mime::APPLICATION_JSON)),
+                headers,
+            )
+            .await
+    }
+
+    /// Inspects a named service's details
+    pub async fn inspect(&self) -> Result<ServiceDetails> {
+        self.docker
+            .get_json(&format!("/services/{}", self.name)[..])
+            .await
+    }
+
+    /// Deletes a service
+    pub async fn delete(&self) -> Result<()> {
+        self.docker
+            .delete_json(&format!("/services/{}", self.name)[..])
+            .await
+    }
+
+    /// Returns a stream of logs from a service
+    pub fn logs(
+        &self,
+        opts: &LogsOptions,
+    ) -> impl Stream<Item = Result<tty::TtyChunk>> + Unpin + 'a {
+        let mut path = vec![format!("/services/{}/logs", self.name)];
+        if let Some(query) = opts.serialize() {
+            path.push(query)
+        }
+
+        let stream = Box::pin(self.docker.stream_get(path.join("?")));
+
+        Box::pin(tty::decode(stream))
+    }
+}
+
 fn get_http_connector() -> HttpConnector {
     let mut http = HttpConnector::new();
     http.enforce_http(false);
@@ -1122,6 +1229,11 @@ impl Docker {
         Containers::new(self)
     }
 
+    /// Exports an interface for interacting with docker services
+    pub fn services(&self) -> Services {
+        Services::new(self)
+    }
+
     pub fn networks(&self) -> Networks {
         Networks::new(self)
     }
@@ -1180,7 +1292,7 @@ impl Docker {
         endpoint: &str,
     ) -> Result<String> {
         self.transport
-            .request(Method::GET, endpoint, Option::<(Body, Mime)>::None)
+            .request(Method::GET, endpoint, Payload::None, Headers::None)
             .await
     }
 
@@ -1190,7 +1302,7 @@ impl Docker {
     ) -> Result<T> {
         let raw_string = self
             .transport
-            .request(Method::GET, endpoint, Option::<(Body, Mime)>::None)
+            .request(Method::GET, endpoint, Payload::None, Headers::None)
             .await?;
 
         Ok(serde_json::from_str::<T>(&raw_string)?)
@@ -1201,7 +1313,9 @@ impl Docker {
         endpoint: &str,
         body: Option<(Body, Mime)>,
     ) -> Result<String> {
-        self.transport.request(Method::POST, endpoint, body).await
+        self.transport
+            .request(Method::POST, endpoint, body, Headers::None)
+            .await
     }
 
     async fn put(
@@ -1209,7 +1323,9 @@ impl Docker {
         endpoint: &str,
         body: Option<(Body, Mime)>,
     ) -> Result<String> {
-        self.transport.request(Method::PUT, endpoint, body).await
+        self.transport
+            .request(Method::PUT, endpoint, body, Headers::None)
+            .await
     }
 
     async fn post_json<T, B>(
@@ -1221,7 +1337,29 @@ impl Docker {
         T: serde::de::DeserializeOwned,
         B: Into<Body>,
     {
-        let string = self.transport.request(Method::POST, endpoint, body).await?;
+        let string = self
+            .transport
+            .request(Method::POST, endpoint, body, Headers::None)
+            .await?;
+
+        Ok(serde_json::from_str::<T>(&string)?)
+    }
+
+    async fn post_json_headers<'a, T, B, H>(
+        &self,
+        endpoint: impl AsRef<str>,
+        body: Option<(B, Mime)>,
+        headers: Option<H>,
+    ) -> Result<T>
+    where
+        T: serde::de::DeserializeOwned,
+        B: Into<Body>,
+        H: IntoIterator<Item = (&'static str, String)> + 'a,
+    {
+        let string = self
+            .transport
+            .request(Method::POST, endpoint, body, headers)
+            .await?;
 
         Ok(serde_json::from_str::<T>(&string)?)
     }
@@ -1231,7 +1369,7 @@ impl Docker {
         endpoint: &str,
     ) -> Result<String> {
         self.transport
-            .request(Method::DELETE, endpoint, Option::<(Body, Mime)>::None)
+            .request(Method::DELETE, endpoint, Payload::None, Headers::None)
             .await
     }
 
@@ -1241,7 +1379,7 @@ impl Docker {
     ) -> Result<T> {
         let string = self
             .transport
-            .request(Method::DELETE, endpoint, Option::<(Body, Mime)>::None)
+            .request(Method::DELETE, endpoint, Payload::None, Headers::None)
             .await?;
 
         Ok(serde_json::from_str::<T>(&string)?)
