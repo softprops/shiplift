@@ -2,15 +2,21 @@
 //!
 //! API Reference: <https://docs.docker.com/engine/api/v1.41/#tag/Service>
 
-use std::iter;
+use std::{collections::HashMap, iter};
 
 use futures_util::stream::Stream;
 use hyper::Body;
+use serde::Serialize;
+use serde_json::{json, Value};
+use url::form_urlencoded;
 
 use crate::{
-    builder::{ServiceListOptions, ServiceOptions},
-    errors::Result,
-    rep::{Service as ServiceInfo, ServiceCreateInfo, ServiceDetails},
+    errors::{Error, Result},
+    image::RegistryAuth,
+    rep::{
+        EndpointSpec, Mode, NetworkAttachmentConfig, RollbackConfig, Service as ServiceInfo,
+        ServiceCreateInfo, ServiceDetails, TaskSpec, UpdateConfig,
+    },
     tty, Docker, LogsOptions,
 };
 
@@ -119,4 +125,223 @@ impl<'docker> Service<'docker> {
 
         Box::pin(tty::decode(stream))
     }
+}
+
+/// Options for filtering services list results
+#[derive(Default, Debug)]
+pub struct ServiceListOptions {
+    params: HashMap<&'static str, String>,
+}
+
+impl ServiceListOptions {
+    /// return a new instance of a builder for options
+    pub fn builder() -> ServiceListOptionsBuilder {
+        ServiceListOptionsBuilder::default()
+    }
+
+    /// serialize options as a string. returns None if no options are defined
+    pub fn serialize(&self) -> Option<String> {
+        if self.params.is_empty() {
+            None
+        } else {
+            Some(
+                form_urlencoded::Serializer::new(String::new())
+                    .extend_pairs(&self.params)
+                    .finish(),
+            )
+        }
+    }
+}
+
+/// Filter options for services listings
+pub enum ServiceFilter {
+    Id(String),
+    Label(String),
+    ReplicatedMode,
+    GlobalMode,
+    Name(String),
+}
+
+/// Builder interface for `ServicesListOptions`
+#[derive(Default)]
+pub struct ServiceListOptionsBuilder {
+    params: HashMap<&'static str, String>,
+}
+
+impl ServiceListOptionsBuilder {
+    pub fn filter(
+        &mut self,
+        filters: Vec<ServiceFilter>,
+    ) -> &mut Self {
+        let mut param = HashMap::new();
+        for f in filters {
+            match f {
+                ServiceFilter::Id(i) => param.insert("id", vec![i]),
+                ServiceFilter::Label(l) => param.insert("label", vec![l]),
+                ServiceFilter::ReplicatedMode => {
+                    param.insert("mode", vec!["replicated".to_string()])
+                }
+                ServiceFilter::GlobalMode => param.insert("mode", vec!["global".to_string()]),
+                ServiceFilter::Name(n) => param.insert("name", vec![n.to_string()]),
+            };
+        }
+        // structure is a a json encoded object mapping string keys to a list
+        // of string values
+        self.params
+            .insert("filters", serde_json::to_string(&param).unwrap());
+        self
+    }
+
+    pub fn enable_status(&mut self) -> &mut Self {
+        self.params.insert("status", "true".to_owned());
+        self
+    }
+
+    pub fn build(&self) -> ServiceListOptions {
+        ServiceListOptions {
+            params: self.params.clone(),
+        }
+    }
+}
+
+#[derive(Default, Debug)]
+pub struct ServiceOptions {
+    auth: Option<RegistryAuth>,
+    params: HashMap<&'static str, Value>,
+}
+
+impl ServiceOptions {
+    /// return a new instance of a builder for options
+    pub fn builder() -> ServiceOptionsBuilder {
+        ServiceOptionsBuilder::default()
+    }
+
+    /// serialize options as a string. returns None if no options are defined
+    pub fn serialize(&self) -> Result<String> {
+        serde_json::to_string(&self.params).map_err(Error::from)
+    }
+
+    pub(crate) fn auth_header(&self) -> Option<String> {
+        self.auth.clone().map(|a| a.serialize())
+    }
+}
+
+#[derive(Default)]
+pub struct ServiceOptionsBuilder {
+    auth: Option<RegistryAuth>,
+    params: HashMap<&'static str, Result<Value>>,
+}
+
+impl ServiceOptionsBuilder {
+    pub fn name<S>(
+        &mut self,
+        name: S,
+    ) -> &mut Self
+    where
+        S: AsRef<str>,
+    {
+        self.params.insert("Name", Ok(json!(name.as_ref())));
+        self
+    }
+
+    pub fn labels<I>(
+        &mut self,
+        labels: I,
+    ) -> &mut Self
+    where
+        I: IntoIterator<Item = (String, String)>,
+    {
+        self.params.insert(
+            "Labels",
+            Ok(json!(labels
+                .into_iter()
+                .collect::<HashMap<String, String>>())),
+        );
+        self
+    }
+
+    pub fn task_template(
+        &mut self,
+        spec: &TaskSpec,
+    ) -> &mut Self {
+        self.params.insert("TaskTemplate", to_json_value(spec));
+        self
+    }
+
+    pub fn mode(
+        &mut self,
+        mode: &Mode,
+    ) -> &mut Self {
+        self.params.insert("Mode", to_json_value(mode));
+        self
+    }
+
+    pub fn update_config(
+        &mut self,
+        conf: &UpdateConfig,
+    ) -> &mut Self {
+        self.params.insert("UpdateConfig", to_json_value(conf));
+        self
+    }
+
+    pub fn rollback_config(
+        &mut self,
+        conf: &RollbackConfig,
+    ) -> &mut Self {
+        self.params.insert("RollbackConfig", to_json_value(conf));
+        self
+    }
+
+    pub fn networks<I>(
+        &mut self,
+        networks: I,
+    ) -> &mut Self
+    where
+        I: IntoIterator<Item = NetworkAttachmentConfig>,
+    {
+        self.params.insert(
+            "Networks",
+            to_json_value(
+                networks
+                    .into_iter()
+                    .collect::<Vec<NetworkAttachmentConfig>>(),
+            ),
+        );
+        self
+    }
+
+    pub fn endpoint_spec(
+        &mut self,
+        spec: &EndpointSpec,
+    ) -> &mut Self {
+        self.params.insert("EndpointSpec", to_json_value(spec));
+        self
+    }
+
+    pub fn auth(
+        &mut self,
+        auth: RegistryAuth,
+    ) -> &mut Self {
+        self.auth = Some(auth);
+        self
+    }
+
+    pub fn build(&mut self) -> Result<ServiceOptions> {
+        let params = std::mem::take(&mut self.params);
+        let mut new_params = HashMap::new();
+        for (k, v) in params.into_iter() {
+            new_params.insert(k, v?);
+        }
+        Ok(ServiceOptions {
+            auth: self.auth.take(),
+            params: new_params,
+        })
+    }
+}
+
+fn to_json_value<T>(value: T) -> Result<Value>
+where
+    T: Serialize,
+{
+    Ok(serde_json::to_value(value)?)
 }

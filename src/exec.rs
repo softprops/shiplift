@@ -2,14 +2,19 @@
 //!
 //! API Reference: <https://docs.docker.com/engine/api/v1.41/#tag/Exec>
 
-use std::iter;
+use std::{
+    collections::{BTreeMap, HashMap},
+    hash::Hash,
+    iter,
+};
 
 use futures_util::{stream::Stream, TryFutureExt};
 use hyper::Body;
+use serde::Serialize;
+use serde_json::{json, Value};
 
 use crate::{
-    builder::{ExecContainerOptions, ExecResizeOptions},
-    errors::Result,
+    errors::{Error, Result},
     rep::ExecDetails,
     tty, Docker,
 };
@@ -168,5 +173,169 @@ impl<'docker> Exec<'docker> {
                 Some((body, mime::APPLICATION_JSON)),
             )
             .await
+    }
+}
+
+#[derive(Serialize, Debug)]
+pub struct ExecContainerOptions {
+    params: HashMap<&'static str, Vec<String>>,
+    params_bool: HashMap<&'static str, bool>,
+}
+
+impl ExecContainerOptions {
+    /// return a new instance of a builder for options
+    pub fn builder() -> ExecContainerOptionsBuilder {
+        ExecContainerOptionsBuilder::default()
+    }
+
+    /// serialize options as a string. returns None if no options are defined
+    pub fn serialize(&self) -> Result<String> {
+        let mut body = serde_json::Map::new();
+
+        for (k, v) in &self.params {
+            body.insert(
+                (*k).to_owned(),
+                serde_json::to_value(v).map_err(Error::SerdeJsonError)?,
+            );
+        }
+
+        for (k, v) in &self.params_bool {
+            body.insert(
+                (*k).to_owned(),
+                serde_json::to_value(v).map_err(Error::SerdeJsonError)?,
+            );
+        }
+
+        serde_json::to_string(&body).map_err(Error::from)
+    }
+}
+
+#[derive(Default)]
+pub struct ExecContainerOptionsBuilder {
+    params: HashMap<&'static str, Vec<String>>,
+    params_bool: HashMap<&'static str, bool>,
+}
+
+impl ExecContainerOptionsBuilder {
+    /// Command to run, as an array of strings
+    pub fn cmd(
+        &mut self,
+        cmds: Vec<&str>,
+    ) -> &mut Self {
+        for cmd in cmds {
+            self.params
+                .entry("Cmd")
+                .or_insert_with(Vec::new)
+                .push(cmd.to_owned());
+        }
+        self
+    }
+
+    /// A list of environment variables in the form "VAR=value"
+    pub fn env(
+        &mut self,
+        envs: Vec<&str>,
+    ) -> &mut Self {
+        for env in envs {
+            self.params
+                .entry("Env")
+                .or_insert_with(Vec::new)
+                .push(env.to_owned());
+        }
+        self
+    }
+
+    /// Attach to stdout of the exec command
+    pub fn attach_stdout(
+        &mut self,
+        stdout: bool,
+    ) -> &mut Self {
+        self.params_bool.insert("AttachStdout", stdout);
+        self
+    }
+
+    /// Attach to stderr of the exec command
+    pub fn attach_stderr(
+        &mut self,
+        stderr: bool,
+    ) -> &mut Self {
+        self.params_bool.insert("AttachStderr", stderr);
+        self
+    }
+
+    pub fn build(&self) -> ExecContainerOptions {
+        ExecContainerOptions {
+            params: self.params.clone(),
+            params_bool: self.params_bool.clone(),
+        }
+    }
+}
+
+/// Interface for creating volumes
+#[derive(Serialize, Debug)]
+pub struct ExecResizeOptions {
+    params: HashMap<&'static str, Value>,
+}
+
+impl ExecResizeOptions {
+    /// serialize options as a string. returns None if no options are defined
+    pub fn serialize(&self) -> Result<String> {
+        serde_json::to_string(&self.params).map_err(Error::from)
+    }
+
+    pub fn parse_from<'a, K, V>(
+        &self,
+        params: &'a HashMap<K, V>,
+        body: &mut BTreeMap<String, Value>,
+    ) where
+        &'a HashMap<K, V>: IntoIterator,
+        K: ToString + Eq + Hash,
+        V: Serialize,
+    {
+        for (k, v) in params.iter() {
+            let key = k.to_string();
+            let value = serde_json::to_value(v).unwrap();
+
+            body.insert(key, value);
+        }
+    }
+
+    /// return a new instance of a builder for options
+    pub fn builder() -> ExecResizeOptionsBuilder {
+        ExecResizeOptionsBuilder::new()
+    }
+}
+
+#[derive(Default)]
+pub struct ExecResizeOptionsBuilder {
+    params: HashMap<&'static str, Value>,
+}
+
+impl ExecResizeOptionsBuilder {
+    pub(crate) fn new() -> Self {
+        let params = HashMap::new();
+        ExecResizeOptionsBuilder { params }
+    }
+
+    pub fn height(
+        &mut self,
+        height: u64,
+    ) -> &mut Self {
+        self.params.insert("Name", json!(height));
+        self
+    }
+
+    pub fn width(
+        &mut self,
+        width: u64,
+    ) -> &mut Self {
+        self.params.insert("Name", json!(width));
+        self
+    }
+
+    pub fn build(&self) -> ExecResizeOptions {
+        ExecResizeOptions {
+            params: self.params.clone(),
+        }
     }
 }

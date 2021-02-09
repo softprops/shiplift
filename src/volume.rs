@@ -2,11 +2,17 @@
 //!
 //! API Reference: <https://docs.docker.com/engine/api/v1.41/#tag/Volume>
 
+use std::{
+    collections::{BTreeMap, HashMap},
+    hash::Hash,
+};
+
 use hyper::Body;
+use serde::Serialize;
+use serde_json::{json, Value};
 
 use crate::{
-    builder::VolumeCreateOptions,
-    errors::Result,
+    errors::{Error, Result},
     rep::{Volume as VolumeRep, VolumeCreateInfo, Volumes as VolumesRep},
     Docker,
 };
@@ -81,5 +87,74 @@ impl<'docker> Volume<'docker> {
             .delete(&format!("/volumes/{}", self.name)[..])
             .await?;
         Ok(())
+    }
+}
+
+/// Interface for creating volumes
+#[derive(Serialize, Debug)]
+pub struct VolumeCreateOptions {
+    params: HashMap<&'static str, Value>,
+}
+
+impl VolumeCreateOptions {
+    /// serialize options as a string. returns None if no options are defined
+    pub fn serialize(&self) -> Result<String> {
+        serde_json::to_string(&self.params).map_err(Error::from)
+    }
+
+    pub fn parse_from<'a, K, V>(
+        &self,
+        params: &'a HashMap<K, V>,
+        body: &mut BTreeMap<String, Value>,
+    ) where
+        &'a HashMap<K, V>: IntoIterator,
+        K: ToString + Eq + Hash,
+        V: Serialize,
+    {
+        for (k, v) in params.iter() {
+            let key = k.to_string();
+            let value = serde_json::to_value(v).unwrap();
+
+            body.insert(key, value);
+        }
+    }
+
+    /// return a new instance of a builder for options
+    pub fn builder() -> VolumeCreateOptionsBuilder {
+        VolumeCreateOptionsBuilder::new()
+    }
+}
+
+#[derive(Default)]
+pub struct VolumeCreateOptionsBuilder {
+    params: HashMap<&'static str, Value>,
+}
+
+impl VolumeCreateOptionsBuilder {
+    pub(crate) fn new() -> Self {
+        let params = HashMap::new();
+        VolumeCreateOptionsBuilder { params }
+    }
+
+    pub fn name(
+        &mut self,
+        name: &str,
+    ) -> &mut Self {
+        self.params.insert("Name", json!(name));
+        self
+    }
+
+    pub fn labels(
+        &mut self,
+        labels: &HashMap<&str, &str>,
+    ) -> &mut Self {
+        self.params.insert("Labels", json!(labels));
+        self
+    }
+
+    pub fn build(&self) -> VolumeCreateOptions {
+        VolumeCreateOptions {
+            params: self.params.clone(),
+        }
     }
 }
