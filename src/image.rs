@@ -6,18 +6,17 @@ use std::{collections::HashMap, io::Read, iter};
 
 use futures_util::{stream::Stream, TryFutureExt, TryStreamExt};
 use hyper::Body;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use url::form_urlencoded;
 
-use crate::{
-    errors::Result,
-    rep::{History, Image as ImageRep, ImageDetails, SearchResult, Status},
-    tarball,
-    transport::tar,
-};
+use crate::{docker::Docker, errors::Result, tarball, transport::tar};
 
-use crate::Docker;
+#[cfg(feature = "chrono")]
+use crate::datetime::datetime_from_unix_timestamp;
+#[cfg(feature = "chrono")]
+use chrono::{DateTime, Utc};
+
 /// Interface for accessing and manipulating a named docker image
 pub struct Image<'docker> {
     docker: &'docker Docker,
@@ -134,12 +133,14 @@ impl<'docker> Images<'docker> {
     pub async fn list(
         &self,
         opts: &ImageListOptions,
-    ) -> Result<Vec<ImageRep>> {
+    ) -> Result<Vec<ImageInfo>> {
         let mut path = vec!["/images/json".to_owned()];
         if let Some(query) = opts.serialize() {
             path.push(query);
         }
-        self.docker.get_json::<Vec<ImageRep>>(&path.join("?")).await
+        self.docker
+            .get_json::<Vec<ImageInfo>>(&path.join("?"))
+            .await
     }
 
     /// Returns a reference to a set of operations available for a named image
@@ -734,6 +735,107 @@ impl ImageListOptionsBuilder {
             params: self.params.clone(),
         }
     }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SearchResult {
+    pub description: String,
+    pub is_official: bool,
+    pub is_automated: bool,
+    pub name: String,
+    pub star_count: u64,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct ImageInfo {
+    #[cfg(feature = "chrono")]
+    #[serde(deserialize_with = "datetime_from_unix_timestamp")]
+    pub created: DateTime<Utc>,
+    #[cfg(not(feature = "chrono"))]
+    pub created: u64,
+    pub id: String,
+    pub parent_id: String,
+    pub labels: Option<HashMap<String, String>>,
+    pub repo_tags: Option<Vec<String>>,
+    pub repo_digests: Option<Vec<String>>,
+    pub virtual_size: u64,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct ImageDetails {
+    pub architecture: String,
+    pub author: String,
+    pub comment: String,
+    pub config: Config,
+    #[cfg(feature = "chrono")]
+    pub created: DateTime<Utc>,
+    #[cfg(not(feature = "chrono"))]
+    pub created: String,
+    pub docker_version: String,
+    pub id: String,
+    pub os: String,
+    pub parent: String,
+    pub repo_tags: Option<Vec<String>>,
+    pub repo_digests: Option<Vec<String>>,
+    pub size: u64,
+    pub virtual_size: u64,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct Config {
+    pub attach_stderr: bool,
+    pub attach_stdin: bool,
+    pub attach_stdout: bool,
+    pub cmd: Option<Vec<String>>,
+    pub domainname: String,
+    pub entrypoint: Option<Vec<String>>,
+    pub env: Option<Vec<String>>,
+    pub exposed_ports: Option<HashMap<String, HashMap<String, String>>>,
+    pub hostname: String,
+    pub image: String,
+    pub labels: Option<HashMap<String, String>>,
+    // pub MacAddress: String,
+    pub on_build: Option<Vec<String>>,
+    // pub NetworkDisabled: bool,
+    pub open_stdin: bool,
+    pub stdin_once: bool,
+    pub tty: bool,
+    pub user: String,
+    pub working_dir: String,
+}
+
+impl Config {
+    pub fn env(&self) -> HashMap<String, String> {
+        let mut map = HashMap::new();
+        if let Some(ref vars) = self.env {
+            for e in vars {
+                let pair: Vec<&str> = e.split('=').collect();
+                map.insert(pair[0].to_owned(), pair[1].to_owned());
+            }
+        }
+        map
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct History {
+    pub id: String,
+    #[cfg(feature = "chrono")]
+    #[serde(deserialize_with = "datetime_from_unix_timestamp")]
+    pub created: DateTime<Utc>,
+    #[cfg(not(feature = "chrono"))]
+    pub created: u64,
+    pub created_by: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum Status {
+    Untagged(String),
+    Deleted(String),
 }
 
 #[cfg(test)]

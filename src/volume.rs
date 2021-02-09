@@ -8,14 +8,16 @@ use std::{
 };
 
 use hyper::Body;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
 use crate::{
     errors::{Error, Result},
-    rep::{Volume as VolumeRep, VolumeCreateInfo, Volumes as VolumesRep},
     Docker,
 };
+
+#[cfg(feature = "chrono")]
+use chrono::{DateTime, Utc};
 
 /// Interface for docker volumes
 pub struct Volumes<'docker> {
@@ -41,10 +43,10 @@ impl<'docker> Volumes<'docker> {
     }
 
     /// Lists the docker volumes on the current docker host
-    pub async fn list(&self) -> Result<Vec<VolumeRep>> {
+    pub async fn list(&self) -> Result<Vec<VolumeInfo>> {
         let path = vec!["/volumes".to_owned()];
 
-        let volumes_rep = self.docker.get_json::<VolumesRep>(&path.join("?")).await?;
+        let volumes_rep = self.docker.get_json::<VolumesInfo>(&path.join("?")).await?;
         Ok(match volumes_rep.volumes {
             Some(volumes) => volumes,
             None => vec![],
@@ -157,4 +159,32 @@ impl VolumeCreateOptionsBuilder {
             params: self.params.clone(),
         }
     }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct VolumeCreateInfo {
+    pub name: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct VolumesInfo {
+    pub volumes: Option<Vec<VolumeInfo>>,
+    pub warnings: Option<Vec<String>>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct VolumeInfo {
+    #[cfg(feature = "chrono")]
+    pub created_at: DateTime<Utc>,
+    #[cfg(not(feature = "chrono"))]
+    pub created_at: String,
+    pub driver: String,
+    pub labels: Option<HashMap<String, String>>,
+    pub name: String,
+    pub mountpoint: String,
+    pub options: Option<HashMap<String, String>>,
+    pub scope: String,
 }

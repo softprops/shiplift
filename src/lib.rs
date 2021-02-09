@@ -18,7 +18,6 @@
 //! ```
 
 pub mod errors;
-pub mod rep;
 pub mod transport;
 pub mod tty;
 
@@ -31,6 +30,9 @@ pub mod service;
 pub mod volume;
 
 mod tarball;
+
+#[cfg(feature = "chrono")]
+mod datetime;
 
 pub use hyper::Uri;
 
@@ -105,4 +107,29 @@ reexport! {
         ServiceOptionsBuilder,
     };
     volume::{VolumeCreateOptions, VolumeCreateOptionsBuilder};
+}
+
+reexport! {
+    mod rep;
+    container::{
+        ContainerInfo as Container, ContainerDetails, Mount, State, HostConfig, Port, Stats,
+        MemoryStats, MemoryStat, CpuStats, CpuUsage, ThrottlingData, BlkioStats, BlkioStat, Change,
+        Top, ContainerCreateInfo, Exit,
+    };
+    docker::{Version, Info, Event, Actor};
+    exec::{ExecDetails, ProcessConfig};
+    image::{
+        SearchResult, ImageInfo as Image, ImageDetails, Config, History, Status,
+    };
+    network::{
+        NetworkSettings, NetworkEntry, NetworkInfo as Network, IPAM, NetworkDetails,
+        NetworkContainerDetails, NetworkCreateInfo,
+    };
+    service::{
+        ServicesInfo as Services, ServiceInfo as Service, ObjectVersion, Endpoint, EndpointSpec,
+        EndpointPortConfig, UpdateStatus, ServiceStatus, JobStatus, ServiceDetails, ServiceSpec,
+        TaskSpec, Mode, Replicated, ReplicatedJob, UpdateConfig, RollbackConfig,
+        NetworkAttachmentConfig, ServiceCreateInfo,
+    };
+    volume::{VolumeCreateInfo, VolumesInfo as Volumes, VolumeInfo as Volume};
 }

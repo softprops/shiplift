@@ -10,12 +10,11 @@ use std::{
 
 use futures_util::{stream::Stream, TryFutureExt};
 use hyper::Body;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
 use crate::{
     errors::{Error, Result},
-    rep::ExecDetails,
     tty, Docker,
 };
 
@@ -338,4 +337,31 @@ impl ExecResizeOptionsBuilder {
             params: self.params.clone(),
         }
     }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct ExecDetails {
+    pub can_remove: bool,
+    #[serde(rename = "ContainerID")]
+    pub container_id: String,
+    pub detach_keys: String,
+    pub exit_code: Option<u64>,
+    #[serde(rename = "ID")]
+    pub id: String,
+    pub open_stderr: bool,
+    pub open_stdin: bool,
+    pub open_stdout: bool,
+    pub process_config: ProcessConfig,
+    pub running: bool,
+    pub pid: u64,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ProcessConfig {
+    pub arguments: Vec<String>,
+    pub entrypoint: String,
+    pub privileged: bool,
+    pub tty: bool,
+    pub user: Option<String>,
 }
