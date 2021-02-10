@@ -33,22 +33,29 @@ pub struct Image {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct ImageDetails {
-    pub architecture: String,
-    pub author: String,
+    pub id: String,
+    pub repo_tags: Option<Vec<String>>,
+    pub repo_digests: Option<Vec<String>>,
+    pub parent: String,
     pub comment: String,
-    pub config: Config,
     #[cfg(feature = "chrono")]
     pub created: DateTime<Utc>,
     #[cfg(not(feature = "chrono"))]
     pub created: String,
+    pub container: String,
+    pub container_config: Option<ContainerConfig>,
     pub docker_version: String,
-    pub id: String,
+    pub author: String,
+    pub config: Option<ContainerConfig>,
+    pub architecture: String,
     pub os: String,
-    pub parent: String,
-    pub repo_tags: Option<Vec<String>>,
-    pub repo_digests: Option<Vec<String>>,
-    pub size: u64,
-    pub virtual_size: u64,
+    pub os_version: Option<String>,
+    pub size: i64,
+    pub virtual_size: i64,
+    pub graph_driver: GraphDriverData,
+    #[serde(rename = "RootFS")]
+    pub root_fs: RootFS,
+    pub metadata: Metadata,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -78,7 +85,7 @@ pub struct Container {
 pub struct ContainerDetails {
     pub app_armor_profile: String,
     pub args: Vec<String>,
-    pub config: Config,
+    pub config: ContainerConfig,
     #[cfg(feature = "chrono")]
     pub created: DateTime<Utc>,
     #[cfg(not(feature = "chrono"))]
@@ -194,29 +201,35 @@ pub struct HostConfig {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-pub struct Config {
-    pub attach_stderr: bool,
-    pub attach_stdin: bool,
-    pub attach_stdout: bool,
-    pub cmd: Option<Vec<String>>,
-    pub domainname: String,
-    pub entrypoint: Option<Vec<String>>,
-    pub env: Option<Vec<String>>,
+pub struct ContainerConfig {
+    pub hostname: Option<String>,
+    pub domainname: Option<String>,
+    pub user: Option<String>,
+    pub attach_stdin: Option<bool>,
+    pub attach_stdout: Option<bool>,
+    pub attach_stderr: Option<bool>,
     pub exposed_ports: Option<HashMap<String, HashMap<String, String>>>,
-    pub hostname: String,
-    pub image: String,
-    pub labels: Option<HashMap<String, String>>,
-    // pub MacAddress: String,
+    pub tty: Option<bool>,
+    pub open_stdin: Option<bool>,
+    pub stdin_once: Option<bool>,
+    pub env: Option<Vec<String>>,
+    pub cmd: Option<Vec<String>>,
+    pub healtcheck: Option<HealthConfig>,
+    pub args_escaped: Option<bool>,
+    pub image: Option<String>,
+    pub volumes: Option<HashMap<String, HashMap<String, String>>>,
+    pub working_dir: Option<String>,
+    pub entrypoint: Option<Vec<String>>,
+    pub network_disabled: Option<bool>,
+    pub mac_address: Option<String>,
     pub on_build: Option<Vec<String>>,
-    // pub NetworkDisabled: bool,
-    pub open_stdin: bool,
-    pub stdin_once: bool,
-    pub tty: bool,
-    pub user: String,
-    pub working_dir: String,
+    pub labels: Option<HashMap<String, String>>,
+    pub stop_signal: Option<String>,
+    pub stop_timeout: Option<u64>,
+    pub shell: Option<Vec<String>>,
 }
 
-impl Config {
+impl ContainerConfig {
     pub fn env(&self) -> HashMap<String, String> {
         let mut map = HashMap::new();
         if let Some(ref vars) = self.env {
@@ -227,6 +240,41 @@ impl Config {
         }
         map
     }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct HealthConfig {
+    pub test: Option<Vec<String>>,
+    pub interval: Option<u64>,
+    pub timeout: Option<u64>,
+    pub retries: Option<u64>,
+    pub start_period: Option<u64>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct GraphDriverData {
+    pub name: String,
+    pub data: HashMap<String, String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct RootFS {
+    #[serde(rename = "Type")]
+    pub typ: String,
+    pub layers: Option<Vec<String>>,
+    pub base_layer: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct Metadata {
+    #[cfg(feature = "chrono")]
+    pub last_tag_time: DateTime<Utc>,
+    #[cfg(not(feature = "chrono"))]
+    pub last_tag_time: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -460,8 +508,11 @@ pub struct History {
     #[serde(deserialize_with = "datetime_from_unix_timestamp")]
     pub created: DateTime<Utc>,
     #[cfg(not(feature = "chrono"))]
-    pub created: u64,
+    pub created: i64,
     pub created_by: String,
+    pub tags: Option<Vec<String>>,
+    pub size: i64,
+    pub comment: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

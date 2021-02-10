@@ -1,6 +1,11 @@
 # 0.8.0
 
 * `ContainerOptionsBuilder::entrypoint` now correctly takes an `IntoIterator<Item = AsRef<str>>` instead of `&str` [#269](https://github.com/softprops/shiplift/pull/269)
+* make `config` field of `ImageDetails` optional [#264](https://github.com/softprops/shiplift/pull/264)
+* add `container`, `container_config`, `os_version`, `graph_driver`, `root_fs`, `metadata` fields to `ImageDetails` [#264](https://github.com/softprops/shiplift/pull/264)
+* rename `shiplift::rep::Config` to `shiplift::rep::ContainerConfig` [#264](https://github.com/softprops/shiplift/pull/264)
+* add missing fields ([API version 1.41](https://docs.docker.com/engine/api/v1.41/#operation/ImageInspect)) to `ContainerConfig` [#264](https://github.com/softprops/shiplift/pull/264)
+* add missing fields ([API version 1.41](https://docs.docker.com/engine/api/v1.41/#operation/ImageHistory)) to `History` [#264](https://github.com/softprops/shiplift/pull/264)
 
 # 0.7.0
 
