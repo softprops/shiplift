@@ -879,10 +879,14 @@ impl ContainerOptionsBuilder {
         self
     }
 
-    pub fn entrypoint(
+    pub fn entrypoint<I, S>(
         &mut self,
-        entrypoint: &str,
-    ) -> &mut Self {
+        entrypoint: I,
+    ) -> &mut Self
+    where
+        I: IntoIterator<Item = S> + Serialize,
+        S: AsRef<str>,
+    {
         self.params.insert("Entrypoint", json!(entrypoint));
         self
     }
