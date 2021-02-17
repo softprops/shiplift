@@ -155,19 +155,27 @@ impl<'docker> Images<'docker> {
         &self,
         opts: &BuildOptions,
     ) -> impl Stream<Item = Result<Value>> + Unpin + 'docker {
+        let mut endpoint = vec!["/build".to_owned()];
+        if let Some(query) = opts.serialize() {
+            endpoint.push(query)
+        }
+
+        // To not tie the lifetime of `opts` to the `'stream`, we do the tarring work outside of
+        // the stream. But for backwards compatability, we have to return the error inside of the
+        // stream.
+        let mut bytes = Vec::default();
+        let tar_result = tarball::dir(&mut bytes, opts.path.as_str());
+
+        // We must take ownership of the Docker reference. If we don't then the lifetime of
+        // `'stream` is incorrectly tied to `self`.
+        let docker = self.docker;
         Box::pin(
             async move {
-                let mut path = vec!["/build".to_owned()];
-                if let Some(query) = opts.serialize() {
-                    path.push(query)
-                }
+                // Bubble up error inside the stream for backwards compatability
+                tar_result?;
 
-                let mut bytes = Vec::default();
-
-                tarball::dir(&mut bytes, &opts.path[..])?;
-
-                let value_stream = self.docker.stream_post_into_values(
-                    path.join("?"),
+                let value_stream = docker.stream_post_into_values(
+                    endpoint.join("?"),
                     Some((Body::from(bytes), tar())),
                     None::<iter::Empty<_>>,
                 );
@@ -1218,6 +1226,8 @@ impl Docker {
             _ => get_docker_for_tcp(tcp_host_str),
         }
     }
+
+    // TODO: DO I want to make the lifetimes here explicit?
 
     /// Exports an interface for interacting with docker images
     pub fn images(&self) -> Images {
