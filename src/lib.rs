@@ -160,14 +160,14 @@ impl<'docker> Images<'docker> {
             endpoint.push(query)
         }
 
-        // To not tie the lifetime of `opts` to the `'stream`, we do the tarring work outside of
-        // the stream. But for backwards compatability, we have to return the error inside of the
+        // To not tie the lifetime of `opts` to the 'stream, we do the tarring work outside of the
+        // stream. But for backwards compatability, we have to return the error inside of the
         // stream.
         let mut bytes = Vec::default();
         let tar_result = tarball::dir(&mut bytes, opts.path.as_str());
 
-        // We must take ownership of the Docker reference. If we don't then the lifetime of
-        // `'stream` is incorrectly tied to `self`.
+        // We must take ownership of the Docker reference. If we don't then the lifetime of 'stream
+        // is incorrectly tied to `self`.
         let docker = self.docker;
         Box::pin(
             async move {
@@ -532,13 +532,7 @@ impl<'docker> Container<'docker> {
         &self,
         opts: &ExecContainerOptions,
     ) -> impl Stream<Item = Result<tty::TtyChunk>> + Unpin + 'docker {
-        Box::pin(
-            async move {
-                let id = Exec::create_id(&self.docker, &self.id, opts).await?;
-                Ok(Exec::_start(&self.docker, &id))
-            }
-            .try_flatten_stream(),
-        )
+        Exec::create_and_start(self.docker, &self.id, opts)
     }
 
     /// Copy a file/folder from the container.  The resulting stream is a tarball of the extracted
@@ -692,12 +686,12 @@ impl<'docker> Exec<'docker> {
         }
     }
 
-    /// Creates an exec instance in docker and returns its id
-    pub(crate) async fn create_id(
+    /// Creates a new exec instance that will be executed in a container with id == container_id
+    pub async fn create(
         docker: &'docker Docker,
         container_id: &str,
         opts: &ExecContainerOptions,
-    ) -> Result<String> {
+    ) -> Result<Exec<'docker>> {
         #[derive(serde::Deserialize)]
         #[serde(rename_all = "PascalCase")]
         struct Response {
@@ -706,41 +700,68 @@ impl<'docker> Exec<'docker> {
 
         let body: Body = opts.serialize()?.into();
 
-        docker
+        let id = docker
             .post_json(
-                &format!("/containers/{}/exec", container_id)[..],
+                &format!("/containers/{}/exec", container_id),
                 Some((body, mime::APPLICATION_JSON)),
             )
             .await
-            .map(|resp: Response| resp.id)
+            .map(|resp: Response| resp.id)?;
+
+        Ok(Exec::new(docker, id))
     }
 
-    /// Starts an exec instance with id exec_id
-    pub(crate) fn _start(
-        docker: &'docker Docker,
-        exec_id: &str,
-    ) -> impl Stream<Item = Result<tty::TtyChunk>> + 'docker {
-        let bytes: &[u8] = b"{}";
-
-        let stream = Box::pin(docker.stream_post(
-            format!("/exec/{}/start", &exec_id),
-            Some((bytes.into(), mime::APPLICATION_JSON)),
-            None::<iter::Empty<_>>,
-        ));
-
-        tty::decode(stream)
-    }
-
-    /// Creates a new exec instance that will be executed in a container with id == container_id
-    pub async fn create(
+    // This exists for Container::exec()
+    //
+    // We need to combine `Exec::create` and `Exec::start` into one method because otherwise you
+    // needlessly tie the Stream to the lifetime of `container_id` and `opts`. This is because
+    // `Exec::create` is async so it must occur inside of the `async move` block. However, this
+    // means that `container_id` and `opts` are both expected to be alive in the returned stream
+    // because we can't do the work of creating an endpoint from `container_id` or serializing
+    // `opts`. By doing this work outside of the stream, we get owned values that we can then move
+    // into the stream and have the lifetimes work out as you would expect.
+    //
+    // Yes, it is sad that we can't do the easy method and thus have some duplicated code.
+    pub(crate) fn create_and_start(
         docker: &'docker Docker,
         container_id: &str,
         opts: &ExecContainerOptions,
-    ) -> Result<Exec<'docker>> {
-        Ok(Exec::new(
-            docker,
-            Exec::create_id(docker, container_id, opts).await?,
-        ))
+    ) -> impl Stream<Item = Result<tty::TtyChunk>> + Unpin + 'docker {
+        #[derive(serde::Deserialize)]
+        #[serde(rename_all = "PascalCase")]
+        struct Response {
+            id: String,
+        }
+
+        // To not tie the lifetime of `opts` to the stream, we do the serializing work outside of
+        // the stream. But for backwards compatability, we have to return the error inside of the
+        // stream.
+        let body_result = opts.serialize();
+
+        // To not tie the lifetime of `container_id` to the stream, we convert it to an (owned)
+        // endpoint outside of the stream.
+        let container_endpoint = format!("/containers/{}/exec", container_id);
+
+        Box::pin(
+            async move {
+                // Bubble up the error inside the stream for backwards compatability
+                let body: Body = body_result?.into();
+
+                let exec_id = docker
+                    .post_json(&container_endpoint, Some((body, mime::APPLICATION_JSON)))
+                    .await
+                    .map(|resp: Response| resp.id)?;
+
+                let stream = Box::pin(docker.stream_post(
+                    format!("/exec/{}/start", exec_id),
+                    Some(("{}".into(), mime::APPLICATION_JSON)),
+                    None::<iter::Empty<_>>,
+                ));
+
+                Ok(tty::decode(stream))
+            }
+            .try_flatten_stream(),
+        )
     }
 
     /// Get a reference to a set of operations available to an already created exec instance.
