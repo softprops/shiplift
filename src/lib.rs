@@ -760,13 +760,17 @@ impl<'docker> Exec<'docker> {
 
     /// Starts this exec instance returning a multiplexed tty stream
     pub fn start(&self) -> impl Stream<Item = Result<tty::TtyChunk>> + 'docker {
+        // We must take ownership of the docker reference to not needlessly tie the stream to the
+        // lifetime of `self`.
+        let docker = self.docker;
+        // We convert `self.id` into the (owned) endpoint outside of the stream to not needlessly
+        // tie the stream to the lifetime of `self`.
+        let endpoint = format!("/exec/{}/start", &self.id);
         Box::pin(
             async move {
-                let bytes: &[u8] = b"{}";
-
-                let stream = Box::pin(self.docker.stream_post(
-                    format!("/exec/{}/start", &self.id),
-                    Some((bytes.into(), mime::APPLICATION_JSON)),
+                let stream = Box::pin(docker.stream_post(
+                    endpoint,
+                    Some(("{}".into(), mime::APPLICATION_JSON)),
                     None::<iter::Empty<_>>,
                 ));
 
