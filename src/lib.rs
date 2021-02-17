@@ -608,13 +608,13 @@ impl<'docker> Container<'docker> {
 }
 
 /// Interface for docker containers
-pub struct Containers<'a> {
-    docker: &'a Docker,
+pub struct Containers<'docker> {
+    docker: &'docker Docker,
 }
 
-impl<'a> Containers<'a> {
+impl<'docker> Containers<'docker> {
     /// Exports an interface for interacting with docker containers
-    pub fn new(docker: &'a Docker) -> Containers<'a> {
+    pub fn new(docker: &'docker Docker) -> Self {
         Containers { docker }
     }
 
@@ -665,16 +665,16 @@ impl<'a> Containers<'a> {
     }
 }
 /// Interface for docker exec instance
-pub struct Exec<'a> {
-    docker: &'a Docker,
+pub struct Exec<'docker> {
+    docker: &'docker Docker,
     id: String,
 }
 
-impl<'a> Exec<'a> {
+impl<'docker> Exec<'docker> {
     fn new<S>(
-        docker: &'a Docker,
+        docker: &'docker Docker,
         id: S,
-    ) -> Exec<'a>
+    ) -> Self
     where
         S: Into<String>,
     {
@@ -686,7 +686,7 @@ impl<'a> Exec<'a> {
 
     /// Creates an exec instance in docker and returns its id
     pub(crate) async fn create_id(
-        docker: &'a Docker,
+        docker: &'docker Docker,
         container_id: &str,
         opts: &ExecContainerOptions,
     ) -> Result<String> {
@@ -709,9 +709,9 @@ impl<'a> Exec<'a> {
 
     /// Starts an exec instance with id exec_id
     pub(crate) fn _start(
-        docker: &'a Docker,
+        docker: &'docker Docker,
         exec_id: &str,
-    ) -> impl Stream<Item = Result<tty::TtyChunk>> + 'a {
+    ) -> impl Stream<Item = Result<tty::TtyChunk>> + 'docker {
         let bytes: &[u8] = b"{}";
 
         let stream = Box::pin(docker.stream_post(
@@ -725,10 +725,10 @@ impl<'a> Exec<'a> {
 
     /// Creates a new exec instance that will be executed in a container with id == container_id
     pub async fn create(
-        docker: &'a Docker,
+        docker: &'docker Docker,
         container_id: &str,
         opts: &ExecContainerOptions,
-    ) -> Result<Exec<'a>> {
+    ) -> Result<Exec<'docker>> {
         Ok(Exec::new(
             docker,
             Exec::create_id(docker, container_id, opts).await?,
@@ -741,9 +741,9 @@ impl<'a> Exec<'a> {
     /// exists. Use [Exec::create](Exec::create) to ensure that the exec instance is created
     /// beforehand.
     pub async fn get<S>(
-        docker: &'a Docker,
+        docker: &'docker Docker,
         id: S,
-    ) -> Exec<'a>
+    ) -> Exec<'docker>
     where
         S: Into<String>,
     {
@@ -751,7 +751,7 @@ impl<'a> Exec<'a> {
     }
 
     /// Starts this exec instance returning a multiplexed tty stream
-    pub fn start(&'a self) -> impl Stream<Item = Result<tty::TtyChunk>> + 'a {
+    pub fn start(&self) -> impl Stream<Item = Result<tty::TtyChunk>> + 'docker {
         Box::pin(
             async move {
                 let bytes: &[u8] = b"{}";
@@ -791,13 +791,13 @@ impl<'a> Exec<'a> {
 }
 
 /// Interface for docker network
-pub struct Networks<'a> {
-    docker: &'a Docker,
+pub struct Networks<'docker> {
+    docker: &'docker Docker,
 }
 
-impl<'a> Networks<'a> {
+impl<'docker> Networks<'docker> {
     /// Exports an interface for interacting with docker Networks
-    pub fn new(docker: &Docker) -> Networks {
+    pub fn new(docker: &'docker Docker) -> Self {
         Networks { docker }
     }
 
@@ -817,7 +817,7 @@ impl<'a> Networks<'a> {
     pub fn get<S>(
         &self,
         id: S,
-    ) -> Network
+    ) -> Network<'docker>
     where
         S: Into<String>,
     {
@@ -839,17 +839,17 @@ impl<'a> Networks<'a> {
 }
 
 /// Interface for accessing and manipulating a docker network
-pub struct Network<'a> {
-    docker: &'a Docker,
+pub struct Network<'docker> {
+    docker: &'docker Docker,
     id: String,
 }
 
-impl<'a> Network<'a> {
+impl<'docker> Network<'docker> {
     /// Exports an interface exposing operations against a network instance
     pub fn new<S>(
-        docker: &Docker,
+        docker: &'docker Docker,
         id: S,
-    ) -> Network
+    ) -> Self
     where
         S: Into<String>,
     {
@@ -913,13 +913,13 @@ impl<'a> Network<'a> {
 }
 
 /// Interface for docker volumes
-pub struct Volumes<'a> {
-    docker: &'a Docker,
+pub struct Volumes<'docker> {
+    docker: &'docker Docker,
 }
 
-impl<'a> Volumes<'a> {
+impl<'docker> Volumes<'docker> {
     /// Exports an interface for interacting with docker volumes
-    pub fn new(docker: &Docker) -> Volumes {
+    pub fn new(docker: &'docker Docker) -> Self {
         Volumes { docker }
     }
 
@@ -950,23 +950,23 @@ impl<'a> Volumes<'a> {
     pub fn get(
         &self,
         name: &str,
-    ) -> Volume {
+    ) -> Volume<'docker> {
         Volume::new(self.docker, name)
     }
 }
 
 /// Interface for accessing and manipulating a named docker volume
-pub struct Volume<'a> {
-    docker: &'a Docker,
+pub struct Volume<'docker> {
+    docker: &'docker Docker,
     name: String,
 }
 
-impl<'a> Volume<'a> {
+impl<'docker> Volume<'docker> {
     /// Exports an interface for operations that may be performed against a named volume
     pub fn new<S>(
-        docker: &Docker,
+        docker: &'docker Docker,
         name: S,
-    ) -> Volume
+    ) -> Self
     where
         S: Into<String>,
     {
@@ -986,13 +986,13 @@ impl<'a> Volume<'a> {
 }
 
 /// Interface for docker services
-pub struct Services<'a> {
-    docker: &'a Docker,
+pub struct Services<'docker> {
+    docker: &'docker Docker,
 }
 
-impl<'a> Services<'a> {
+impl<'docker> Services<'docker> {
     /// Exports an interface for interacting with docker services
-    pub fn new(docker: &Docker) -> Services {
+    pub fn new(docker: &'docker Docker) -> Self {
         Services { docker }
     }
 
@@ -1013,23 +1013,23 @@ impl<'a> Services<'a> {
     pub fn get(
         &self,
         name: &str,
-    ) -> Service {
+    ) -> Service<'docker> {
         Service::new(self.docker, name)
     }
 }
 
 /// Interface for accessing and manipulating a named docker volume
-pub struct Service<'a> {
-    docker: &'a Docker,
+pub struct Service<'docker> {
+    docker: &'docker Docker,
     name: String,
 }
 
-impl<'a> Service<'a> {
+impl<'docker> Service<'docker> {
     /// Exports an interface for operations that may be performed against a named service
     pub fn new<S>(
-        docker: &Docker,
+        docker: &'docker Docker,
         name: S,
-    ) -> Service
+    ) -> Self
     where
         S: Into<String>,
     {
@@ -1078,7 +1078,7 @@ impl<'a> Service<'a> {
     pub fn logs(
         &self,
         opts: &LogsOptions,
-    ) -> impl Stream<Item = Result<tty::TtyChunk>> + Unpin + 'a {
+    ) -> impl Stream<Item = Result<tty::TtyChunk>> + Unpin + 'docker {
         let mut path = vec![format!("/services/{}/logs", self.name)];
         if let Some(query) = opts.serialize() {
             path.push(query)
@@ -1258,10 +1258,10 @@ impl Docker {
     }
 
     /// Returns a stream of docker events
-    pub fn events<'a>(
-        &'a self,
+    pub fn events<'docker>(
+        &'docker self,
         opts: &EventsOptions,
-    ) -> impl Stream<Item = Result<Event>> + Unpin + 'a {
+    ) -> impl Stream<Item = Result<Event>> + Unpin + 'docker {
         let mut path = vec!["/events".to_owned()];
         if let Some(query) = opts.serialize() {
             path.push(query);
