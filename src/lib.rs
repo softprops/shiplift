@@ -75,17 +75,17 @@ pub struct Docker {
 }
 
 /// Interface for accessing and manipulating a named docker image
-pub struct Image<'a> {
-    docker: &'a Docker,
+pub struct Image<'docker> {
+    docker: &'docker Docker,
     name: String,
 }
 
-impl<'a> Image<'a> {
+impl<'docker> Image<'docker> {
     /// Exports an interface for operations that may be performed against a named image
     pub fn new<S>(
-        docker: &Docker,
+        docker: &'docker Docker,
         name: S,
-    ) -> Image
+    ) -> Self
     where
         S: Into<String>,
     {
@@ -117,7 +117,7 @@ impl<'a> Image<'a> {
     }
 
     /// Export this image to a tarball
-    pub fn export(&self) -> impl Stream<Item = Result<Vec<u8>>> + Unpin + 'a {
+    pub fn export(&self) -> impl Stream<Item = Result<Vec<u8>>> + Unpin + 'docker {
         Box::pin(
             self.docker
                 .stream_get(format!("/images/{}/get", self.name))
@@ -140,21 +140,21 @@ impl<'a> Image<'a> {
 }
 
 /// Interface for docker images
-pub struct Images<'a> {
-    docker: &'a Docker,
+pub struct Images<'docker> {
+    docker: &'docker Docker,
 }
 
-impl<'a> Images<'a> {
+impl<'docker> Images<'docker> {
     /// Exports an interface for interacting with docker images
-    pub fn new(docker: &'a Docker) -> Images<'a> {
+    pub fn new(docker: &'docker Docker) -> Self {
         Images { docker }
     }
 
     /// Builds a new image build by reading a Dockerfile in a target directory
     pub fn build(
-        &'a self,
-        opts: &'a BuildOptions,
-    ) -> impl Stream<Item = Result<Value>> + Unpin + 'a {
+        &self,
+        opts: &BuildOptions,
+    ) -> impl Stream<Item = Result<Value>> + Unpin + 'docker {
         Box::pin(
             async move {
                 let mut path = vec!["/build".to_owned()];
@@ -194,7 +194,7 @@ impl<'a> Images<'a> {
     pub fn get<S>(
         &self,
         name: S,
-    ) -> Image<'a>
+    ) -> Image<'docker>
     where
         S: Into<String>,
     {
@@ -218,7 +218,7 @@ impl<'a> Images<'a> {
     pub fn pull(
         &self,
         opts: &PullOptions,
-    ) -> impl Stream<Item = Result<Value>> + Unpin + 'a {
+    ) -> impl Stream<Item = Result<Value>> + Unpin + 'docker {
         let mut path = vec!["/images/create".to_owned()];
         if let Some(query) = opts.serialize() {
             path.push(query);
@@ -238,7 +238,7 @@ impl<'a> Images<'a> {
     pub fn export(
         &self,
         names: Vec<&str>,
-    ) -> impl Stream<Item = Result<Vec<u8>>> + 'a {
+    ) -> impl Stream<Item = Result<Vec<u8>>> + 'docker {
         let params = names.iter().map(|n| ("names", *n));
         let query = form_urlencoded::Serializer::new(String::new())
             .extend_pairs(params)
@@ -253,9 +253,9 @@ impl<'a> Images<'a> {
     pub fn import<R>(
         self,
         mut tarball: R,
-    ) -> impl Stream<Item = Result<Value>> + Unpin + 'a
+    ) -> impl Stream<Item = Result<Value>> + Unpin + 'docker
     where
-        R: Read + Send + 'a,
+        R: Read + Send + 'docker,
     {
         Box::pin(
             async move {
@@ -276,15 +276,15 @@ impl<'a> Images<'a> {
 }
 
 /// Interface for accessing and manipulating a docker container
-pub struct Container<'a> {
-    docker: &'a Docker,
+pub struct Container<'docker> {
+    docker: &'docker Docker,
     id: String,
 }
 
-impl<'a> Container<'a> {
+impl<'docker> Container<'docker> {
     /// Exports an interface exposing operations against a container instance
     pub fn new<S>(
-        docker: &'a Docker,
+        docker: &'docker Docker,
         id: S,
     ) -> Self
     where
@@ -327,7 +327,7 @@ impl<'a> Container<'a> {
     pub fn logs(
         &self,
         opts: &LogsOptions,
-    ) -> impl Stream<Item = Result<tty::TtyChunk>> + Unpin + 'a {
+    ) -> impl Stream<Item = Result<tty::TtyChunk>> + Unpin + 'docker {
         let mut path = vec![format!("/containers/{}/logs", self.id)];
         if let Some(query) = opts.serialize() {
             path.push(query)
@@ -339,7 +339,7 @@ impl<'a> Container<'a> {
     }
 
     /// Attaches a multiplexed TCP stream to the container that can be used to read Stdout, Stderr and write Stdin.
-    async fn attach_raw(&self) -> Result<impl AsyncRead + AsyncWrite + Send + 'a> {
+    async fn attach_raw(&self) -> Result<impl AsyncRead + AsyncWrite + Send + 'docker> {
         self.docker
             .stream_post_upgrade(
                 format!(
@@ -356,7 +356,7 @@ impl<'a> Container<'a> {
     /// The `[TtyMultiplexer]` implements Stream for returning Stdout and Stderr chunks. It also implements `[AsyncWrite]` for writing to Stdin.
     ///
     /// The multiplexer can be split into its read and write halves with the `[split](TtyMultiplexer::split)` method
-    pub async fn attach(&self) -> Result<TtyMultiPlexer<'a>> {
+    pub async fn attach(&self) -> Result<TtyMultiPlexer<'docker>> {
         let tcp_stream = self.attach_raw().await?;
 
         Ok(TtyMultiPlexer::new(tcp_stream))
@@ -370,14 +370,14 @@ impl<'a> Container<'a> {
     }
 
     /// Exports the current docker container into a tarball
-    pub fn export(&self) -> impl Stream<Item = Result<Vec<u8>>> + 'a {
+    pub fn export(&self) -> impl Stream<Item = Result<Vec<u8>>> + 'docker {
         self.docker
             .stream_get(format!("/containers/{}/export", self.id))
             .map_ok(|c| c.to_vec())
     }
 
     /// Returns a stream of stats specific to this container instance
-    pub fn stats(&'a self) -> impl Stream<Item = Result<Stats>> + Unpin + 'a {
+    pub fn stats(&self) -> impl Stream<Item = Result<Stats>> + Unpin + 'docker {
         let codec = futures_codec::LinesCodec {};
 
         let reader = Box::pin(
@@ -521,9 +521,9 @@ impl<'a> Container<'a> {
 
     /// Execute a command in this container
     pub fn exec(
-        &'a self,
-        opts: &'a ExecContainerOptions,
-    ) -> impl Stream<Item = Result<tty::TtyChunk>> + Unpin + 'a {
+        &self,
+        opts: &ExecContainerOptions,
+    ) -> impl Stream<Item = Result<tty::TtyChunk>> + Unpin + 'docker {
         Box::pin(
             async move {
                 let id = Exec::create_id(&self.docker, &self.id, opts).await?;
@@ -544,7 +544,7 @@ impl<'a> Container<'a> {
     pub fn copy_from(
         &self,
         path: &Path,
-    ) -> impl Stream<Item = Result<Vec<u8>>> + 'a {
+    ) -> impl Stream<Item = Result<Vec<u8>>> + 'docker {
         let path_arg = form_urlencoded::Serializer::new(String::new())
             .append_pair("path", &path.to_string_lossy())
             .finish();
