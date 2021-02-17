@@ -1252,28 +1252,26 @@ impl Docker {
         }
     }
 
-    // TODO: DO I want to make the lifetimes here explicit?
-
     /// Exports an interface for interacting with docker images
-    pub fn images(&self) -> Images {
+    pub fn images<'docker>(&'docker self) -> Images<'docker> {
         Images::new(self)
     }
 
     /// Exports an interface for interacting with docker containers
-    pub fn containers(&self) -> Containers {
+    pub fn containers<'docker>(&'docker self) -> Containers<'docker> {
         Containers::new(self)
     }
 
     /// Exports an interface for interacting with docker services
-    pub fn services(&self) -> Services {
+    pub fn services<'docker>(&'docker self) -> Services<'docker> {
         Services::new(self)
     }
 
-    pub fn networks(&self) -> Networks {
+    pub fn networks<'docker>(&'docker self) -> Networks<'docker> {
         Networks::new(self)
     }
 
-    pub fn volumes(&self) -> Volumes {
+    pub fn volumes<'docker>(&'docker self) -> Volumes<'docker> {
         Volumes::new(self)
     }
 
