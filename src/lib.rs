@@ -638,7 +638,7 @@ impl<'docker> Containers<'docker> {
     pub fn get<S>(
         &self,
         name: S,
-    ) -> Container
+    ) -> Container<'docker>
     where
         S: Into<String>,
     {
