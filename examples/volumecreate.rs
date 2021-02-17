@@ -4,7 +4,6 @@ use std::{collections::HashMap, env};
 #[tokio::main]
 async fn main() {
     let docker = Docker::new();
-    let volumes = docker.volumes();
 
     let volume_name = env::args()
         .nth(1)
@@ -13,7 +12,8 @@ async fn main() {
     let mut labels = HashMap::new();
     labels.insert("com.github.softprops", "shiplift");
 
-    match volumes
+    match docker
+        .volumes()
         .create(
             &VolumeCreateOptions::builder()
                 .name(volume_name.as_ref())

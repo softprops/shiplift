@@ -9,9 +9,8 @@ async fn main() {
         .nth(1)
         .expect("You need to specify a container id");
 
-    let containers = docker.containers();
-
-    let mut logs_stream = containers
+    let mut logs_stream = docker
+        .containers()
         .get(&id)
         .logs(&LogsOptions::builder().stdout(true).stderr(true).build());
 

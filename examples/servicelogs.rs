@@ -9,9 +9,8 @@ async fn main() {
         .nth(1)
         .expect("You need to specify a service name");
 
-    let services = docker.services();
-
-    let mut logs_stream = services
+    let mut logs_stream = docker
+        .services()
         .get(&id)
         .logs(&LogsOptions::builder().stdout(true).stderr(true).build());
 
