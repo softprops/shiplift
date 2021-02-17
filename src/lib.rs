@@ -1253,25 +1253,25 @@ impl Docker {
     }
 
     /// Exports an interface for interacting with docker images
-    pub fn images<'docker>(&'docker self) -> Images<'docker> {
+    pub fn images(&'_ self) -> Images<'_> {
         Images::new(self)
     }
 
     /// Exports an interface for interacting with docker containers
-    pub fn containers<'docker>(&'docker self) -> Containers<'docker> {
+    pub fn containers(&'_ self) -> Containers<'_> {
         Containers::new(self)
     }
 
     /// Exports an interface for interacting with docker services
-    pub fn services<'docker>(&'docker self) -> Services<'docker> {
+    pub fn services(&'_ self) -> Services<'_> {
         Services::new(self)
     }
 
-    pub fn networks<'docker>(&'docker self) -> Networks<'docker> {
+    pub fn networks(&'_ self) -> Networks<'_> {
         Networks::new(self)
     }
 
-    pub fn volumes<'docker>(&'docker self) -> Volumes<'docker> {
+    pub fn volumes(&'_ self) -> Volumes<'_> {
         Volumes::new(self)
     }
 
