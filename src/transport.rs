@@ -73,7 +73,7 @@ impl fmt::Debug for Transport {
 
 impl Transport {
     /// Make a request and return the whole response in a `String`
-    pub async fn request<'a, B, H>(
+    pub async fn request<B, H>(
         &self,
         method: Method,
         endpoint: impl AsRef<str>,
@@ -82,7 +82,7 @@ impl Transport {
     ) -> Result<String>
     where
         B: Into<Body>,
-        H: IntoIterator<Item = (&'static str, String)> + 'a,
+        H: IntoIterator<Item = (&'static str, String)>,
     {
         let body = self.get_body(method, endpoint, body, headers).await?;
         let bytes = hyper::body::to_bytes(body).await?;
@@ -149,16 +149,16 @@ impl Transport {
         Ok(stream_body(body))
     }
 
-    pub fn stream_chunks<'a, H, B>(
-        &'a self,
+    pub fn stream_chunks<'stream, H, B>(
+        &'stream self,
         method: Method,
-        endpoint: impl AsRef<str> + 'a,
+        endpoint: impl AsRef<str> + 'stream,
         body: Option<(B, Mime)>,
         headers: Option<H>,
-    ) -> impl Stream<Item = Result<Bytes>> + 'a
+    ) -> impl Stream<Item = Result<Bytes>> + 'stream
     where
-        H: IntoIterator<Item = (&'static str, String)> + 'a,
-        B: Into<Body> + 'a,
+        B: Into<Body> + 'stream,
+        H: IntoIterator<Item = (&'static str, String)> + 'stream,
     {
         self.get_chunk_stream(method, endpoint, body, headers)
             .try_flatten_stream()
