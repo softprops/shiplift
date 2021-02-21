@@ -22,7 +22,7 @@ env:
 
 jobs:
   codestyle:
-    runs-on: ubuntu-latest
+    runs-o  n: ubuntu-latest
     steps:
       - name: Set up Rust
         uses: hecrj/setup-rust-action@v1
