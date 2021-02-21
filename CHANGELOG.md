@@ -1,3 +1,7 @@
+# 0.8.0
+
+* `ContainerOptionsBuilder::entrypoint` now correctly takes an `IntoIterator<Item = AsRef<str>>` instead of `&str` [#269](https://github.com/softprops/shiplift/pull/269)
+
 # 0.7.0
 
 * async-await support [#229](https://github.com/softprops/shiplift/pull/229)
@@ -15,7 +19,7 @@
 * support for uploading tar to container [#239](https://github.com/softprops/shiplift/pull/239)
 * fix registry authentication to use URL-safe base64 encoding [#245](https://github.com/softprops/shiplift/pull/245)
 * add StopSignal and StopTimeout to ContainerOptionsBuilder [#248](https://github.com/softprops/shiplift/pull/248)
-* `ContainerOptionsBuilder::entrypoint` now correctly takes an `IntoIterator<Item = AsRef<str>>` instead of `&str` [#269](https://github.com/softprops/shiplift/pull/269)
+* update lifetimes of various methods to avoid `temporary value dropped while borrowed` errors [#272](https://github.com/softprops/shiplift/pull/272)
 
 # 0.6.0
 

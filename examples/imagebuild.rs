@@ -9,10 +9,7 @@ async fn main() {
 
     let options = BuildOptions::builder(path).tag("shiplift_test").build();
 
-    let images = docker.images();
-
-    let mut stream = images.build(&options);
-
+    let mut stream = docker.images().build(&options);
     while let Some(build_result) = stream.next().await {
         match build_result {
             Ok(output) => println!("{:?}", output),
