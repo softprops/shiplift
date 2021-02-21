@@ -1,3 +1,7 @@
+# 0.8.0
+
+* `ContainerOptionsBuilder::entrypoint` now correctly takes an `IntoIterator<Item = AsRef<str>>` instead of `&str` [#269](https://github.com/softprops/shiplift/pull/269)
+
 # 0.7.0
 
 * async-await support [#229](https://github.com/softprops/shiplift/pull/229)
