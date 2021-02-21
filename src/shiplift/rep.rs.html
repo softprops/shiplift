@@ -770,6 +770,57 @@
 <span id="767">767</span>
 <span id="768">768</span>
 <span id="769">769</span>
+<span id="770">770</span>
+<span id="771">771</span>
+<span id="772">772</span>
+<span id="773">773</span>
+<span id="774">774</span>
+<span id="775">775</span>
+<span id="776">776</span>
+<span id="777">777</span>
+<span id="778">778</span>
+<span id="779">779</span>
+<span id="780">780</span>
+<span id="781">781</span>
+<span id="782">782</span>
+<span id="783">783</span>
+<span id="784">784</span>
+<span id="785">785</span>
+<span id="786">786</span>
+<span id="787">787</span>
+<span id="788">788</span>
+<span id="789">789</span>
+<span id="790">790</span>
+<span id="791">791</span>
+<span id="792">792</span>
+<span id="793">793</span>
+<span id="794">794</span>
+<span id="795">795</span>
+<span id="796">796</span>
+<span id="797">797</span>
+<span id="798">798</span>
+<span id="799">799</span>
+<span id="800">800</span>
+<span id="801">801</span>
+<span id="802">802</span>
+<span id="803">803</span>
+<span id="804">804</span>
+<span id="805">805</span>
+<span id="806">806</span>
+<span id="807">807</span>
+<span id="808">808</span>
+<span id="809">809</span>
+<span id="810">810</span>
+<span id="811">811</span>
+<span id="812">812</span>
+<span id="813">813</span>
+<span id="814">814</span>
+<span id="815">815</span>
+<span id="816">816</span>
+<span id="817">817</span>
+<span id="818">818</span>
+<span id="819">819</span>
+<span id="820">820</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Rust representations of docker json structures</span>
 
@@ -806,22 +857,29 @@
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
 <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename_all</span> <span class="op">=</span> <span class="string">&quot;PascalCase&quot;</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ImageDetails</span> {
-    <span class="kw">pub</span> <span class="ident">architecture</span>: <span class="ident">String</span>,
-    <span class="kw">pub</span> <span class="ident">author</span>: <span class="ident">String</span>,
+    <span class="kw">pub</span> <span class="ident">id</span>: <span class="ident">String</span>,
+    <span class="kw">pub</span> <span class="ident">repo_tags</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">repo_digests</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">parent</span>: <span class="ident">String</span>,
     <span class="kw">pub</span> <span class="ident">comment</span>: <span class="ident">String</span>,
-    <span class="kw">pub</span> <span class="ident">config</span>: <span class="ident">Config</span>,
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;chrono&quot;</span>)]</span>
     <span class="kw">pub</span> <span class="ident">created</span>: <span class="ident">DateTime</span><span class="op">&lt;</span><span class="ident">Utc</span><span class="op">&gt;</span>,
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;chrono&quot;</span>))]</span>
     <span class="kw">pub</span> <span class="ident">created</span>: <span class="ident">String</span>,
+    <span class="kw">pub</span> <span class="ident">container</span>: <span class="ident">String</span>,
+    <span class="kw">pub</span> <span class="ident">container_config</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ContainerConfig</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">docker_version</span>: <span class="ident">String</span>,
-    <span class="kw">pub</span> <span class="ident">id</span>: <span class="ident">String</span>,
+    <span class="kw">pub</span> <span class="ident">author</span>: <span class="ident">String</span>,
+    <span class="kw">pub</span> <span class="ident">config</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ContainerConfig</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">architecture</span>: <span class="ident">String</span>,
     <span class="kw">pub</span> <span class="ident">os</span>: <span class="ident">String</span>,
-    <span class="kw">pub</span> <span class="ident">parent</span>: <span class="ident">String</span>,
-    <span class="kw">pub</span> <span class="ident">repo_tags</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="kw">pub</span> <span class="ident">repo_digests</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="kw">pub</span> <span class="ident">size</span>: <span class="ident">u64</span>,
-    <span class="kw">pub</span> <span class="ident">virtual_size</span>: <span class="ident">u64</span>,
+    <span class="kw">pub</span> <span class="ident">os_version</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">size</span>: <span class="ident">i64</span>,
+    <span class="kw">pub</span> <span class="ident">virtual_size</span>: <span class="ident">i64</span>,
+    <span class="kw">pub</span> <span class="ident">graph_driver</span>: <span class="ident">GraphDriverData</span>,
+    <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;RootFS&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="ident">root_fs</span>: <span class="ident">RootFS</span>,
+    <span class="kw">pub</span> <span class="ident">metadata</span>: <span class="ident">Metadata</span>,
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
@@ -851,7 +909,7 @@
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ContainerDetails</span> {
     <span class="kw">pub</span> <span class="ident">app_armor_profile</span>: <span class="ident">String</span>,
     <span class="kw">pub</span> <span class="ident">args</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
-    <span class="kw">pub</span> <span class="ident">config</span>: <span class="ident">Config</span>,
+    <span class="kw">pub</span> <span class="ident">config</span>: <span class="ident">ContainerConfig</span>,
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;chrono&quot;</span>)]</span>
     <span class="kw">pub</span> <span class="ident">created</span>: <span class="ident">DateTime</span><span class="op">&lt;</span><span class="ident">Utc</span><span class="op">&gt;</span>,
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;chrono&quot;</span>))]</span>
@@ -967,29 +1025,35 @@
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
 <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename_all</span> <span class="op">=</span> <span class="string">&quot;PascalCase&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Config</span> {
-    <span class="kw">pub</span> <span class="ident">attach_stderr</span>: <span class="ident">bool</span>,
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ContainerConfig</span> {
+    <span class="kw">pub</span> <span class="ident">hostname</span>: <span class="ident">String</span>,
+    <span class="kw">pub</span> <span class="ident">domainname</span>: <span class="ident">String</span>,
+    <span class="kw">pub</span> <span class="ident">user</span>: <span class="ident">String</span>,
     <span class="kw">pub</span> <span class="ident">attach_stdin</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span> <span class="ident">attach_stdout</span>: <span class="ident">bool</span>,
-    <span class="kw">pub</span> <span class="ident">cmd</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="kw">pub</span> <span class="ident">domainname</span>: <span class="ident">String</span>,
-    <span class="kw">pub</span> <span class="ident">entrypoint</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="kw">pub</span> <span class="ident">env</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">attach_stderr</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span> <span class="ident">exposed_ports</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="kw">pub</span> <span class="ident">hostname</span>: <span class="ident">String</span>,
-    <span class="kw">pub</span> <span class="ident">image</span>: <span class="ident">String</span>,
-    <span class="kw">pub</span> <span class="ident">labels</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="comment">// pub MacAddress: String,</span>
-    <span class="kw">pub</span> <span class="ident">on_build</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="comment">// pub NetworkDisabled: bool,</span>
+    <span class="kw">pub</span> <span class="ident">tty</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span> <span class="ident">open_stdin</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span> <span class="ident">stdin_once</span>: <span class="ident">bool</span>,
-    <span class="kw">pub</span> <span class="ident">tty</span>: <span class="ident">bool</span>,
-    <span class="kw">pub</span> <span class="ident">user</span>: <span class="ident">String</span>,
+    <span class="kw">pub</span> <span class="ident">env</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">cmd</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">healtcheck</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">HealthConfig</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">args_escaped</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">image</span>: <span class="ident">String</span>,
+    <span class="kw">pub</span> <span class="ident">volumes</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">working_dir</span>: <span class="ident">String</span>,
+    <span class="kw">pub</span> <span class="ident">entrypoint</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">network_disabled</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">mac_address</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">on_build</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">labels</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">stop_signal</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">stop_timeout</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">shell</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 }
 
-<span class="kw">impl</span> <span class="ident">Config</span> {
+<span class="kw">impl</span> <span class="ident">ContainerConfig</span> {
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">env</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">String</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">map</span> <span class="op">=</span> <span class="ident">HashMap</span>::<span class="ident">new</span>();
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="ident">vars</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">env</span> {
@@ -1000,6 +1064,41 @@
         }
         <span class="ident">map</span>
     }
+}
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
+<span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename_all</span> <span class="op">=</span> <span class="string">&quot;PascalCase&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">HealthConfig</span> {
+    <span class="kw">pub</span> <span class="ident">test</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">interval</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">timeout</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">retries</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">start_period</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
+}
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
+<span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename_all</span> <span class="op">=</span> <span class="string">&quot;PascalCase&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">GraphDriverData</span> {
+    <span class="kw">pub</span> <span class="ident">name</span>: <span class="ident">String</span>,
+    <span class="kw">pub</span> <span class="ident">data</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">String</span><span class="op">&gt;</span>,
+}
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
+<span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename_all</span> <span class="op">=</span> <span class="string">&quot;PascalCase&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">RootFS</span> {
+    <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;Type&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="ident">typ</span>: <span class="ident">String</span>,
+    <span class="kw">pub</span> <span class="ident">layers</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">base_layer</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
+}
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
+<span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename_all</span> <span class="op">=</span> <span class="string">&quot;PascalCase&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Metadata</span> {
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;chrono&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="ident">last_tag_time</span>: <span class="ident">DateTime</span><span class="op">&lt;</span><span class="ident">Utc</span><span class="op">&gt;</span>,
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;chrono&quot;</span>))]</span>
+    <span class="kw">pub</span> <span class="ident">last_tag_time</span>: <span class="ident">String</span>,
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
@@ -1233,8 +1332,11 @@
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">deserialize_with</span> <span class="op">=</span> <span class="string">&quot;datetime_from_unix_timestamp&quot;</span>)]</span>
     <span class="kw">pub</span> <span class="ident">created</span>: <span class="ident">DateTime</span><span class="op">&lt;</span><span class="ident">Utc</span><span class="op">&gt;</span>,
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;chrono&quot;</span>))]</span>
-    <span class="kw">pub</span> <span class="ident">created</span>: <span class="ident">u64</span>,
+    <span class="kw">pub</span> <span class="ident">created</span>: <span class="ident">i64</span>,
     <span class="kw">pub</span> <span class="ident">created_by</span>: <span class="ident">String</span>,
+    <span class="kw">pub</span> <span class="ident">tags</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">size</span>: <span class="ident">i64</span>,
+    <span class="kw">pub</span> <span class="ident">comment</span>: <span class="ident">String</span>,
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
