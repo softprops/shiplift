@@ -10,7 +10,7 @@ Add the following to your `Cargo.toml` file
 
 ```toml
 [dependencies]
-shiplift = "0.7"
+shiplift = "0.8"
 ```
 
 ## usage
@@ -19,6 +19,6 @@ Many small runnable example programs can be found in this repository's [examples
 
 ## planned changes
 
-* give image pull chunked json a proper type
+- give image pull chunked json a proper type
 
 Doug Tangren (softprops) 2015-2018
