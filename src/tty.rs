@@ -53,7 +53,7 @@ async fn decode_chunk<S>(mut stream: S) -> Option<(Result<TtyChunk>, S)>
 where
     S: AsyncRead + Unpin,
 {
-    let mut header_bytes = vec![0u8; 8];
+    let mut header_bytes = [0u8; 8];
 
     match stream.read_exact(&mut header_bytes).await {
         Err(e) if e.kind() == futures_util::io::ErrorKind::UnexpectedEof => return None,

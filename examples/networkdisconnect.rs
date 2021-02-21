@@ -6,9 +6,8 @@ async fn network_disconnect(
     network_id: &str,
 ) {
     let docker = Docker::new();
-    let networks = docker.networks();
-
-    if let Err(e) = networks
+    if let Err(e) = docker
+        .networks()
         .get(network_id)
         .disconnect(&ContainerConnectionOptions::builder(container_id).build())
         .await
