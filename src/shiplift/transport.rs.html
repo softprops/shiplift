@@ -1,6 +1,6 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/transport.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>transport.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../favicon-16x16.png">
-<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../shiplift/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
+<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../shiplift/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
                 <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
@@ -424,7 +424,7 @@
 
 <span class="kw">impl</span> <span class="ident">Transport</span> {
     <span class="doccomment">/// Make a request and return the whole response in a `String`</span>
-    <span class="kw">pub</span> <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">request</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span>, <span class="ident">H</span><span class="op">&gt;</span>(
+    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">request</span><span class="op">&lt;</span><span class="ident">B</span>, <span class="ident">H</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">method</span>: <span class="ident">Method</span>,
         <span class="ident">endpoint</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span>,
@@ -433,16 +433,16 @@
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>
     <span class="kw">where</span>
         <span class="ident">B</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Body</span><span class="op">&gt;</span>,
-        <span class="ident">H</span>: <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>, <span class="ident">String</span>)<span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span>,
+        <span class="ident">H</span>: <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>, <span class="ident">String</span>)<span class="op">&gt;</span>,
     {
-        <span class="kw">let</span> <span class="ident">body</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">get_body</span>(<span class="ident">method</span>, <span class="ident">endpoint</span>, <span class="ident">body</span>, <span class="ident">headers</span>).<span class="ident">await</span><span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="ident">hyper</span>::<span class="ident">body</span>::<span class="ident">to_bytes</span>(<span class="ident">body</span>).<span class="ident">await</span><span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">body</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">get_body</span>(<span class="ident">method</span>, <span class="ident">endpoint</span>, <span class="ident">body</span>, <span class="ident">headers</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="ident">hyper</span>::<span class="ident">body</span>::<span class="ident">to_bytes</span>(<span class="ident">body</span>).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">string</span> <span class="op">=</span> <span class="ident">String</span>::<span class="ident">from_utf8</span>(<span class="ident">bytes</span>.<span class="ident">to_vec</span>())<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(<span class="ident">string</span>)
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">get_body</span><span class="op">&lt;</span><span class="ident">B</span>, <span class="ident">H</span><span class="op">&gt;</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_body</span><span class="op">&lt;</span><span class="ident">B</span>, <span class="ident">H</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">method</span>: <span class="ident">Method</span>,
         <span class="ident">endpoint</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span>,
@@ -457,7 +457,7 @@
             .<span class="ident">build_request</span>(<span class="ident">method</span>, <span class="ident">endpoint</span>, <span class="ident">body</span>, <span class="ident">headers</span>, <span class="ident">Request</span>::<span class="ident">builder</span>())
             .<span class="ident">expect</span>(<span class="string">&quot;Failed to build request!&quot;</span>);
 
-        <span class="kw">let</span> <span class="ident">response</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">send_request</span>(<span class="ident">req</span>).<span class="ident">await</span><span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">response</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">send_request</span>(<span class="ident">req</span>).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">let</span> <span class="ident">status</span> <span class="op">=</span> <span class="ident">response</span>.<span class="ident">status</span>();
 
@@ -468,7 +468,7 @@
             <span class="op">|</span> <span class="ident">StatusCode</span>::<span class="ident">SWITCHING_PROTOCOLS</span>
             <span class="op">|</span> <span class="ident">StatusCode</span>::<span class="ident">NO_CONTENT</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">response</span>.<span class="ident">into_body</span>()),
             <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="kw">let</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="ident">hyper</span>::<span class="ident">body</span>::<span class="ident">to_bytes</span>(<span class="ident">response</span>.<span class="ident">into_body</span>()).<span class="ident">await</span><span class="question-mark">?</span>;
+                <span class="kw">let</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="ident">hyper</span>::<span class="ident">body</span>::<span class="ident">to_bytes</span>(<span class="ident">response</span>.<span class="ident">into_body</span>()).<span class="kw">await</span><span class="question-mark">?</span>;
                 <span class="kw">let</span> <span class="ident">message_body</span> <span class="op">=</span> <span class="ident">String</span>::<span class="ident">from_utf8</span>(<span class="ident">bytes</span>.<span class="ident">to_vec</span>())<span class="question-mark">?</span>;
 
                 <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">Fault</span> {
@@ -484,7 +484,7 @@
         }
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">get_chunk_stream</span><span class="op">&lt;</span><span class="ident">B</span>, <span class="ident">H</span><span class="op">&gt;</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_chunk_stream</span><span class="op">&lt;</span><span class="ident">B</span>, <span class="ident">H</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">method</span>: <span class="ident">Method</span>,
         <span class="ident">endpoint</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span>,
@@ -495,21 +495,21 @@
         <span class="ident">B</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Body</span><span class="op">&gt;</span>,
         <span class="ident">H</span>: <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>, <span class="ident">String</span>)<span class="op">&gt;</span>,
     {
-        <span class="kw">let</span> <span class="ident">body</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">get_body</span>(<span class="ident">method</span>, <span class="ident">endpoint</span>, <span class="ident">body</span>, <span class="ident">headers</span>).<span class="ident">await</span><span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">body</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">get_body</span>(<span class="ident">method</span>, <span class="ident">endpoint</span>, <span class="ident">body</span>, <span class="ident">headers</span>).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(<span class="ident">stream_body</span>(<span class="ident">body</span>))
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">stream_chunks</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">H</span>, <span class="ident">B</span><span class="op">&gt;</span>(
-        <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>,
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">stream_chunks</span><span class="op">&lt;</span><span class="lifetime">&#39;stream</span>, <span class="ident">H</span>, <span class="ident">B</span><span class="op">&gt;</span>(
+        <span class="kw-2">&amp;</span><span class="lifetime">&#39;stream</span> <span class="self">self</span>,
         <span class="ident">method</span>: <span class="ident">Method</span>,
-        <span class="ident">endpoint</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span>,
+        <span class="ident">endpoint</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;stream</span>,
         <span class="ident">body</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">B</span>, <span class="ident">Mime</span>)<span class="op">&gt;</span>,
         <span class="ident">headers</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Stream</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Bytes</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span>
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Stream</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Bytes</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;stream</span>
     <span class="kw">where</span>
-        <span class="ident">H</span>: <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>, <span class="ident">String</span>)<span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span>,
-        <span class="ident">B</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Body</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span>,
+        <span class="ident">B</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Body</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;stream</span>,
+        <span class="ident">H</span>: <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>, <span class="ident">String</span>)<span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;stream</span>,
     {
         <span class="self">self</span>.<span class="ident">get_chunk_stream</span>(<span class="ident">method</span>, <span class="ident">endpoint</span>, <span class="ident">body</span>, <span class="ident">headers</span>)
             .<span class="ident">try_flatten_stream</span>()
@@ -563,16 +563,16 @@
     }
 
     <span class="doccomment">/// Send the given request to the docker daemon and return a Future of the response.</span>
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">send_request</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">send_request</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">req</span>: <span class="ident">Request</span><span class="op">&lt;</span><span class="ident">hyper</span>::<span class="ident">Body</span><span class="op">&gt;</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">hyper</span>::<span class="ident">Response</span><span class="op">&lt;</span><span class="ident">Body</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">Transport</span>::<span class="ident">Tcp</span> { <span class="kw-2">ref</span> <span class="ident">client</span>, .. } <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">client</span>.<span class="ident">request</span>(<span class="ident">req</span>).<span class="ident">await</span><span class="question-mark">?</span>),
+            <span class="ident">Transport</span>::<span class="ident">Tcp</span> { <span class="kw-2">ref</span> <span class="ident">client</span>, .. } <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">client</span>.<span class="ident">request</span>(<span class="ident">req</span>).<span class="kw">await</span><span class="question-mark">?</span>),
             <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;tls&quot;</span>)]</span>
-            <span class="ident">Transport</span>::<span class="ident">EncryptedTcp</span> { <span class="kw-2">ref</span> <span class="ident">client</span>, .. } <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">client</span>.<span class="ident">request</span>(<span class="ident">req</span>).<span class="ident">await</span><span class="question-mark">?</span>),
+            <span class="ident">Transport</span>::<span class="ident">EncryptedTcp</span> { <span class="kw-2">ref</span> <span class="ident">client</span>, .. } <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">client</span>.<span class="ident">request</span>(<span class="ident">req</span>).<span class="kw">await</span><span class="question-mark">?</span>),
             <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;unix-socket&quot;</span>)]</span>
-            <span class="ident">Transport</span>::<span class="ident">Unix</span> { <span class="kw-2">ref</span> <span class="ident">client</span>, .. } <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">client</span>.<span class="ident">request</span>(<span class="ident">req</span>).<span class="ident">await</span><span class="question-mark">?</span>),
+            <span class="ident">Transport</span>::<span class="ident">Unix</span> { <span class="kw-2">ref</span> <span class="ident">client</span>, .. } <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">client</span>.<span class="ident">request</span>(<span class="ident">req</span>).<span class="kw">await</span><span class="question-mark">?</span>),
         }
     }
 
@@ -581,7 +581,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// This method can be used for operations such as viewing</span>
     <span class="doccomment">/// docker container logs interactively.</span>
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">stream_upgrade_tokio</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">stream_upgrade_tokio</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">method</span>: <span class="ident">Method</span>,
         <span class="ident">endpoint</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span>,
@@ -602,15 +602,15 @@
             )
             .<span class="ident">expect</span>(<span class="string">&quot;Failed to build request!&quot;</span>);
 
-        <span class="kw">let</span> <span class="ident">response</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">send_request</span>(<span class="ident">req</span>).<span class="ident">await</span><span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">response</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">send_request</span>(<span class="ident">req</span>).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">match</span> <span class="ident">response</span>.<span class="ident">status</span>() {
-            <span class="ident">StatusCode</span>::<span class="ident">SWITCHING_PROTOCOLS</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">hyper</span>::<span class="ident">upgrade</span>::<span class="ident">on</span>(<span class="ident">response</span>).<span class="ident">await</span><span class="question-mark">?</span>),
+            <span class="ident">StatusCode</span>::<span class="ident">SWITCHING_PROTOCOLS</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">hyper</span>::<span class="ident">upgrade</span>::<span class="ident">on</span>(<span class="ident">response</span>).<span class="kw">await</span><span class="question-mark">?</span>),
             <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">ConnectionNotUpgraded</span>),
         }
     }
 
-    <span class="kw">pub</span> <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">stream_upgrade</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>(
+    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">stream_upgrade</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">method</span>: <span class="ident">Method</span>,
         <span class="ident">endpoint</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span>,
@@ -619,7 +619,7 @@
     <span class="kw">where</span>
         <span class="ident">B</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Body</span><span class="op">&gt;</span>,
     {
-        <span class="kw">let</span> <span class="ident">tokio_multiplexer</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">stream_upgrade_tokio</span>(<span class="ident">method</span>, <span class="ident">endpoint</span>, <span class="ident">body</span>).<span class="ident">await</span><span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">tokio_multiplexer</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">stream_upgrade_tokio</span>(<span class="ident">method</span>, <span class="ident">endpoint</span>, <span class="ident">body</span>).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(<span class="ident">Compat</span> { <span class="ident">tokio_multiplexer</span> })
     }
@@ -688,8 +688,8 @@
 }
 
 <span class="kw">fn</span> <span class="ident">stream_body</span>(<span class="ident">body</span>: <span class="ident">Body</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Stream</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Bytes</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">unfold</span>(<span class="kw-2">mut</span> <span class="ident">body</span>: <span class="ident">Body</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Bytes</span><span class="op">&gt;</span>, <span class="ident">Body</span>)<span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">chunk_result</span> <span class="op">=</span> <span class="ident">body</span>.<span class="ident">next</span>().<span class="ident">await</span><span class="question-mark">?</span>.<span class="ident">map_err</span>(<span class="ident">Error</span>::<span class="ident">from</span>);
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">unfold</span>(<span class="kw-2">mut</span> <span class="ident">body</span>: <span class="ident">Body</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Bytes</span><span class="op">&gt;</span>, <span class="ident">Body</span>)<span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">chunk_result</span> <span class="op">=</span> <span class="ident">body</span>.<span class="ident">next</span>().<span class="kw">await</span><span class="question-mark">?</span>.<span class="ident">map_err</span>(<span class="ident">Error</span>::<span class="ident">from</span>);
 
         <span class="prelude-val">Some</span>((<span class="ident">chunk_result</span>, <span class="ident">body</span>))
     }
