@@ -635,6 +635,11 @@ impl<'docker> Containers<'docker> {
     }
 
     /// Returns a reference to a set of operations available to a specific container instance
+    ///
+    /// # Warning
+    ///
+    /// This function does not check whether the container with `name` actually exists and returns
+    /// a potentially invalid handle.
     pub fn get<S>(
         &self,
         name: S,
