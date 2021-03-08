@@ -2085,7 +2085,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// If `path` is not an absolute path, it is relative to the container’s root directory. The</span>
     <span class="doccomment">/// resource specified by `path` must exist. To assert that the resource is expected to be a</span>
-    <span class="doccomment">/// directory, `path` should end in `/` or `/`. (assuming a path separator of `/`). If `path`</span>
+    <span class="doccomment">/// directory, `path` should end in `/` or `/.` (assuming a path separator of `/`). If `path`</span>
     <span class="doccomment">/// ends in `/.`  then this indicates that only the contents of the path directory should be</span>
     <span class="doccomment">/// copied.  A symlink is always resolved to its target.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">copy_from</span>(
