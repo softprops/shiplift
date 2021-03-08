@@ -540,7 +540,7 @@ impl<'docker> Container<'docker> {
     ///
     /// If `path` is not an absolute path, it is relative to the container’s root directory. The
     /// resource specified by `path` must exist. To assert that the resource is expected to be a
-    /// directory, `path` should end in `/` or `/`. (assuming a path separator of `/`). If `path`
+    /// directory, `path` should end in `/` or `/.` (assuming a path separator of `/`). If `path`
     /// ends in `/.`  then this indicates that only the contents of the path directory should be
     /// copied.  A symlink is always resolved to its target.
     pub fn copy_from(
