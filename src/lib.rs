@@ -650,6 +650,25 @@ impl<'docker> Containers<'docker> {
         Container::new(self.docker, name)
     }
 
+    /// Same as `Container::get()`, but checks whether the container exists and returns None if it
+    /// doesn't
+    pub async fn get_checked<S>(
+        &self,
+        name: S,
+    ) -> Result<Option<Container<'docker>>>
+    where
+        S: AsRef<str>,
+    {
+        let listopts = ContainerListOptions::builder().all().build();
+        self.list(&listopts)
+            .await?
+            .into_iter()
+            .find(|rep| rep.id == name.as_ref())
+            .map(|rep| Container::new(self.docker, rep.id))
+            .map(Ok)
+            .transpose()
+    }
+
     /// Returns a builder interface for creating a new container instance
     pub async fn create(
         &self,
