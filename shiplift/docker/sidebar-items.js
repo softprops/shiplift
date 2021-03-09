@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["EventFilter","Filter options for image listings"],["EventFilterType",""]],"struct":[["Actor",""],["Docker","Entrypoint interface for communicating with docker daemon"],["Event",""],["EventsOptions","Options for filtering streams of Docker events"],["EventsOptionsBuilder","Builder interface for `EventOptions`"],["Info",""],["Version",""]]});

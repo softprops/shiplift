@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Error",""]]});
+initSidebarItems({"enum":[["Error",""]],"type":[["Result","Represents the result of all docker operations"]]});

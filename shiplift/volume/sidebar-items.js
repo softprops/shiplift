@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Volume","Interface for accessing and manipulating a named docker volume"],["VolumeCreateInfo",""],["VolumeCreateOptions","Interface for creating volumes"],["VolumeCreateOptionsBuilder",""],["VolumeInfo",""],["Volumes","Interface for docker volumes"],["VolumesInfo",""]]});
