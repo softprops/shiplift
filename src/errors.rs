@@ -6,6 +6,9 @@ use std::{error::Error as StdError, fmt, string::FromUtf8Error};
 
 use futures_util::io::Error as IoError;
 
+/// Represents the result of all docker operations
+pub type Result<T> = std::result::Result<T, Error>;
+
 #[derive(Debug)]
 pub enum Error {
     SerdeJsonError(SerdeError),

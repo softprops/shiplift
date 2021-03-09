@@ -1,4 +1,4 @@
-use shiplift::{builder::VolumeCreateOptions, Docker};
+use shiplift::{Docker, VolumeCreateOptions};
 use std::{collections::HashMap, env};
 
 #[tokio::main]
