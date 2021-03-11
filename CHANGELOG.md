@@ -6,6 +6,7 @@
 * rename `shiplift::rep::Config` to `shiplift::rep::ContainerConfig` [#264](https://github.com/softprops/shiplift/pull/264)
 * add missing fields ([API version 1.41](https://docs.docker.com/engine/api/v1.41/#operation/ImageInspect)) to `ContainerConfig` [#264](https://github.com/softprops/shiplift/pull/264)
 * add missing fields ([API version 1.41](https://docs.docker.com/engine/api/v1.41/#operation/ImageHistory)) to `History` [#264](https://github.com/softprops/shiplift/pull/264)
+* PullOptionsBuilder now adds a `latest` tag by default [#261](https://github.com/softprops/shiplift/pull/261)
 
 # 0.7.0
 
