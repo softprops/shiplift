@@ -7,6 +7,10 @@
 * add missing fields ([API version 1.41](https://docs.docker.com/engine/api/v1.41/#operation/ImageInspect)) to `ContainerConfig` [#264](https://github.com/softprops/shiplift/pull/264)
 * add missing fields ([API version 1.41](https://docs.docker.com/engine/api/v1.41/#operation/ImageHistory)) to `History` [#264](https://github.com/softprops/shiplift/pull/264)
 * add missing fields to `NetworkEntry` [#254](https://github.com/softprops/shiplift/pull/254)
+* rename `Config` to `ContainerConfig` [#266](https://github.com/softprops/shiplift/pull/266)
+* `HostConfig.port_bindings` inner elements now have a clear type `PortBinding` instead of `HashMap<String, String>` [#266](https://github.com/softprops/shiplift/pull/266)
+* `ContainerDetails` contains new fields [#266](https://github.com/softprops/shiplift/pull/266)
+* Units of `ContainerInfo` `size_rw` and `size_root_fs` units changed to match API [#266](https://github.com/softprops/shiplift/pull/266)
 
 # 0.7.0
 
