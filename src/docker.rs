@@ -36,7 +36,7 @@ use openssl::ssl::{SslConnector, SslFiletype, SslMethod};
 use hyperlocal::UnixConnector;
 
 /// Entrypoint interface for communicating with docker daemon
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Docker {
     transport: Transport,
 }
