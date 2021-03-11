@@ -9,6 +9,9 @@ use futures_util::io::Error as IoError;
 /// Represents the result of all docker operations
 pub type Result<T> = std::result::Result<T, Error>;
 
+#[cfg(feature = "tls")]
+use openssl::error::ErrorStack;
+
 #[derive(Debug)]
 pub enum Error {
     SerdeJsonError(SerdeError),
@@ -17,8 +20,22 @@ pub enum Error {
     IO(IoError),
     Encoding(FromUtf8Error),
     InvalidResponse(String),
-    Fault { code: StatusCode, message: String },
+    Fault {
+        code: StatusCode,
+        message: String,
+    },
     ConnectionNotUpgraded,
+    #[cfg(feature = "tls")]
+    ErrorStack(ErrorStack),
+    UnsupportedScheme(String),
+    MissingAuthority,
+}
+
+#[cfg(feature = "tls")]
+impl From<ErrorStack> for Error {
+    fn from(error: ErrorStack) -> Error {
+        Error::ErrorStack(error)
+    }
 }
 
 impl From<SerdeError> for Error {
@@ -78,6 +95,24 @@ impl fmt::Display for Error {
                 f,
                 "expected the docker host to upgrade the HTTP connection but it did not"
             ),
+            #[cfg(feature = "tls")]
+            Error::ErrorStack(stack) => {
+                writeln!(f, "Error stack:")?;
+                for error in stack.errors() {
+                    writeln!(f, " - {}", error)?;
+                }
+                Ok(())
+            }
+            Error::UnsupportedScheme(scheme) => {
+                if scheme.as_str() == "unix" {
+                    writeln!(f, "Provided scheme `unix` is not supported. Recompile with `unix-socket` feature enabled.")
+                } else {
+                    writeln!(f, "Provided scheme `{}` is not supported", scheme)
+                }
+            }
+            Error::MissingAuthority => {
+                writeln!(f, "Provided URI is missing authority part after scheme")
+            }
         }
     }
 }
