@@ -425,10 +425,18 @@ impl PullOptions {
     }
 }
 
-#[derive(Default)]
 pub struct PullOptionsBuilder {
     auth: Option<RegistryAuth>,
     params: HashMap<&'static str, String>,
+}
+
+impl Default for PullOptionsBuilder {
+    fn default() -> Self {
+        let mut params = HashMap::new();
+        params.insert("tag", "latest".to_string());
+
+        PullOptionsBuilder { auth: None, params }
+    }
 }
 
 impl PullOptionsBuilder {
@@ -461,6 +469,9 @@ impl PullOptionsBuilder {
 
     /// Repository name given to an image when it is imported. The repo may include a tag.
     /// This parameter may only be used when importing an image.
+    ///
+    /// By default a `latest` tag is added when calling
+    /// [PullOptionsBuilder::default](PullOptionsBuilder::default].
     pub fn repo<R>(
         &mut self,
         r: R,
