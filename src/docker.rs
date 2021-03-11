@@ -107,29 +107,78 @@ fn get_docker_for_tcp(tcp_host_str: String) -> Docker {
     }
 }
 
-// https://docs.docker.com/reference/api/docker_remote_api_v1.17/
+#[cfg(feature = "tls")]
+fn get_docker_for_tcp_tls(
+    host: String,
+    cert_path: &Path,
+    verify: bool,
+) -> Result<Docker> {
+    let http = get_http_connector();
+    let mut connector = SslConnector::builder(SslMethod::tls())?;
+    connector.set_cipher_list("DEFAULT")?;
+    let cert = cert_path.join("cert.pem");
+    let key = cert_path.join("key.pem");
+    connector.set_certificate_file(cert.as_path(), SslFiletype::PEM)?;
+    connector.set_private_key_file(key.as_path(), SslFiletype::PEM)?;
+    if verify {
+        let ca = cert_path.join("ca.pem");
+        connector.set_ca_file(ca.as_path())?;
+    }
+
+    Ok(Docker {
+        transport: Transport::EncryptedTcp {
+            client: Client::builder().build(HttpsConnector::with_connector(http, connector)?),
+            host: format!("https://{}", host),
+        },
+    })
+}
+
 impl Docker {
-    /// constructs a new Docker instance for a docker host listening at a url specified by an env var `DOCKER_HOST`,
-    /// falling back on unix:///var/run/docker.sock
-    pub fn new() -> Docker {
-        match env::var("DOCKER_HOST").ok() {
-            Some(host) => {
-                #[cfg(feature = "unix-socket")]
-                if let Some(path) = host.strip_prefix("unix://") {
-                    return Docker::unix(path);
-                }
-                let host = host.parse().expect("invalid url");
-                Docker::host(host)
-            }
+    /// Creates a new Docker instance by automatically choosing appropriate connection type based
+    /// on provided `uri`.
+    ///
+    /// Supported schemes are:
+    ///  - `unix://` with feature `unix-socket` enabled, otherwise returns an Error
+    ///  - `tcp://`
+    ///  - `http://`
+    ///
+    ///  To create a Docker instance utilizing TLS use explicit [Docker::tls](Docker::tls)
+    ///  constructor.
+    pub fn new<S>(uri: S) -> Result<Docker>
+    where
+        S: AsRef<str>,
+    {
+        let uri = uri.as_ref();
+        let mut it = uri.split("://");
+
+        match it.next() {
             #[cfg(feature = "unix-socket")]
-            None => Docker::unix("/var/run/docker.sock"),
+            Some("unix") => {
+                if let Some(path) = it.next() {
+                    Ok(Docker::unix(path))
+                } else {
+                    Err(Error::MissingAuthority)
+                }
+            }
             #[cfg(not(feature = "unix-socket"))]
-            None => panic!("Unix socket support is disabled"),
+            Some("unix") => Err(Error::UnsupportedScheme("unix".to_string())),
+            Some("tcp") | Some("http") => {
+                if let Some(host) = it.next() {
+                    Ok(Docker::tcp(host))
+                } else {
+                    Err(Error::MissingAuthority)
+                }
+            }
+            Some(scheme) => Err(Error::UnsupportedScheme(scheme.to_string())),
+            None => unreachable!(), // This is never possible because calling split on an empty string
+                                    // always returns at least one element
         }
     }
 
-    /// Creates a new docker instance for a docker host
-    /// listening on a given Unix socket.
+    /// Creates a new docker instance for a docker host listening on a given Unix socket.
+    ///
+    /// `socket_path` is the part of URI that comes after the `unix://`. For example a URI `unix:///run/docker.sock` has a
+    /// `socket_path` == "/run/docker.sock".
     #[cfg(feature = "unix-socket")]
     pub fn unix<S>(socket_path: S) -> Docker
     where
@@ -141,6 +190,44 @@ impl Docker {
                     .pool_max_idle_per_host(0)
                     .build(UnixConnector),
                 path: socket_path.into(),
+            },
+        }
+    }
+
+    #[cfg(feature = "tls")]
+    /// Creates a new docker instance for a docker host listening on a given TCP socket `host`.
+    /// `host` is the part of URI that comes after `tcp://` or `http://` or `https://` schemes,
+    /// also known as authority part.
+    ///
+    /// `cert_path` specifies the base path in the filesystem containing a certificate (`cert.pem`)
+    /// and a key (`key.pem`) that will be used by the client. If verify is `true` a CA file will be
+    /// added (`ca.pem`) to the connector.
+    pub fn tls<S, P>(
+        host: S,
+        cert_path: P,
+        verify: bool,
+    ) -> Result<Docker>
+    where
+        S: Into<String>,
+        P: AsRef<Path>,
+    {
+        get_docker_for_tcp_tls(host.into(), cert_path.as_ref(), verify)
+    }
+
+    /// Creates a new docker instance for a docker host listening on a given TCP socket `host`.
+    /// `host` is the part of URI that comes after `tcp://` or `http://` schemes, also known as
+    /// authority part.
+    ///
+    /// TLS is supported with feature `tls` enabled through [Docker::tls](Docker::tls) constructor.
+    pub fn tcp<S>(host: S) -> Docker
+    where
+        S: Into<String>,
+    {
+        let http = get_http_connector();
+        Docker {
+            transport: Transport::Tcp {
+                client: Client::builder().build(http),
+                host: format!("tcp://{}", host.into()),
             },
         }
     }
@@ -616,30 +703,46 @@ pub struct Actor {
 
 #[cfg(test)]
 mod tests {
-    #[cfg(feature = "unix-socket")]
+    use super::{Docker, Error};
     #[test]
-    fn unix_host_env() {
-        use super::Docker;
-        use std::env;
-        env::set_var("DOCKER_HOST", "unix:///docker.sock");
-        let d = Docker::new();
-        match d.transport {
-            crate::transport::Transport::Unix { path, .. } => {
-                assert_eq!(path, "/docker.sock");
-            }
-            _ => {
-                panic!("Expected transport to be unix.");
+    fn creates_correct_docker() {
+        let d = Docker::new("tcp://127.0.0.1:80");
+        d.unwrap();
+        let d = Docker::new("http://127.0.0.1:80");
+        d.unwrap();
+
+        #[cfg(feature = "unix-socket")]
+        let d = Docker::new("unix://127.0.0.1:80");
+        d.unwrap();
+
+        #[cfg(not(feature = "unix-socket"))]
+        {
+            let d = Docker::new("unix://127.0.0.1:80");
+            assert!(d.is_err());
+            match d.unwrap_err() {
+                Error::UnsupportedScheme(scheme) if &scheme == "unix" => {}
+                e => panic!(r#"Expected Error::UnsupportedScheme("unix"), got {}"#, e),
             }
         }
-        env::set_var("DOCKER_HOST", "http://localhost:8000");
-        let d = Docker::new();
-        match d.transport {
-            crate::transport::Transport::Tcp { host, .. } => {
-                assert_eq!(host, "http://localhost:8000");
-            }
-            _ => {
-                panic!("Expected transport to be http.");
-            }
+
+        let d = Docker::new("rand://127.0.0.1:80");
+        match d.unwrap_err() {
+            Error::UnsupportedScheme(scheme) if &scheme == "rand" => {}
+            e => panic!(r#"Expected Error::UnsupportedScheme("rand"), got {}"#, e),
+        }
+
+        let d = Docker::new("invalid_uri");
+        match d.unwrap_err() {
+            Error::UnsupportedScheme(scheme) if &scheme == "invalid_uri" => {}
+            e => panic!(
+                r#"Expected Error::UnsupportedScheme("invalid_uri"), got {}"#,
+                e
+            ),
+        }
+        let d = Docker::new("");
+        match d.unwrap_err() {
+            Error::UnsupportedScheme(scheme) if &scheme == "" => {}
+            e => panic!(r#"Expected Error::UnsupportedScheme(""), got {}"#, e),
         }
     }
 }
