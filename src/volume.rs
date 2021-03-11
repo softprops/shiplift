@@ -20,6 +20,8 @@ use crate::{
 use chrono::{DateTime, Utc};
 
 /// Interface for docker volumes
+///
+/// API Reference: <https://docs.docker.com/engine/api/v1.41/#tag/Volume>
 pub struct Volumes<'docker> {
     docker: &'docker Docker,
 }
@@ -30,6 +32,9 @@ impl<'docker> Volumes<'docker> {
         Volumes { docker }
     }
 
+    /// Creates a new docker volume.
+    ///
+    /// API Reference: <https://docs.docker.com/engine/api/v1.41/#operation/VolumeCreate>
     pub async fn create(
         &self,
         opts: &VolumeCreateOptions,
@@ -43,6 +48,8 @@ impl<'docker> Volumes<'docker> {
     }
 
     /// Lists the docker volumes on the current docker host
+    ///
+    /// API Reference: <https://docs.docker.com/engine/api/v1.41/#operation/VolumeList>
     pub async fn list(&self) -> Result<Vec<VolumeInfo>> {
         let path = vec!["/volumes".to_owned()];
 
@@ -63,6 +70,8 @@ impl<'docker> Volumes<'docker> {
 }
 
 /// Interface for accessing and manipulating a named docker volume
+///
+/// API Reference: <https://docs.docker.com/engine/api/v1.41/#tag/Volume>
 pub struct Volume<'docker> {
     docker: &'docker Docker,
     name: String,
@@ -84,6 +93,8 @@ impl<'docker> Volume<'docker> {
     }
 
     /// Deletes a volume
+    ///
+    /// API Reference: <https://docs.docker.com/engine/api/v1.41/#operation/VolumeDelete>
     pub async fn delete(&self) -> Result<()> {
         self.docker
             .delete(&format!("/volumes/{}", self.name)[..])
