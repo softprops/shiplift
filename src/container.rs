@@ -1195,8 +1195,8 @@ pub struct ContainerInfo {
     pub ports: Vec<Port>,
     pub state: String,
     pub status: String,
-    pub size_rw: Option<u64>,
-    pub size_root_fs: Option<u64>,
+    pub size_rw: Option<i64>,
+    pub size_root_fs: Option<i64>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
