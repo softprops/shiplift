@@ -49,6 +49,7 @@ fn get_http_connector() -> HttpConnector {
 }
 
 #[cfg(feature = "tls")]
+// To be deleted after 0.8.0
 fn get_docker_for_tcp(tcp_host_str: String) -> Docker {
     let http = get_http_connector();
     if let Ok(ref certs) = env::var("DOCKER_CERT_PATH") {
@@ -97,6 +98,7 @@ fn get_docker_for_tcp(tcp_host_str: String) -> Docker {
 }
 
 #[cfg(not(feature = "tls"))]
+// To be deleted after 0.8.0
 fn get_docker_for_tcp(tcp_host_str: String) -> Docker {
     let http = get_http_connector();
     Docker {
@@ -232,6 +234,7 @@ impl Docker {
         }
     }
 
+    #[deprecated(since = "0.9.0", note = "Please use Docker::new instead")]
     /// constructs a new Docker instance for docker host listening at the given host url
     pub fn host(host: Uri) -> Docker {
         let tcp_host_str = format!(
