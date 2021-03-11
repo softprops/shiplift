@@ -5,7 +5,7 @@ async fn network_disconnect(
     container_id: &str,
     network_id: &str,
 ) {
-    let docker = Docker::new();
+    let docker = Docker::new("tcp://127.0.0.1:80").unwrap();
     if let Err(e) = docker
         .networks()
         .get(network_id)

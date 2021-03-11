@@ -3,7 +3,7 @@ use std::{env, fs::File, io::Read};
 
 #[tokio::main]
 async fn main() {
-    let docker = Docker::new();
+    let docker = Docker::new("tcp://127.0.0.1:80").unwrap();
     let path = env::args()
         .nth(1)
         .expect("Usage: cargo run --example containercopyinto -- <local path> <container>");
