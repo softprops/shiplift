@@ -19,7 +19,7 @@ use crate::{
     docker::Docker,
     errors::{Error, Result},
     exec::{Exec, ExecContainerOptions},
-    image::Config,
+    image::ContainerConfig,
     network::{NetworkInfo, NetworkSettings},
     transport::Payload,
     tty::{self, Multiplexer as TtyMultiPlexer},
