@@ -3,8 +3,9 @@
 //! # examples
 //!
 //! ```no_run
+//! use shiplift::Docker;
 //! # async {
-//! let docker = shiplift::Docker::new();
+//! let docker = Docker::new("tcp://127.0.0.1:80").unwrap();
 //!
 //! match docker.images().list(&Default::default()).await {
 //!     Ok(images) => {
