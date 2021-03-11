@@ -744,7 +744,7 @@ mod tests {
         }
         let d = Docker::new("");
         match d.unwrap_err() {
-            Error::UnsupportedScheme(scheme) if &scheme == "" => {}
+            Error::UnsupportedScheme(scheme) if scheme.is_empty() => {}
             e => panic!(r#"Expected Error::UnsupportedScheme(""), got {}"#, e),
         }
     }
