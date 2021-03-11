@@ -1148,30 +1148,40 @@ pub struct ContainerInfo {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct ContainerDetails {
-    pub app_armor_profile: String,
-    pub args: Vec<String>,
-    pub config: Config,
+    pub id: String,
     #[cfg(feature = "chrono")]
     pub created: DateTime<Utc>,
     #[cfg(not(feature = "chrono"))]
     pub created: String,
-    pub driver: String,
-    // pub ExecIDs: ??
-    pub host_config: HostConfig,
+    pub path: String,
+    pub args: Vec<String>,
+    pub state: State,
+    pub image: String,
+    pub resolv_conf_path: String,
     pub hostname_path: String,
     pub hosts_path: String,
     pub log_path: String,
-    pub id: String,
-    pub image: String,
-    pub mount_label: String,
     pub name: String,
-    pub network_settings: NetworkSettings,
-    pub path: String,
+    pub restart_count: i64,
+    pub driver: String,
+    pub platform: String,
+    pub mount_label: String,
     pub process_label: String,
-    pub resolv_conf_path: String,
-    pub restart_count: u64,
-    pub state: State,
+    pub app_armor_profile: String,
+    #[serde(rename = "ExecIDs")]
+    pub exec_ids: Option<Vec<String>>,
+    pub host_config: HostConfig,
+    pub graph_driver: GraphDriverData,
     pub mounts: Vec<Mount>,
+    pub config: ContainerConfig,
+    pub network_settings: NetworkSettings,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct GraphDriverData {
+    pub name: String,
+    pub data: HashMap<String, String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -1209,22 +1219,139 @@ pub struct State {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct HostConfig {
+    pub cpu_shares: Option<i64>,
+    pub memory: Option<i64>,
     pub cgroup_parent: Option<String>,
+    pub blkio_weight_device: Option<Vec<ThrottleDevice>>,
+    pub blkio_device_read_bps: Option<Vec<ThrottleDevice>>,
+    pub blkio_device_write_bps: Option<Vec<ThrottleDevice>>,
+    #[serde(rename = "BlkioDeviceReadIOps")]
+    pub blkio_device_read_iops: Option<Vec<ThrottleDevice>>,
+    #[serde(rename = "BlkioDeviceWriteIOps")]
+    pub blkio_device_write_iops: Option<Vec<ThrottleDevice>>,
+    pub cpu_period: Option<i64>,
+    pub cpu_quota: Option<i64>,
+    pub cpu_realtime_period: Option<i64>,
+    pub cpu_realtime_runtime: Option<i64>,
+    pub cpuset_cpus: Option<String>,
+    pub cpuset_mems: Option<String>,
+    pub devices: Option<Vec<DeviceMapping>>,
+    pub device_cgroup_rules: Option<String>,
+    pub device_requests: Option<Vec<DeviceRequest>>,
+    #[serde(rename = "KernelMemoryTCP")]
+    pub kernel_memory_tcp: i64,
+    pub memory_reservation: Option<i64>,
+    pub memory_swap: Option<i64>,
+    pub memory_swappiness: Option<i64>,
+    #[serde(rename = "NanoCPUs")]
+    pub nano_cpus: Option<i64>,
+    pub oom_kill_disable: bool,
+    pub init: Option<bool>,
+    pub pids_limit: Option<i64>,
+    pub ulimits: Option<Vec<Ulimit>>,
+    pub cpu_count: i64,
+    pub cpu_percent: i64,
+    #[serde(rename = "IOMaximumIOps")]
+    pub io_maximum_iops: u64,
+    #[serde(rename = "IOMaximumBandwith")]
+    pub io_maximum_bandwith: Option<u64>,
+    pub binds: Option<Vec<String>>,
     #[serde(rename = "ContainerIDFile")]
     pub container_id_file: String,
-    pub cpu_shares: Option<u64>,
-    pub cpuset_cpus: Option<String>,
-    pub memory: Option<u64>,
-    pub memory_swap: Option<i64>,
+    pub log_config: LogConfig,
     pub network_mode: String,
+    pub port_bindings: Option<PortMap>,
+    pub restart_policy: RestartPolicy,
+    pub auto_remove: bool,
+    pub volume_driver: String,
+    pub volumes_from: Option<Vec<String>>,
+    pub mounts: Option<Vec<Mount>>,
+    pub cap_add: Option<Vec<String>>,
+    pub cap_drop: Option<Vec<String>>,
+    pub dns: Option<Vec<String>>,
+    pub dns_options: Option<Vec<String>>,
+    pub dns_search: Option<Vec<String>>,
+    pub extra_hosts: Option<Vec<String>>,
+    pub group_add: Option<Vec<String>>,
+    pub ipc_mode: String,
+    pub cgroup: String,
+    pub links: Option<Vec<String>>,
+    pub oom_score_adj: i64,
     pub pid_mode: Option<String>,
-    pub port_bindings: Option<HashMap<String, Vec<HashMap<String, String>>>>,
     pub privileged: bool,
     pub publish_all_ports: bool,
-    pub readonly_rootfs: Option<bool>, /* pub RestartPolicy: ???
-                                        * pub SecurityOpt: Option<???>,
-                                        * pub Ulimits: Option<???>
-                                        * pub VolumesFrom: Option<??/> */
+    pub readonly_rootfs: Option<bool>,
+    pub security_opt: Option<Vec<String>>,
+    pub storage_opt: Option<HashMap<String, String>>,
+    pub tmpfs: Option<HashMap<String, String>>,
+    #[serde(rename = "UTSMode")]
+    pub uts_mode: String,
+    pub userns_mode: String,
+    pub shm_size: u64,
+    pub sysctls: Option<HashMap<String, String>>,
+    pub runtime: String,
+    pub console_size: Option<Vec<u64>>,
+    pub isolation: String,
+    pub masked_paths: Option<Vec<String>>,
+    pub readonly_paths: Option<Vec<String>>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct ThrottleDevice {
+    pub path: String,
+    pub rate: u64,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct RestartPolicy {
+    pub name: String,
+    pub maximum_retry_count: u64,
+}
+
+pub type PortMap = HashMap<String, Option<Vec<PortBinding>>>;
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct PortBinding {
+    pub host_ip: String,
+    pub host_port: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct LogConfig {
+    #[serde(rename = "Type")]
+    pub type_: String,
+    #[serde(rename = "Config")]
+    pub config: HashMap<String, String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct Ulimit {
+    pub name: String,
+    pub soft: u64,
+    pub hard: u64,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct DeviceMapping {
+    pub path_on_host: Option<String>,
+    pub path_in_container: Option<String>,
+    pub cgroup_permissions: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct DeviceRequest {
+    pub driver: String,
+    pub count: u64,
+    #[serde(rename = "DeviceIDs")]
+    pub device_ids: Vec<String>,
+    pub capabilities: Vec<String>,
+    pub options: Option<serde_json::Value>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
