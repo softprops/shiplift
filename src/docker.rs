@@ -398,12 +398,6 @@ impl Docker {
     }
 }
 
-impl Default for Docker {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 /// Options for filtering streams of Docker events
 #[derive(Default, Debug)]
 pub struct EventsOptions {
