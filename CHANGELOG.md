@@ -7,6 +7,7 @@
 * add missing fields ([API version 1.41](https://docs.docker.com/engine/api/v1.41/#operation/ImageInspect)) to `ContainerConfig` [#264](https://github.com/softprops/shiplift/pull/264)
 * add missing fields ([API version 1.41](https://docs.docker.com/engine/api/v1.41/#operation/ImageHistory)) to `History` [#264](https://github.com/softprops/shiplift/pull/264)
 * add missing fields to `NetworkEntry` [#254](https://github.com/softprops/shiplift/pull/254)
+* PullOptionsBuilder now adds a `latest` tag by default [#261](https://github.com/softprops/shiplift/pull/261)
 * `Image::pull`, `Image::build` and `Image::import` now return a stream of `ImageBuildChunk` instead of `json::Value`[#262](https://github.com/softprops/shiplift/262)
 * rename `Config` to `ContainerConfig` [#266](https://github.com/softprops/shiplift/pull/266)
 * `HostConfig.port_bindings` inner elements now have a clear type `PortBinding` instead of `HashMap<String, String>` [#266](https://github.com/softprops/shiplift/pull/266)
