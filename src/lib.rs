@@ -119,7 +119,7 @@ reexport! {
     docker::{Version, Info, Event, Actor};
     exec::{ExecDetails, ProcessConfig};
     image::{
-        SearchResult, ImageInfo as Image, ImageDetails, Config, History, Status,
+        SearchResult, ImageInfo as Image, ImageDetails, ContainerConfig, History, Status,
     };
     network::{
         NetworkSettings, NetworkEntry, Ipam, NetworkDetails,
