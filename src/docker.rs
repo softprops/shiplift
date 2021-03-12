@@ -7,8 +7,7 @@ use std::{collections::HashMap, env, io, path::Path};
 use futures_util::{stream::Stream, TryStreamExt};
 use hyper::{client::HttpConnector, Body, Client, Method};
 use mime::Mime;
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use serde::{de, Deserialize, Serialize};
 use url::form_urlencoded;
 
 use crate::{
@@ -355,14 +354,15 @@ impl Docker {
     /// Send a streaming post request that returns a stream of JSON values
     ///
     /// Assumes that each received chunk contains one or more JSON values
-    pub(crate) fn stream_post_into_values<'a, H>(
+    pub(crate) fn stream_post_into<'a, H, T>(
         &'a self,
         endpoint: impl AsRef<str> + 'a,
         body: Option<(Body, Mime)>,
         headers: Option<H>,
-    ) -> impl Stream<Item = Result<Value>> + 'a
+    ) -> impl Stream<Item = Result<T>> + 'a
     where
         H: IntoIterator<Item = (&'static str, String)> + 'a,
+        T: de::DeserializeOwned,
     {
         self.stream_post(endpoint, body, headers)
             .and_then(|chunk| async move {

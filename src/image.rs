@@ -7,7 +7,6 @@ use std::{collections::HashMap, io::Read, iter};
 use futures_util::{stream::Stream, TryFutureExt, TryStreamExt};
 use hyper::Body;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use url::form_urlencoded;
 
 use crate::{docker::Docker, errors::Result, tarball, transport::tar};
@@ -111,7 +110,7 @@ impl<'docker> Images<'docker> {
     pub fn build(
         &self,
         opts: &BuildOptions,
-    ) -> impl Stream<Item = Result<Value>> + Unpin + 'docker {
+    ) -> impl Stream<Item = Result<ImageBuildChunk>> + Unpin + 'docker {
         let mut endpoint = vec!["/build".to_owned()];
         if let Some(query) = opts.serialize() {
             endpoint.push(query)
@@ -131,7 +130,7 @@ impl<'docker> Images<'docker> {
                 // Bubble up error inside the stream for backwards compatability
                 tar_result?;
 
-                let value_stream = docker.stream_post_into_values(
+                let value_stream = docker.stream_post_into(
                     endpoint.join("?"),
                     Some((Body::from(bytes), tar())),
                     None::<iter::Empty<_>>,
@@ -191,7 +190,7 @@ impl<'docker> Images<'docker> {
     pub fn pull(
         &self,
         opts: &PullOptions,
-    ) -> impl Stream<Item = Result<Value>> + Unpin + 'docker {
+    ) -> impl Stream<Item = Result<ImageBuildChunk>> + Unpin + 'docker {
         let mut path = vec!["/images/create".to_owned()];
         if let Some(query) = opts.serialize() {
             path.push(query);
@@ -200,10 +199,7 @@ impl<'docker> Images<'docker> {
             .auth_header()
             .map(|a| iter::once(("X-Registry-Auth", a)));
 
-        Box::pin(
-            self.docker
-                .stream_post_into_values(path.join("?"), None, headers),
-        )
+        Box::pin(self.docker.stream_post_into(path.join("?"), None, headers))
     }
 
     /// exports a collection of named images,
@@ -230,7 +226,7 @@ impl<'docker> Images<'docker> {
     pub fn import<R>(
         self,
         mut tarball: R,
-    ) -> impl Stream<Item = Result<Value>> + Unpin + 'docker
+    ) -> impl Stream<Item = Result<ImageBuildChunk>> + Unpin + 'docker
     where
         R: Read + Send + 'docker,
     {
@@ -240,7 +236,7 @@ impl<'docker> Images<'docker> {
 
                 tarball.read_to_end(&mut bytes)?;
 
-                let value_stream = self.docker.stream_post_into_values(
+                let value_stream = self.docker.stream_post_into(
                     "/images/load",
                     Some((Body::from(bytes), tar())),
                     None::<iter::Empty<_>>,
