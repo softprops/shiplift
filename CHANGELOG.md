@@ -6,6 +6,7 @@
 * rename `shiplift::rep::Config` to `shiplift::rep::ContainerConfig` [#264](https://github.com/softprops/shiplift/pull/264)
 * add missing fields ([API version 1.41](https://docs.docker.com/engine/api/v1.41/#operation/ImageInspect)) to `ContainerConfig` [#264](https://github.com/softprops/shiplift/pull/264)
 * add missing fields ([API version 1.41](https://docs.docker.com/engine/api/v1.41/#operation/ImageHistory)) to `History` [#264](https://github.com/softprops/shiplift/pull/264)
+* `Image::pull`, `Image::build` and `Image::import` now return a stream of `ImageBuildChunk` instead of `json::Value`[#262](https://github.com/softprops/shiplift/262)
 
 # 0.7.0
 
