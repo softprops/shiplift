@@ -838,6 +838,47 @@ pub enum Status {
     Deleted(String),
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(untagged)]
+/// Represents a response chunk from Docker api when building, pulling or importing an image.
+pub enum ImageBuildChunk {
+    Update {
+        stream: String,
+    },
+    Error {
+        error: String,
+        #[serde(rename = "errorDetail")]
+        error_detail: ErrorDetail,
+    },
+    Digest {
+        aux: Aux,
+    },
+    PullStatus {
+        status: String,
+        id: Option<String>,
+        progress: Option<String>,
+        #[serde(rename = "progressDetail")]
+        progress_detail: Option<ProgressDetail>,
+    },
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Aux {
+    #[serde(rename = "ID")]
+    id: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ErrorDetail {
+    message: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ProgressDetail {
+    current: Option<u64>,
+    total: Option<u64>,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
