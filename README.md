@@ -17,8 +17,4 @@ shiplift = "0.7"
 
 Many small runnable example programs can be found in this repository's [examples directory](https://github.com/softprops/shiplift/tree/master/examples).
 
-## planned changes
-
-- give image pull chunked json a proper type
-
 Doug Tangren (softprops) 2015-2018
