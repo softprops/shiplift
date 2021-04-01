@@ -113,7 +113,7 @@ reexport! {
     mod rep;
     container::{
         ContainerInfo as Container, ContainerDetails, Mount, State, HostConfig, Port, Stats,
-        MemoryStats, MemoryStat, CpuStats, CpuUsage, ThrottlingData, BlkioStats, BlkioStat, Change,
+        MemoryStats, MemoryStat, NetworkStats as Network, CpuStats, CpuUsage, ThrottlingData, BlkioStats, BlkioStat, Change,
         Top, ContainerCreateInfo, Exit,
     };
     docker::{Version, Info, Event, Actor};
@@ -122,7 +122,7 @@ reexport! {
         SearchResult, ImageInfo as Image, ImageDetails, Config, History, Status,
     };
     network::{
-        NetworkSettings, NetworkEntry, NetworkInfo as Network, Ipam, NetworkDetails,
+        NetworkSettings, NetworkEntry, Ipam, NetworkDetails,
         NetworkContainerDetails, NetworkCreateInfo,
     };
     service::{

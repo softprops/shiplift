@@ -20,7 +20,7 @@ use crate::{
     errors::{Error, Result},
     exec::{Exec, ExecContainerOptions},
     image::Config,
-    network::{NetworkInfo, NetworkSettings},
+    network::NetworkSettings,
     transport::Payload,
     tty::{self, Multiplexer as TtyMultiPlexer},
 };
@@ -1288,10 +1288,22 @@ pub struct Port {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Stats {
     pub read: String,
-    pub networks: HashMap<String, NetworkInfo>,
+    pub networks: HashMap<String, NetworkStats>,
     pub memory_stats: MemoryStats,
     pub blkio_stats: BlkioStats,
     pub cpu_stats: CpuStats,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct NetworkStats {
+    pub rx_dropped: u64,
+    pub rx_bytes: u64,
+    pub rx_errors: u64,
+    pub tx_packets: u64,
+    pub tx_dropped: u64,
+    pub rx_packets: u64,
+    pub tx_errors: u64,
+    pub tx_bytes: u64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
