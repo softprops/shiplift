@@ -122,7 +122,7 @@ reexport! {
         SearchResult, ImageInfo as Image, ImageDetails, Config, History, Status,
     };
     network::{
-        NetworkSettings, NetworkEntry, NetworkInfo as Network, IPAM, NetworkDetails,
+        NetworkSettings, NetworkEntry, NetworkInfo as Network, Ipam, NetworkDetails,
         NetworkContainerDetails, NetworkCreateInfo,
     };
     service::{

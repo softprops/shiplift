@@ -351,7 +351,7 @@ pub struct NetworkInfo {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-pub struct IPAM {
+pub struct Ipam {
     pub driver: String,
     pub config: Vec<HashMap<String, String>>,
     pub options: Option<HashMap<String, String>>,
@@ -367,7 +367,7 @@ pub struct NetworkDetails {
     #[serde(rename = "EnableIPv6")]
     pub enable_ipv6: bool,
     #[serde(rename = "IPAM")]
-    pub ipam: IPAM,
+    pub ipam: Ipam,
     pub internal: bool,
     pub attachable: bool,
     pub containers: HashMap<String, NetworkContainerDetails>,
