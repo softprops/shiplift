@@ -14,10 +14,14 @@ pub enum Error {
     SerdeJsonError(SerdeError),
     Hyper(hyper::Error),
     Http(hyper::http::Error),
+    #[allow(clippy::upper_case_acronyms)]
     IO(IoError),
     Encoding(FromUtf8Error),
     InvalidResponse(String),
-    Fault { code: StatusCode, message: String },
+    Fault {
+        code: StatusCode,
+        message: String,
+    },
     ConnectionNotUpgraded,
 }
 
