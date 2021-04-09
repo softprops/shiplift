@@ -335,6 +335,20 @@ pub struct NetworkEntry {
     #[serde(rename = "GlobalIPv6PrefixLen")]
     pub global_ipv6_prefix_len: u64,
     pub mac_address: String,
+    pub links: Option<Vec<String>>,
+    pub aliases: Option<Vec<String>>,
+    #[serde(rename = "IPAMConfig")]
+    pub ipam_config: Option<EndpointIPAMConfig>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct EndpointIPAMConfig {
+    #[serde(rename = "IPv4Address")]
+    pub ipv4_address: String,
+    #[serde(rename = "IPv6Address")]
+    pub ipv6_address: String,
+    #[serde(rename = "LinkLocalIPs")]
+    pub link_local_ips: Vec<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
