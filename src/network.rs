@@ -356,6 +356,7 @@ pub struct NetworkEntry {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[allow(clippy::upper_case_acronyms)]
 pub struct EndpointIPAMConfig {
     #[serde(rename = "IPv4Address")]
     pub ipv4_address: String,
