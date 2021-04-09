@@ -396,6 +396,35 @@
 <span id="393">393</span>
 <span id="394">394</span>
 <span id="395">395</span>
+<span id="396">396</span>
+<span id="397">397</span>
+<span id="398">398</span>
+<span id="399">399</span>
+<span id="400">400</span>
+<span id="401">401</span>
+<span id="402">402</span>
+<span id="403">403</span>
+<span id="404">404</span>
+<span id="405">405</span>
+<span id="406">406</span>
+<span id="407">407</span>
+<span id="408">408</span>
+<span id="409">409</span>
+<span id="410">410</span>
+<span id="411">411</span>
+<span id="412">412</span>
+<span id="413">413</span>
+<span id="414">414</span>
+<span id="415">415</span>
+<span id="416">416</span>
+<span id="417">417</span>
+<span id="418">418</span>
+<span id="419">419</span>
+<span id="420">420</span>
+<span id="421">421</span>
+<span id="422">422</span>
+<span id="423">423</span>
+<span id="424">424</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Create and manage user-defined networks that containers can be attached to.</span>
 <span class="doccomment">//!</span>
@@ -417,6 +446,8 @@
 };
 
 <span class="doccomment">/// Interface for docker network</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// API Reference: &lt;https://docs.docker.com/engine/api/v1.41/#tag/Network&gt;</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Networks</span><span class="op">&lt;</span><span class="lifetime">&#39;docker</span><span class="op">&gt;</span> {
     <span class="ident">docker</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;docker</span> <span class="ident">Docker</span>,
 }
@@ -428,6 +459,8 @@
     }
 
     <span class="doccomment">/// List the docker networks on the current docker host</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// API Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/NetworkList&gt;</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">list</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">NetworkListOptions</span>,
@@ -451,6 +484,8 @@
     }
 
     <span class="doccomment">/// Create a new Network instance</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// API Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/NetworkCreate&gt;</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">create</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">NetworkCreateOptions</span>,
@@ -491,6 +526,8 @@
     }
 
     <span class="doccomment">/// Inspects the current docker network instance&#39;s details</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// API Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/NetworkInspect&gt;</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">inspect</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">NetworkInfo</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">docker</span>
             .<span class="ident">get_json</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/networks/{}&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>)[..])
@@ -498,6 +535,8 @@
     }
 
     <span class="doccomment">/// Delete the network instance</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// API Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/NetworkDelete&gt;</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">delete</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">docker</span>
             .<span class="ident">delete</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/networks/{}&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>)[..])
@@ -506,6 +545,8 @@
     }
 
     <span class="doccomment">/// Connect container to network</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// API Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/NetworkConnect&gt;</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">connect</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">ContainerConnectionOptions</span>,
@@ -514,6 +555,8 @@
     }
 
     <span class="doccomment">/// Disconnect container to network</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// API Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/NetworkDisconnect&gt;</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">disconnect</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">ContainerConnectionOptions</span>,
@@ -734,6 +777,21 @@
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;GlobalIPv6PrefixLen&quot;</span>)]</span>
     <span class="kw">pub</span> <span class="ident">global_ipv6_prefix_len</span>: <span class="ident">u64</span>,
     <span class="kw">pub</span> <span class="ident">mac_address</span>: <span class="ident">String</span>,
+    <span class="kw">pub</span> <span class="ident">links</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">aliases</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;IPAMConfig&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="ident">ipam_config</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">EndpointIPAMConfig</span><span class="op">&gt;</span>,
+}
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
+<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">upper_case_acronyms</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">EndpointIPAMConfig</span> {
+    <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;IPv4Address&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="ident">ipv4_address</span>: <span class="ident">String</span>,
+    <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;IPv6Address&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="ident">ipv6_address</span>: <span class="ident">String</span>,
+    <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;LinkLocalIPs&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="ident">link_local_ips</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
@@ -750,7 +808,7 @@
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
 <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename_all</span> <span class="op">=</span> <span class="string">&quot;PascalCase&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">IPAM</span> {
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Ipam</span> {
     <span class="kw">pub</span> <span class="ident">driver</span>: <span class="ident">String</span>,
     <span class="kw">pub</span> <span class="ident">config</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">options</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
@@ -766,7 +824,7 @@
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;EnableIPv6&quot;</span>)]</span>
     <span class="kw">pub</span> <span class="ident">enable_ipv6</span>: <span class="ident">bool</span>,
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;IPAM&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="ident">ipam</span>: <span class="ident">IPAM</span>,
+    <span class="kw">pub</span> <span class="ident">ipam</span>: <span class="ident">Ipam</span>,
     <span class="kw">pub</span> <span class="ident">internal</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span> <span class="ident">attachable</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span> <span class="ident">containers</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">NetworkContainerDetails</span><span class="op">&gt;</span>,
@@ -793,4 +851,5 @@
     <span class="kw">pub</span> <span class="ident">warning</span>: <span class="ident">String</span>,
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "shiplift";</script><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>
+</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="shiplift"></div>
+    <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>

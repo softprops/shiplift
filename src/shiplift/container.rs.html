@@ -1564,6 +1564,54 @@
 <span id="1561">1561</span>
 <span id="1562">1562</span>
 <span id="1563">1563</span>
+<span id="1564">1564</span>
+<span id="1565">1565</span>
+<span id="1566">1566</span>
+<span id="1567">1567</span>
+<span id="1568">1568</span>
+<span id="1569">1569</span>
+<span id="1570">1570</span>
+<span id="1571">1571</span>
+<span id="1572">1572</span>
+<span id="1573">1573</span>
+<span id="1574">1574</span>
+<span id="1575">1575</span>
+<span id="1576">1576</span>
+<span id="1577">1577</span>
+<span id="1578">1578</span>
+<span id="1579">1579</span>
+<span id="1580">1580</span>
+<span id="1581">1581</span>
+<span id="1582">1582</span>
+<span id="1583">1583</span>
+<span id="1584">1584</span>
+<span id="1585">1585</span>
+<span id="1586">1586</span>
+<span id="1587">1587</span>
+<span id="1588">1588</span>
+<span id="1589">1589</span>
+<span id="1590">1590</span>
+<span id="1591">1591</span>
+<span id="1592">1592</span>
+<span id="1593">1593</span>
+<span id="1594">1594</span>
+<span id="1595">1595</span>
+<span id="1596">1596</span>
+<span id="1597">1597</span>
+<span id="1598">1598</span>
+<span id="1599">1599</span>
+<span id="1600">1600</span>
+<span id="1601">1601</span>
+<span id="1602">1602</span>
+<span id="1603">1603</span>
+<span id="1604">1604</span>
+<span id="1605">1605</span>
+<span id="1606">1606</span>
+<span id="1607">1607</span>
+<span id="1608">1608</span>
+<span id="1609">1609</span>
+<span id="1610">1610</span>
+<span id="1611">1611</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Create and manage containers.</span>
 <span class="doccomment">//!</span>
@@ -1598,6 +1646,8 @@
 <span class="kw">use</span> <span class="ident">chrono</span>::{<span class="ident">DateTime</span>, <span class="ident">Utc</span>};
 
 <span class="doccomment">/// Interface for accessing and manipulating a docker container</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#tag/Container&gt;</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Container</span><span class="op">&lt;</span><span class="lifetime">&#39;docker</span><span class="op">&gt;</span> {
     <span class="ident">docker</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;docker</span> <span class="ident">Docker</span>,
     <span class="ident">id</span>: <span class="ident">String</span>,
@@ -1624,6 +1674,8 @@
     }
 
     <span class="doccomment">/// Inspects the current docker container instance&#39;s details</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/ContainerInspect&gt;</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">inspect</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ContainerDetails</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">docker</span>
             .<span class="ident">get_json</span>::<span class="op">&lt;</span><span class="ident">ContainerDetails</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/containers/{}/json&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>)[..])
@@ -1631,6 +1683,8 @@
     }
 
     <span class="doccomment">/// Returns a `top` view of information about the container process</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/ContainerTop&gt;</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">top</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">psargs</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>,
@@ -1646,6 +1700,8 @@
     }
 
     <span class="doccomment">/// Returns a stream of logs emitted but the container instance</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/ContainerLogs&gt;</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">logs</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">LogsOptions</span>,
@@ -1678,6 +1734,8 @@
     <span class="doccomment">/// The `[TtyMultiplexer]` implements Stream for returning Stdout and Stderr chunks. It also implements `[AsyncWrite]` for writing to Stdin.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// The multiplexer can be split into its read and write halves with the `[split](TtyMultiplexer::split)` method</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/ContainerAttach&gt;</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">attach</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">TtyMultiPlexer</span><span class="op">&lt;</span><span class="lifetime">&#39;docker</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">tcp_stream</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">attach_raw</span>().<span class="kw">await</span><span class="question-mark">?</span>;
 
@@ -1685,6 +1743,8 @@
     }
 
     <span class="doccomment">/// Returns a set of changes made to the container instance</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/ContainerChanges&gt;</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">changes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Change</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">docker</span>
             .<span class="ident">get_json</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Change</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/containers/{}/changes&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>)[..])
@@ -1692,6 +1752,8 @@
     }
 
     <span class="doccomment">/// Exports the current docker container into a tarball</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/ContainerExport&gt;</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">export</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Stream</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;docker</span> {
         <span class="self">self</span>.<span class="ident">docker</span>
             .<span class="ident">stream_get</span>(<span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/containers/{}/export&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>))
@@ -1699,6 +1761,8 @@
     }
 
     <span class="doccomment">/// Returns a stream of stats specific to this container instance</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/ContainerStats&gt;</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">stats</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Stream</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Stats</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Unpin</span> <span class="op">+</span> <span class="lifetime">&#39;docker</span> {
         <span class="kw">let</span> <span class="ident">codec</span> <span class="op">=</span> <span class="ident">futures_codec</span>::<span class="ident">LinesCodec</span> {};
 
@@ -1719,6 +1783,8 @@
     }
 
     <span class="doccomment">/// Start the container instance</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/ContainerStart&gt;</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">start</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">docker</span>
             .<span class="ident">post</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/containers/{}/start&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>)[..], <span class="prelude-val">None</span>)
@@ -1727,6 +1793,8 @@
     }
 
     <span class="doccomment">/// Stop the container instance</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/ContainerStop&gt;</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">stop</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">wait</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Duration</span><span class="op">&gt;</span>,
@@ -1744,6 +1812,8 @@
     }
 
     <span class="doccomment">/// Restart the container instance</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/ContainerRestart&gt;</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">restart</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">wait</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Duration</span><span class="op">&gt;</span>,
@@ -1760,6 +1830,8 @@
     }
 
     <span class="doccomment">/// Kill the container instance</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/ContainerKill&gt;</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">kill</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">signal</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>,
@@ -1776,6 +1848,8 @@
     }
 
     <span class="doccomment">/// Rename the container instance</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/ContainerRename&gt;</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">rename</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
@@ -1793,6 +1867,8 @@
     }
 
     <span class="doccomment">/// Pause the container instance</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/ContainerPause&gt;</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">pause</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">docker</span>
             .<span class="ident">post</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/containers/{}/pause&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>)[..], <span class="prelude-val">None</span>)
@@ -1801,6 +1877,8 @@
     }
 
     <span class="doccomment">/// Unpause the container instance</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/ContainerUnpause&gt;</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">unpause</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">docker</span>
             .<span class="ident">post</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/containers/{}/unpause&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>)[..], <span class="prelude-val">None</span>)
@@ -1809,6 +1887,8 @@
     }
 
     <span class="doccomment">/// Wait until the container stops</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/ContainerWait&gt;</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">wait</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Exit</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">docker</span>
             .<span class="ident">post_json</span>(<span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/containers/{}/wait&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>), <span class="ident">Payload</span>::<span class="prelude-val">None</span>)
@@ -1818,6 +1898,8 @@
     <span class="doccomment">/// Delete the container instance</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Use remove instead to use the force/v options.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/ContainerDelete&gt;</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">delete</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">docker</span>
             .<span class="ident">delete</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/containers/{}&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>)[..])
@@ -1826,6 +1908,8 @@
     }
 
     <span class="doccomment">/// Delete the container instance (todo: force/v)</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/ContainerRemove&gt;</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">remove</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">opts</span>: <span class="ident">RmContainerOptions</span>,
@@ -1839,6 +1923,8 @@
     }
 
     <span class="doccomment">/// Execute a command in this container</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#tag/Exec&gt;</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">exec</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">ExecContainerOptions</span>,
@@ -1854,6 +1940,8 @@
     <span class="doccomment">/// directory, `path` should end in `/` or `/`. (assuming a path separator of `/`). If `path`</span>
     <span class="doccomment">/// ends in `/.`  then this indicates that only the contents of the path directory should be</span>
     <span class="doccomment">/// copied.  A symlink is always resolved to its target.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/ContainerArchive&gt;</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">copy_from</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>,
@@ -1870,6 +1958,8 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// The file will be copied at the given location (see `path`) and will be owned by root</span>
     <span class="doccomment">/// with access mask 644.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/PutContainerArchive&gt;</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">copy_file_into</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">Path</span><span class="op">&gt;</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">path</span>: <span class="ident">P</span>,
@@ -1899,6 +1989,8 @@
     <span class="doccomment">/// Copy a tarball (see `body`) to the container.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// The tarball will be copied to the container and extracted at the given location (see `path`).</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/PutContainerArchive&gt;</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">copy_to</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>,
@@ -1921,6 +2013,8 @@
 }
 
 <span class="doccomment">/// Interface for docker containers</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#tag/Containers&gt;</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Containers</span><span class="op">&lt;</span><span class="lifetime">&#39;docker</span><span class="op">&gt;</span> {
     <span class="ident">docker</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;docker</span> <span class="ident">Docker</span>,
 }
@@ -1932,6 +2026,8 @@
     }
 
     <span class="doccomment">/// Lists the container instances on the docker host</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/ContainerList&gt;</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">list</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">ContainerListOptions</span>,
@@ -3129,4 +3225,5 @@
     }
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "shiplift";</script><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>
+</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="shiplift"></div>
+    <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>

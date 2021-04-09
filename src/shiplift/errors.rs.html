@@ -96,6 +96,10 @@
 <span id="93">93</span>
 <span id="94">94</span>
 <span id="95">95</span>
+<span id="96">96</span>
+<span id="97">97</span>
+<span id="98">98</span>
+<span id="99">99</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Representations of various client errors</span>
 
@@ -113,10 +117,14 @@
     <span class="ident">SerdeJsonError</span>(<span class="ident">SerdeError</span>),
     <span class="ident">Hyper</span>(<span class="ident">hyper</span>::<span class="ident">Error</span>),
     <span class="ident">Http</span>(<span class="ident">hyper</span>::<span class="ident">http</span>::<span class="ident">Error</span>),
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">upper_case_acronyms</span>)]</span>
     <span class="ident">IO</span>(<span class="ident">IoError</span>),
     <span class="ident">Encoding</span>(<span class="ident">FromUtf8Error</span>),
     <span class="ident">InvalidResponse</span>(<span class="ident">String</span>),
-    <span class="ident">Fault</span> { <span class="ident">code</span>: <span class="ident">StatusCode</span>, <span class="ident">message</span>: <span class="ident">String</span> },
+    <span class="ident">Fault</span> {
+        <span class="ident">code</span>: <span class="ident">StatusCode</span>,
+        <span class="ident">message</span>: <span class="ident">String</span>,
+    },
     <span class="ident">ConnectionNotUpgraded</span>,
 }
 
@@ -193,4 +201,5 @@
     }
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "shiplift";</script><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>
+</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="shiplift"></div>
+    <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>

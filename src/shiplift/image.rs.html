@@ -885,6 +885,30 @@
 <span id="882">882</span>
 <span id="883">883</span>
 <span id="884">884</span>
+<span id="885">885</span>
+<span id="886">886</span>
+<span id="887">887</span>
+<span id="888">888</span>
+<span id="889">889</span>
+<span id="890">890</span>
+<span id="891">891</span>
+<span id="892">892</span>
+<span id="893">893</span>
+<span id="894">894</span>
+<span id="895">895</span>
+<span id="896">896</span>
+<span id="897">897</span>
+<span id="898">898</span>
+<span id="899">899</span>
+<span id="900">900</span>
+<span id="901">901</span>
+<span id="902">902</span>
+<span id="903">903</span>
+<span id="904">904</span>
+<span id="905">905</span>
+<span id="906">906</span>
+<span id="907">907</span>
+<span id="908">908</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Create and manage images.</span>
 <span class="doccomment">//!</span>
@@ -906,6 +930,8 @@
 <span class="kw">use</span> <span class="ident">chrono</span>::{<span class="ident">DateTime</span>, <span class="ident">Utc</span>};
 
 <span class="doccomment">/// Interface for accessing and manipulating a named docker image</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#tag/Image&gt;</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Image</span><span class="op">&lt;</span><span class="lifetime">&#39;docker</span><span class="op">&gt;</span> {
     <span class="ident">docker</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;docker</span> <span class="ident">Docker</span>,
     <span class="ident">name</span>: <span class="ident">String</span>,
@@ -927,6 +953,8 @@
     }
 
     <span class="doccomment">/// Inspects a named image&#39;s details</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/ImageInspect&gt;</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">inspect</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ImageDetails</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">docker</span>
             .<span class="ident">get_json</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/images/{}/json&quot;</span>, <span class="self">self</span>.<span class="ident">name</span>)[..])
@@ -934,6 +962,8 @@
     }
 
     <span class="doccomment">/// Lists the history of the images set of changes</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/ImageHistory&gt;</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">history</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">History</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">docker</span>
             .<span class="ident">get_json</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/images/{}/history&quot;</span>, <span class="self">self</span>.<span class="ident">name</span>)[..])
@@ -941,6 +971,8 @@
     }
 
     <span class="doccomment">/// Deletes an image</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/ImagePrune&gt;</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">delete</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Status</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">docker</span>
             .<span class="ident">delete_json</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Status</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/images/{}&quot;</span>, <span class="self">self</span>.<span class="ident">name</span>)[..])
@@ -948,6 +980,8 @@
     }
 
     <span class="doccomment">/// Export this image to a tarball</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/ImageGet&gt;</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">export</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Stream</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Unpin</span> <span class="op">+</span> <span class="lifetime">&#39;docker</span> {
         <span class="ident">Box</span>::<span class="ident">pin</span>(
             <span class="self">self</span>.<span class="ident">docker</span>
@@ -957,6 +991,8 @@
     }
 
     <span class="doccomment">/// Adds a tag to an image</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/ImageTag&gt;</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">tag</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">TagOptions</span>,
@@ -982,6 +1018,8 @@
     }
 
     <span class="doccomment">/// Builds a new image build by reading a Dockerfile in a target directory</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/ImageBuild&gt;</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">BuildOptions</span>,
@@ -1018,6 +1056,8 @@
     }
 
     <span class="doccomment">/// Lists the docker images on the current docker host</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/ImageList&gt;</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">list</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">ImageListOptions</span>,
@@ -1043,6 +1083,8 @@
     }
 
     <span class="doccomment">/// Search for docker images by term</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/ImageSearch&gt;</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">search</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">term</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
@@ -1056,6 +1098,8 @@
     }
 
     <span class="doccomment">/// Pull and create a new docker images from an existing image</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/ImagePull&gt;</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">pull</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">PullOptions</span>,
@@ -1076,6 +1120,8 @@
 
     <span class="doccomment">/// exports a collection of named images,</span>
     <span class="doccomment">/// either by name, name:tag, or image id, into a tarball</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/ImageGetAll&gt;</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">export</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">names</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>,
@@ -1091,6 +1137,8 @@
 
     <span class="doccomment">/// imports an image or set of images from a given tarball source</span>
     <span class="doccomment">/// source can be uncompressed on compressed via gzip, bzip2 or xz</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Api Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/ImageLoad&gt;</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">import</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>(
         <span class="self">self</span>,
         <span class="kw-2">mut</span> <span class="ident">tarball</span>: <span class="ident">R</span>,
@@ -1771,4 +1819,5 @@
     }
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "shiplift";</script><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>
+</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="shiplift"></div>
+    <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>

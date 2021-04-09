@@ -191,6 +191,17 @@
 <span id="188">188</span>
 <span id="189">189</span>
 <span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Create and manage persistent storage that can be attached to containers.</span>
 <span class="doccomment">//!</span>
@@ -214,6 +225,8 @@
 <span class="kw">use</span> <span class="ident">chrono</span>::{<span class="ident">DateTime</span>, <span class="ident">Utc</span>};
 
 <span class="doccomment">/// Interface for docker volumes</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// API Reference: &lt;https://docs.docker.com/engine/api/v1.41/#tag/Volume&gt;</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Volumes</span><span class="op">&lt;</span><span class="lifetime">&#39;docker</span><span class="op">&gt;</span> {
     <span class="ident">docker</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;docker</span> <span class="ident">Docker</span>,
 }
@@ -224,6 +237,9 @@
         <span class="ident">Volumes</span> { <span class="ident">docker</span> }
     }
 
+    <span class="doccomment">/// Creates a new docker volume.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// API Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/VolumeCreate&gt;</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">create</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">VolumeCreateOptions</span>,
@@ -237,6 +253,8 @@
     }
 
     <span class="doccomment">/// Lists the docker volumes on the current docker host</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// API Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/VolumeList&gt;</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">list</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">VolumeInfo</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="macro">vec</span><span class="macro">!</span>[<span class="string">&quot;/volumes&quot;</span>.<span class="ident">to_owned</span>()];
 
@@ -257,6 +275,8 @@
 }
 
 <span class="doccomment">/// Interface for accessing and manipulating a named docker volume</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// API Reference: &lt;https://docs.docker.com/engine/api/v1.41/#tag/Volume&gt;</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Volume</span><span class="op">&lt;</span><span class="lifetime">&#39;docker</span><span class="op">&gt;</span> {
     <span class="ident">docker</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;docker</span> <span class="ident">Docker</span>,
     <span class="ident">name</span>: <span class="ident">String</span>,
@@ -278,6 +298,8 @@
     }
 
     <span class="doccomment">/// Deletes a volume</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// API Reference: &lt;https://docs.docker.com/engine/api/v1.41/#operation/VolumeDelete&gt;</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">delete</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">docker</span>
             .<span class="ident">delete</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/volumes/{}&quot;</span>, <span class="self">self</span>.<span class="ident">name</span>)[..])
@@ -383,4 +405,5 @@
     <span class="kw">pub</span> <span class="ident">scope</span>: <span class="ident">String</span>,
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "shiplift";</script><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>
+</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="shiplift"></div>
+    <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>
