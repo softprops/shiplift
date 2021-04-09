@@ -19,6 +19,8 @@ use crate::{
 };
 
 /// Interface for docker exec instance
+///
+/// Api Reference: <https://docs.docker.com/engine/api/v1.41/#tag/Exec>
 pub struct Exec<'docker> {
     docker: &'docker Docker,
     id: String,
@@ -39,6 +41,8 @@ impl<'docker> Exec<'docker> {
     }
 
     /// Creates a new exec instance that will be executed in a container with id == container_id
+    ///
+    /// Api Reference: <https://docs.docker.com/engine/api/v1.41/#operation/ContainerExec>
     pub async fn create(
         docker: &'docker Docker,
         container_id: &str,
@@ -132,6 +136,8 @@ impl<'docker> Exec<'docker> {
     }
 
     /// Starts this exec instance returning a multiplexed tty stream
+    ///
+    /// Api Reference: <https://docs.docker.com/engine/api/v1.41/#operation/ExecStart>
     pub fn start(&self) -> impl Stream<Item = Result<tty::TtyChunk>> + 'docker {
         // We must take ownership of the docker reference to not needlessly tie the stream to the
         // lifetime of `self`.
@@ -154,12 +160,18 @@ impl<'docker> Exec<'docker> {
     }
 
     /// Inspect this exec instance to aquire detailed information
+    ///
+    /// Api Reference: <https://docs.docker.com/engine/api/v1.41/#operation/ExecInpsect>
     pub async fn inspect(&self) -> Result<ExecDetails> {
         self.docker
             .get_json(&format!("/exec/{}/json", &self.id)[..])
             .await
     }
 
+    /// Resize the TTY session used by an exec instance. This only works if the exec was created
+    /// with `tty` enabled.
+    ///
+    /// Api Reference: <https://docs.docker.com/engine/api/v1.41/#operation/ExecResize>
     pub async fn resize(
         &self,
         opts: &ExecResizeOptions,

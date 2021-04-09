@@ -22,6 +22,8 @@ use crate::{
 use chrono::{DateTime, Utc};
 
 /// Interface for docker services
+///
+/// API Reference: <https://docs.docker.com/engine/api/v1.41/#tag/Service>
 pub struct Services<'docker> {
     docker: &'docker Docker,
 }
@@ -33,6 +35,8 @@ impl<'docker> Services<'docker> {
     }
 
     /// Lists the docker services on the current docker host
+    ///
+    /// API Reference: <https://docs.docker.com/engine/api/v1.41/#operation/ServiceList>
     pub async fn list(
         &self,
         opts: &ServiceListOptions,
@@ -56,6 +60,8 @@ impl<'docker> Services<'docker> {
 }
 
 /// Interface for accessing and manipulating a named docker volume
+///
+/// API Reference: <https://docs.docker.com/engine/api/v1.41/#tag/Service>
 pub struct Service<'docker> {
     docker: &'docker Docker,
     name: String,
@@ -77,6 +83,8 @@ impl<'docker> Service<'docker> {
     }
 
     /// Creates a new service from ServiceOptions
+    ///
+    /// API Reference: <https://docs.docker.com/engine/api/v1.41/#operation/ServiceCreate>
     pub async fn create(
         &self,
         opts: &ServiceOptions,
@@ -98,6 +106,8 @@ impl<'docker> Service<'docker> {
     }
 
     /// Inspects a named service's details
+    ///
+    /// API Reference: <https://docs.docker.com/engine/api/v1.41/#operation/ServiceInspect>
     pub async fn inspect(&self) -> Result<ServiceDetails> {
         self.docker
             .get_json(&format!("/services/{}", self.name)[..])
@@ -105,6 +115,8 @@ impl<'docker> Service<'docker> {
     }
 
     /// Deletes a service
+    ///
+    /// API Reference: <https://docs.docker.com/engine/api/v1.41/#operation/ServiceDelete>
     pub async fn delete(&self) -> Result<()> {
         self.docker
             .delete_json(&format!("/services/{}", self.name)[..])
@@ -112,6 +124,8 @@ impl<'docker> Service<'docker> {
     }
 
     /// Returns a stream of logs from a service
+    ///
+    /// API Reference: <https://docs.docker.com/engine/api/v1.41/#operation/ServiceLogs>
     pub fn logs(
         &self,
         opts: &LogsOptions,

@@ -18,6 +18,8 @@ use crate::{
 };
 
 /// Interface for docker network
+///
+/// API Reference: <https://docs.docker.com/engine/api/v1.41/#tag/Network>
 pub struct Networks<'docker> {
     docker: &'docker Docker,
 }
@@ -29,6 +31,8 @@ impl<'docker> Networks<'docker> {
     }
 
     /// List the docker networks on the current docker host
+    ///
+    /// API Reference: <https://docs.docker.com/engine/api/v1.41/#operation/NetworkList>
     pub async fn list(
         &self,
         opts: &NetworkListOptions,
@@ -52,6 +56,8 @@ impl<'docker> Networks<'docker> {
     }
 
     /// Create a new Network instance
+    ///
+    /// API Reference: <https://docs.docker.com/engine/api/v1.41/#operation/NetworkCreate>
     pub async fn create(
         &self,
         opts: &NetworkCreateOptions,
@@ -92,6 +98,8 @@ impl<'docker> Network<'docker> {
     }
 
     /// Inspects the current docker network instance's details
+    ///
+    /// API Reference: <https://docs.docker.com/engine/api/v1.41/#operation/NetworkInspect>
     pub async fn inspect(&self) -> Result<NetworkInfo> {
         self.docker
             .get_json(&format!("/networks/{}", self.id)[..])
@@ -99,6 +107,8 @@ impl<'docker> Network<'docker> {
     }
 
     /// Delete the network instance
+    ///
+    /// API Reference: <https://docs.docker.com/engine/api/v1.41/#operation/NetworkDelete>
     pub async fn delete(&self) -> Result<()> {
         self.docker
             .delete(&format!("/networks/{}", self.id)[..])
@@ -107,6 +117,8 @@ impl<'docker> Network<'docker> {
     }
 
     /// Connect container to network
+    ///
+    /// API Reference: <https://docs.docker.com/engine/api/v1.41/#operation/NetworkConnect>
     pub async fn connect(
         &self,
         opts: &ContainerConnectionOptions,
@@ -115,6 +127,8 @@ impl<'docker> Network<'docker> {
     }
 
     /// Disconnect container to network
+    ///
+    /// API Reference: <https://docs.docker.com/engine/api/v1.41/#operation/NetworkDisconnect>
     pub async fn disconnect(
         &self,
         opts: &ContainerConnectionOptions,
