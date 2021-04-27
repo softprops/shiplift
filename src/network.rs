@@ -100,7 +100,7 @@ impl<'docker> Network<'docker> {
     /// Inspects the current docker network instance's details
     ///
     /// API Reference: <https://docs.docker.com/engine/api/v1.41/#operation/NetworkInspect>
-    pub async fn inspect(&self) -> Result<NetworkInfo> {
+    pub async fn inspect(&self) -> Result<NetworkDetails> {
         self.docker
             .get_json(&format!("/networks/{}", self.id)[..])
             .await
