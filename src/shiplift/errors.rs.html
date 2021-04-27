@@ -180,7 +180,7 @@
             <span class="ident">Error</span>::<span class="ident">InvalidResponse</span>(<span class="kw-2">ref</span> <span class="ident">cause</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;Response doesn&#39;t have the expected format: {}&quot;</span>, <span class="ident">cause</span>)
             }
-            <span class="ident">Error</span>::<span class="ident">Fault</span> { <span class="ident">code</span>, .. } <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;{}&quot;</span>, <span class="ident">code</span>),
+            <span class="ident">Error</span>::<span class="ident">Fault</span> { <span class="ident">code</span>, <span class="ident">message</span> } <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;{}: {}&quot;</span>, <span class="ident">code</span>, <span class="ident">message</span>),
             <span class="ident">Error</span>::<span class="ident">ConnectionNotUpgraded</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write</span><span class="macro">!</span>(
                 <span class="ident">f</span>,
                 <span class="string">&quot;expected the docker host to upgrade the HTTP connection but it did not&quot;</span>
