@@ -67,6 +67,7 @@ where
     let mut data = vec![0u8; data_length as usize];
 
     if stream.read_exact(&mut data).await.is_err() {
+        // TODO: return error?
         return None;
     }
 
@@ -80,6 +81,22 @@ where
     Some((Ok(chunk), stream))
 }
 
+async fn forward_chunk<S>(mut stream: S) -> Option<(Result<TtyChunk>, S)>
+where
+    S: AsyncRead + Unpin,
+{
+    // TODO: don't allocate new 32KiB buffer for each chunk
+    let mut buffer = vec![0u8; 32 * 1024];
+    match stream.read(&mut buffer).await {
+        Err(e) if e.kind() == futures_util::io::ErrorKind::UnexpectedEof => None,
+        Err(e) => Some((Err(Error::IO(e)), stream)),
+        Ok(len) => {
+            buffer.truncate(len);
+            Some((Ok(TtyChunk::StdOut(buffer)), stream))
+        }
+    }
+}
+
 pub(crate) fn decode<S>(hyper_chunk_stream: S) -> impl Stream<Item = Result<TtyChunk>>
 where
     S: Stream<Item = Result<hyper::body::Bytes>> + Unpin,
@@ -89,6 +106,17 @@ where
         .into_async_read();
 
     futures_util::stream::unfold(stream, decode_chunk)
+}
+
+pub(crate) fn forward<S>(hyper_chunk_stream: S) -> impl Stream<Item = Result<TtyChunk>>
+where
+    S: Stream<Item = Result<hyper::body::Bytes>> + Unpin,
+{
+    let stream = hyper_chunk_stream
+        .map_err(|e| io::Error::new(io::ErrorKind::Other, e))
+        .into_async_read();
+
+    futures_util::stream::unfold(stream, forward_chunk)
 }
 
 type TtyReader<'a> = Pin<Box<dyn Stream<Item = Result<TtyChunk>> + Send + 'a>>;
