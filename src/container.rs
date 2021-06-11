@@ -114,11 +114,13 @@ impl<'docker> Container<'docker> {
             .await
     }
 
-    /// Attaches a `[TtyMultiplexer]` to the container.
+    /// Attaches a [Multiplexer](crate::tty::Multiplexer) to the container.
     ///
-    /// The `[TtyMultiplexer]` implements Stream for returning Stdout and Stderr chunks. It also implements `[AsyncWrite]` for writing to Stdin.
+    /// The [Multiplexer](crate::tty::Multiplexer) implements Stream for returning Stdout and
+    /// Stderr chunks. It also implements `[AsyncWrite]` for writing to Stdin.
     ///
-    /// The multiplexer can be split into its read and write halves with the `[split](TtyMultiplexer::split)` method
+    /// The multiplexer can be split into its read and write halves with the
+    /// [split](crate::tty::Multiplexer::split) method
     ///
     /// [Api Reference](https://docs.docker.com/engine/api/v1.41/#operation/ContainerAttach)
     pub async fn attach(&self) -> Result<TtyMultiPlexer<'docker>> {
