@@ -149,6 +149,18 @@ impl VolumeCreateOptionsBuilder {
         VolumeCreateOptionsBuilder { params }
     }
 
+    pub fn driver(
+        &mut self,
+        driver_name: &str,
+        driver_opts: Option<&HashMap<&str, &str>>,
+    ) -> &mut Self {
+        self.params.insert("Driver", json!(driver_name));
+        if let Some(opts) = driver_opts {
+            self.params.insert("DriverOpts", json!(opts));
+        }
+        self
+    }
+
     pub fn name(
         &mut self,
         name: &str,
@@ -198,4 +210,48 @@ pub struct VolumeInfo {
     pub mountpoint: String,
     pub options: Option<HashMap<String, String>>,
     pub scope: String,
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[derive(Deserialize)]
+    #[serde(rename_all = "PascalCase")]
+    pub struct VolumeTestInfo {
+        pub driver: Option<String>,
+        pub name: Option<String>,
+        pub driver_opts: Option<HashMap<String, String>>,
+    }
+
+    #[test]
+    fn test_volumecreateoptionsbuilder_driver() {
+        let volume = VolumeCreateOptions::builder()
+            .driver("my_driver", None)
+            .build();
+
+        let serialized = volume.serialize().unwrap();
+        let volume_info: VolumeTestInfo = serde_json::from_str(&serialized).unwrap();
+
+        assert_eq!(volume_info.driver, Some("my_driver".to_string()));
+        assert_eq!(volume_info.name, None);
+        assert_eq!(volume_info.driver_opts, None)
+    }
+
+    #[test]
+    fn test_volumecreateoptionsbuilder_driver_opts() {
+        let opts: HashMap<&str, &str> = [("option", "value")].iter().cloned().collect();
+        let volume = VolumeCreateOptions::builder()
+            .driver("my_driver", Some(&opts))
+            .build();
+
+        let serialized = volume.serialize().unwrap();
+        let volume_info: VolumeTestInfo = serde_json::from_str(&serialized).unwrap();
+        let mut driver_options = HashMap::new();
+        driver_options.insert("option".to_string(), "value".to_string());
+
+        assert_eq!(volume_info.driver, Some("my_driver".to_string()));
+        assert_eq!(volume_info.name, None);
+        assert_eq!(volume_info.driver_opts, Some(driver_options))
+    }
 }
