@@ -1614,6 +1614,18 @@
 <span id="1611">1611</span>
 <span id="1612">1612</span>
 <span id="1613">1613</span>
+<span id="1614">1614</span>
+<span id="1615">1615</span>
+<span id="1616">1616</span>
+<span id="1617">1617</span>
+<span id="1618">1618</span>
+<span id="1619">1619</span>
+<span id="1620">1620</span>
+<span id="1621">1621</span>
+<span id="1622">1622</span>
+<span id="1623">1623</span>
+<span id="1624">1624</span>
+<span id="1625">1625</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Create and manage containers.</span>
 <span class="doccomment">//!</span>
@@ -1637,7 +1649,7 @@
     <span class="ident">errors</span>::{<span class="ident">Error</span>, <span class="prelude-ty">Result</span>},
     <span class="ident">exec</span>::{<span class="ident">Exec</span>, <span class="ident">ExecContainerOptions</span>},
     <span class="ident">image</span>::<span class="ident">Config</span>,
-    <span class="ident">network</span>::{<span class="ident">NetworkInfo</span>, <span class="ident">NetworkSettings</span>},
+    <span class="ident">network</span>::<span class="ident">NetworkSettings</span>,
     <span class="ident">transport</span>::<span class="ident">Payload</span>,
     <span class="ident">tty</span>::{<span class="self">self</span>, <span class="ident">Multiplexer</span> <span class="kw">as</span> <span class="ident">TtyMultiPlexer</span>},
 };
@@ -2907,10 +2919,22 @@
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Stats</span> {
     <span class="kw">pub</span> <span class="ident">read</span>: <span class="ident">String</span>,
-    <span class="kw">pub</span> <span class="ident">networks</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">NetworkInfo</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">networks</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">NetworkStats</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">memory_stats</span>: <span class="ident">MemoryStats</span>,
     <span class="kw">pub</span> <span class="ident">blkio_stats</span>: <span class="ident">BlkioStats</span>,
     <span class="kw">pub</span> <span class="ident">cpu_stats</span>: <span class="ident">CpuStats</span>,
+}
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">NetworkStats</span> {
+    <span class="kw">pub</span> <span class="ident">rx_dropped</span>: <span class="ident">u64</span>,
+    <span class="kw">pub</span> <span class="ident">rx_bytes</span>: <span class="ident">u64</span>,
+    <span class="kw">pub</span> <span class="ident">rx_errors</span>: <span class="ident">u64</span>,
+    <span class="kw">pub</span> <span class="ident">tx_packets</span>: <span class="ident">u64</span>,
+    <span class="kw">pub</span> <span class="ident">tx_dropped</span>: <span class="ident">u64</span>,
+    <span class="kw">pub</span> <span class="ident">rx_packets</span>: <span class="ident">u64</span>,
+    <span class="kw">pub</span> <span class="ident">tx_errors</span>: <span class="ident">u64</span>,
+    <span class="kw">pub</span> <span class="ident">tx_bytes</span>: <span class="ident">u64</span>,
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>

@@ -252,7 +252,7 @@
     <span class="kw">mod</span> <span class="ident">rep</span>;
     <span class="ident">container</span>::{
         <span class="ident">ContainerInfo</span> <span class="kw">as</span> <span class="ident">Container</span>, <span class="ident">ContainerDetails</span>, <span class="ident">Mount</span>, <span class="ident">State</span>, <span class="ident">HostConfig</span>, <span class="ident">Port</span>, <span class="ident">Stats</span>,
-        <span class="ident">MemoryStats</span>, <span class="ident">MemoryStat</span>, <span class="ident">CpuStats</span>, <span class="ident">CpuUsage</span>, <span class="ident">ThrottlingData</span>, <span class="ident">BlkioStats</span>, <span class="ident">BlkioStat</span>, <span class="ident">Change</span>,
+        <span class="ident">MemoryStats</span>, <span class="ident">MemoryStat</span>, <span class="ident">NetworkStats</span> <span class="kw">as</span> <span class="ident">Network</span>, <span class="ident">CpuStats</span>, <span class="ident">CpuUsage</span>, <span class="ident">ThrottlingData</span>, <span class="ident">BlkioStats</span>, <span class="ident">BlkioStat</span>, <span class="ident">Change</span>,
         <span class="ident">Top</span>, <span class="ident">ContainerCreateInfo</span>, <span class="ident">Exit</span>,
     };
     <span class="ident">docker</span>::{<span class="ident">Version</span>, <span class="ident">Info</span>, <span class="ident">Event</span>, <span class="ident">Actor</span>};
@@ -261,7 +261,7 @@
         <span class="ident">SearchResult</span>, <span class="ident">ImageInfo</span> <span class="kw">as</span> <span class="ident">Image</span>, <span class="ident">ImageDetails</span>, <span class="ident">Config</span>, <span class="ident">History</span>, <span class="ident">Status</span>,
     };
     <span class="ident">network</span>::{
-        <span class="ident">NetworkSettings</span>, <span class="ident">NetworkEntry</span>, <span class="ident">NetworkInfo</span> <span class="kw">as</span> <span class="ident">Network</span>, <span class="ident">Ipam</span>, <span class="ident">NetworkDetails</span>,
+        <span class="ident">NetworkSettings</span>, <span class="ident">NetworkEntry</span>, <span class="ident">Ipam</span>, <span class="ident">NetworkDetails</span>,
         <span class="ident">NetworkContainerDetails</span>, <span class="ident">NetworkCreateInfo</span>,
     };
     <span class="ident">service</span>::{
