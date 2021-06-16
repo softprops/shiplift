@@ -36,7 +36,7 @@ impl<'docker> Networks<'docker> {
     pub async fn list(
         &self,
         opts: &NetworkListOptions,
-    ) -> Result<Vec<NetworkInfo>> {
+    ) -> Result<Vec<NetworkDetails>> {
         let mut path = vec!["/networks".to_owned()];
         if let Some(query) = opts.serialize() {
             path.push(query);
@@ -100,7 +100,7 @@ impl<'docker> Network<'docker> {
     /// Inspects the current docker network instance's details
     ///
     /// API Reference: <https://docs.docker.com/engine/api/v1.41/#operation/NetworkInspect>
-    pub async fn inspect(&self) -> Result<NetworkInfo> {
+    pub async fn inspect(&self) -> Result<NetworkDetails> {
         self.docker
             .get_json(&format!("/networks/{}", self.id)[..])
             .await
@@ -364,18 +364,6 @@ pub struct EndpointIPAMConfig {
     pub ipv6_address: String,
     #[serde(rename = "LinkLocalIPs")]
     pub link_local_ips: Vec<String>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct NetworkInfo {
-    pub rx_dropped: u64,
-    pub rx_bytes: u64,
-    pub rx_errors: u64,
-    pub tx_packets: u64,
-    pub tx_dropped: u64,
-    pub rx_packets: u64,
-    pub tx_errors: u64,
-    pub tx_bytes: u64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
