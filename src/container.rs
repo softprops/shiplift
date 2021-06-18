@@ -513,7 +513,7 @@ impl ContainerListOptionsBuilder {
                 ContainerFilter::Label(n, v) => ("label", format!("{}={}", n, v)),
             };
 
-            param.entry(key).or_insert(Vec::new()).push(value);
+            param.entry(key).or_insert_with(Vec::new).push(value);
         }
         // structure is a a json encoded object mapping string keys to a list
         // of string values
