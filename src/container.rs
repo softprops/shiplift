@@ -506,14 +506,16 @@ impl ContainerListOptionsBuilder {
         &mut self,
         filters: Vec<ContainerFilter>,
     ) -> &mut Self {
-        let mut param = HashMap::new();
+        let mut param: HashMap<&str, Vec<String>> = HashMap::new();
         for f in filters {
-            match f {
-                ContainerFilter::ExitCode(c) => param.insert("exit", vec![c.to_string()]),
-                ContainerFilter::Status(s) => param.insert("status", vec![s]),
-                ContainerFilter::LabelName(n) => param.insert("label", vec![n]),
-                ContainerFilter::Label(n, v) => param.insert("label", vec![format!("{}={}", n, v)]),
+            let (key, value) = match f {
+                ContainerFilter::ExitCode(c) => ("exited", c.to_string()),
+                ContainerFilter::Status(s) => ("status", s),
+                ContainerFilter::LabelName(n) => ("label", n),
+                ContainerFilter::Label(n, v) => ("label", format!("{}={}", n, v)),
             };
+
+            param.entry(key).or_insert_with(Vec::new).push(value);
         }
         // structure is a a json encoded object mapping string keys to a list
         // of string values
@@ -1423,6 +1425,7 @@ pub struct Exit {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::container::ContainerFilter::{ExitCode, Label, LabelName, Status};
 
     #[test]
     fn container_options_simple() {
@@ -1574,6 +1577,69 @@ mod tests {
             r#"{"HostConfig":{"RestartPolicy":{"Name":"always"}},"Image":"test_image"}"#,
             options.serialize().unwrap()
         );
+    }
+
+    #[test]
+    fn container_list_options_multiple_labels() {
+        let options = ContainerListOptions::builder()
+            .filter(vec![
+                Label("label1".to_string(), "value".to_string()),
+                LabelName("label2".to_string()),
+            ])
+            .build();
+
+        let form = form_urlencoded::Serializer::new(String::new())
+            .append_pair("filters", r#"{"label":["label1=value","label2"]}"#)
+            .finish();
+
+        assert_eq!(form, options.serialize().unwrap())
+    }
+
+    #[test]
+    fn container_list_options_exit_code() {
+        let options = ContainerListOptions::builder()
+            .filter(vec![ExitCode(0)])
+            .build();
+
+        let form = form_urlencoded::Serializer::new(String::new())
+            .append_pair("filters", r#"{"exited":["0"]}"#)
+            .finish();
+
+        assert_eq!(form, options.serialize().unwrap())
+    }
+
+    #[test]
+    fn container_list_options_status() {
+        let options = ContainerListOptions::builder()
+            .filter(vec![Status("running".to_string())])
+            .build();
+
+        let form = form_urlencoded::Serializer::new(String::new())
+            .append_pair("filters", r#"{"status":["running"]}"#)
+            .finish();
+
+        assert_eq!(form, options.serialize().unwrap())
+    }
+
+    #[test]
+    fn container_list_options_combined() {
+        let options = ContainerListOptions::builder()
+            .all()
+            .filter(vec![
+                Label("label1".to_string(), "value".to_string()),
+                LabelName("label2".to_string()),
+                ExitCode(0),
+                Status("running".to_string()),
+            ])
+            .build();
+
+        let serialized = options.serialize().unwrap();
+
+        assert!(serialized.contains("all=true"));
+        assert!(serialized.contains("filters="));
+        assert!(serialized.contains("%22label%22%3A%5B%22label1%3Dvalue%22%2C%22label2%22%5D"));
+        assert!(serialized.contains("%22status%22%3A%5B%22running%22%5D"));
+        assert!(serialized.contains("%22exited%22%3A%5B%220%22%5D"));
     }
 
     #[cfg(feature = "chrono")]
