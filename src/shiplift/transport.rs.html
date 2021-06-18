@@ -1,6 +1,6 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/transport.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>transport.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><script src="../../crates.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../favicon-16x16.png">
-<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../shiplift/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
+<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../shiplift/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
                 <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
@@ -354,26 +354,26 @@
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Error</span>, <span class="prelude-ty">Result</span>};
 <span class="kw">use</span> <span class="ident">futures_util</span>::{
     <span class="ident">io</span>::{<span class="ident">AsyncRead</span>, <span class="ident">AsyncWrite</span>},
-    <span class="ident">stream</span>::<span class="ident">Stream</span>,
+    <span class="ident">stream::Stream</span>,
     <span class="ident">StreamExt</span>, <span class="ident">TryFutureExt</span>,
 };
 <span class="kw">use</span> <span class="ident">hyper</span>::{
-    <span class="ident">body</span>::<span class="ident">Bytes</span>,
+    <span class="ident">body::Bytes</span>,
     <span class="ident">client</span>::{<span class="ident">Client</span>, <span class="ident">HttpConnector</span>},
     <span class="ident">header</span>, <span class="ident">Body</span>, <span class="ident">Method</span>, <span class="ident">Request</span>, <span class="ident">StatusCode</span>,
 };
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;tls&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident">hyper_openssl</span>::<span class="ident">HttpsConnector</span>;
+<span class="kw">use</span> <span class="ident">hyper_openssl::HttpsConnector</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;unix-socket&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident">hyperlocal</span>::<span class="ident">UnixConnector</span>;
+<span class="kw">use</span> <span class="ident">hyperlocal::UnixConnector</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;unix-socket&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident">hyperlocal</span>::<span class="ident">Uri</span> <span class="kw">as</span> <span class="ident">DomainUri</span>;
-<span class="kw">use</span> <span class="ident">mime</span>::<span class="ident">Mime</span>;
-<span class="kw">use</span> <span class="ident">pin_project</span>::<span class="ident">pin_project</span>;
+<span class="kw">use</span> <span class="ident">hyperlocal::Uri</span> <span class="kw">as</span> <span class="ident">DomainUri</span>;
+<span class="kw">use</span> <span class="ident">mime::Mime</span>;
+<span class="kw">use</span> <span class="ident">pin_project::pin_project</span>;
 <span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
 <span class="kw">use</span> <span class="ident">std</span>::{
     <span class="ident">fmt</span>, <span class="ident">io</span>, <span class="ident">iter</span>,
-    <span class="ident">pin</span>::<span class="ident">Pin</span>,
+    <span class="ident">pin::Pin</span>,
     <span class="ident">task</span>::{<span class="ident">Context</span>, <span class="ident">Poll</span>},
 };
 
@@ -407,17 +407,17 @@
     },
 }
 
-<span class="kw">impl</span> <span class="ident">fmt</span>::<span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">Transport</span> {
+<span class="kw">impl</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">Transport</span> {
     <span class="kw">fn</span> <span class="ident">fmt</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
+        <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
         <span class="kw">match</span> <span class="kw-2">*</span><span class="self">self</span> {
-            <span class="ident">Transport</span>::<span class="ident">Tcp</span> { <span class="kw-2">ref</span> <span class="ident">host</span>, .. } <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;Tcp({})&quot;</span>, <span class="ident">host</span>),
+            <span class="ident">Transport::Tcp</span> { <span class="kw-2">ref</span> <span class="ident">host</span>, .. } <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;Tcp({})&quot;</span>, <span class="ident">host</span>),
             <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;tls&quot;</span>)]</span>
-            <span class="ident">Transport</span>::<span class="ident">EncryptedTcp</span> { <span class="kw-2">ref</span> <span class="ident">host</span>, .. } <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;EncryptedTcp({})&quot;</span>, <span class="ident">host</span>),
+            <span class="ident">Transport::EncryptedTcp</span> { <span class="kw-2">ref</span> <span class="ident">host</span>, .. } <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;EncryptedTcp({})&quot;</span>, <span class="ident">host</span>),
             <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;unix-socket&quot;</span>)]</span>
-            <span class="ident">Transport</span>::<span class="ident">Unix</span> { <span class="kw-2">ref</span> <span class="ident">path</span>, .. } <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;Unix({})&quot;</span>, <span class="ident">path</span>),
+            <span class="ident">Transport::Unix</span> { <span class="kw-2">ref</span> <span class="ident">path</span>, .. } <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;Unix({})&quot;</span>, <span class="ident">path</span>),
         }
     }
 }
@@ -436,8 +436,8 @@
         <span class="ident">H</span>: <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>, <span class="ident">String</span>)<span class="op">&gt;</span>,
     {
         <span class="kw">let</span> <span class="ident">body</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">get_body</span>(<span class="ident">method</span>, <span class="ident">endpoint</span>, <span class="ident">body</span>, <span class="ident">headers</span>).<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="ident">hyper</span>::<span class="ident">body</span>::<span class="ident">to_bytes</span>(<span class="ident">body</span>).<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">string</span> <span class="op">=</span> <span class="ident">String</span>::<span class="ident">from_utf8</span>(<span class="ident">bytes</span>.<span class="ident">to_vec</span>())<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="ident">hyper::body::to_bytes</span>(<span class="ident">body</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">string</span> <span class="op">=</span> <span class="ident">String::from_utf8</span>(<span class="ident">bytes</span>.<span class="ident">to_vec</span>())<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(<span class="ident">string</span>)
     }
@@ -454,7 +454,7 @@
         <span class="ident">H</span>: <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>, <span class="ident">String</span>)<span class="op">&gt;</span>,
     {
         <span class="kw">let</span> <span class="ident">req</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">build_request</span>(<span class="ident">method</span>, <span class="ident">endpoint</span>, <span class="ident">body</span>, <span class="ident">headers</span>, <span class="ident">Request</span>::<span class="ident">builder</span>())
+            .<span class="ident">build_request</span>(<span class="ident">method</span>, <span class="ident">endpoint</span>, <span class="ident">body</span>, <span class="ident">headers</span>, <span class="ident">Request::builder</span>())
             .<span class="ident">expect</span>(<span class="string">&quot;Failed to build request!&quot;</span>);
 
         <span class="kw">let</span> <span class="ident">response</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">send_request</span>(<span class="ident">req</span>).<span class="kw">await</span><span class="question-mark">?</span>;
@@ -463,17 +463,17 @@
 
         <span class="kw">match</span> <span class="ident">status</span> {
             <span class="comment">// Success case: pass on the response</span>
-            <span class="ident">StatusCode</span>::<span class="ident">OK</span>
-            <span class="op">|</span> <span class="ident">StatusCode</span>::<span class="ident">CREATED</span>
-            <span class="op">|</span> <span class="ident">StatusCode</span>::<span class="ident">SWITCHING_PROTOCOLS</span>
-            <span class="op">|</span> <span class="ident">StatusCode</span>::<span class="ident">NO_CONTENT</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">response</span>.<span class="ident">into_body</span>()),
+            <span class="ident">StatusCode::OK</span>
+            <span class="op">|</span> <span class="ident">StatusCode::CREATED</span>
+            <span class="op">|</span> <span class="ident">StatusCode::SWITCHING_PROTOCOLS</span>
+            <span class="op">|</span> <span class="ident">StatusCode::NO_CONTENT</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">response</span>.<span class="ident">into_body</span>()),
             <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="kw">let</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="ident">hyper</span>::<span class="ident">body</span>::<span class="ident">to_bytes</span>(<span class="ident">response</span>.<span class="ident">into_body</span>()).<span class="kw">await</span><span class="question-mark">?</span>;
-                <span class="kw">let</span> <span class="ident">message_body</span> <span class="op">=</span> <span class="ident">String</span>::<span class="ident">from_utf8</span>(<span class="ident">bytes</span>.<span class="ident">to_vec</span>())<span class="question-mark">?</span>;
+                <span class="kw">let</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="ident">hyper::body::to_bytes</span>(<span class="ident">response</span>.<span class="ident">into_body</span>()).<span class="kw">await</span><span class="question-mark">?</span>;
+                <span class="kw">let</span> <span class="ident">message_body</span> <span class="op">=</span> <span class="ident">String::from_utf8</span>(<span class="ident">bytes</span>.<span class="ident">to_vec</span>())<span class="question-mark">?</span>;
 
-                <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">Fault</span> {
+                <span class="prelude-val">Err</span>(<span class="ident">Error::Fault</span> {
                     <span class="ident">code</span>: <span class="ident">status</span>,
-                    <span class="ident">message</span>: <span class="self">Self</span>::<span class="ident">get_error_message</span>(<span class="kw-2">&amp;</span><span class="ident">message_body</span>).<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> {
+                    <span class="ident">message</span>: <span class="self">Self</span><span class="ident">::get_error_message</span>(<span class="kw-2">&amp;</span><span class="ident">message_body</span>).<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> {
                         <span class="ident">status</span>
                             .<span class="ident">canonical_reason</span>()
                             .<span class="ident">unwrap_or</span>(<span class="string">&quot;unknown error code&quot;</span>)
@@ -522,31 +522,31 @@
         <span class="ident">endpoint</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span>,
         <span class="ident">body</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">B</span>, <span class="ident">Mime</span>)<span class="op">&gt;</span>,
         <span class="ident">headers</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>,
-        <span class="ident">builder</span>: <span class="ident">hyper</span>::<span class="ident">http</span>::<span class="ident">request</span>::<span class="ident">Builder</span>,
+        <span class="ident">builder</span>: <span class="ident">hyper::http::request::Builder</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Request</span><span class="op">&lt;</span><span class="ident">Body</span><span class="op">&gt;</span><span class="op">&gt;</span>
     <span class="kw">where</span>
         <span class="ident">B</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Body</span><span class="op">&gt;</span>,
         <span class="ident">H</span>: <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>, <span class="ident">String</span>)<span class="op">&gt;</span>,
     {
         <span class="kw">let</span> <span class="ident">req</span> <span class="op">=</span> <span class="kw">match</span> <span class="kw-2">*</span><span class="self">self</span> {
-            <span class="ident">Transport</span>::<span class="ident">Tcp</span> { <span class="kw-2">ref</span> <span class="ident">host</span>, .. } <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">Transport::Tcp</span> { <span class="kw-2">ref</span> <span class="ident">host</span>, .. } <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="ident">builder</span>
                     .<span class="ident">method</span>(<span class="ident">method</span>)
-                    .<span class="ident">uri</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}{}&quot;</span>, <span class="ident">host</span>, <span class="ident">endpoint</span>.<span class="ident">as_ref</span>()))
+                    .<span class="ident">uri</span>(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{}{}&quot;</span>, <span class="ident">host</span>, <span class="ident">endpoint</span>.<span class="ident">as_ref</span>()))
             }
             <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;tls&quot;</span>)]</span>
-            <span class="ident">Transport</span>::<span class="ident">EncryptedTcp</span> { <span class="kw-2">ref</span> <span class="ident">host</span>, .. } <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">Transport::EncryptedTcp</span> { <span class="kw-2">ref</span> <span class="ident">host</span>, .. } <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="ident">builder</span>
                     .<span class="ident">method</span>(<span class="ident">method</span>)
-                    .<span class="ident">uri</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}{}&quot;</span>, <span class="ident">host</span>, <span class="ident">endpoint</span>.<span class="ident">as_ref</span>()))
+                    .<span class="ident">uri</span>(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{}{}&quot;</span>, <span class="ident">host</span>, <span class="ident">endpoint</span>.<span class="ident">as_ref</span>()))
             }
             <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;unix-socket&quot;</span>)]</span>
-            <span class="ident">Transport</span>::<span class="ident">Unix</span> { <span class="kw-2">ref</span> <span class="ident">path</span>, .. } <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="kw">let</span> <span class="ident">uri</span> <span class="op">=</span> <span class="ident">DomainUri</span>::<span class="ident">new</span>(<span class="kw-2">&amp;</span><span class="ident">path</span>, <span class="ident">endpoint</span>.<span class="ident">as_ref</span>());
+            <span class="ident">Transport::Unix</span> { <span class="kw-2">ref</span> <span class="ident">path</span>, .. } <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="kw">let</span> <span class="ident">uri</span> <span class="op">=</span> <span class="ident">DomainUri::new</span>(<span class="kw-2">&amp;</span><span class="ident">path</span>, <span class="ident">endpoint</span>.<span class="ident">as_ref</span>());
                 <span class="ident">builder</span>.<span class="ident">method</span>(<span class="ident">method</span>).<span class="ident">uri</span>(<span class="ident">uri</span>)
             }
         };
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">req</span> <span class="op">=</span> <span class="ident">req</span>.<span class="ident">header</span>(<span class="ident">header</span>::<span class="ident">HOST</span>, <span class="string">&quot;&quot;</span>);
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">req</span> <span class="op">=</span> <span class="ident">req</span>.<span class="ident">header</span>(<span class="ident">header::HOST</span>, <span class="string">&quot;&quot;</span>);
 
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">h</span>) <span class="op">=</span> <span class="ident">headers</span> {
             <span class="kw">for</span> (<span class="ident">k</span>, <span class="ident">v</span>) <span class="kw">in</span> <span class="ident">h</span>.<span class="ident">into_iter</span>() {
@@ -556,23 +556,23 @@
 
         <span class="kw">match</span> <span class="ident">body</span> {
             <span class="prelude-val">Some</span>((<span class="ident">b</span>, <span class="ident">c</span>)) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">req</span>
-                .<span class="ident">header</span>(<span class="ident">header</span>::<span class="ident">CONTENT_TYPE</span>, <span class="kw-2">&amp;</span><span class="ident">c</span>.<span class="ident">to_string</span>()[..])
+                .<span class="ident">header</span>(<span class="ident">header::CONTENT_TYPE</span>, <span class="kw-2">&amp;</span><span class="ident">c</span>.<span class="ident">to_string</span>()[..])
                 .<span class="ident">body</span>(<span class="ident">b</span>.<span class="ident">into</span>())<span class="question-mark">?</span>),
-            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">req</span>.<span class="ident">body</span>(<span class="ident">Body</span>::<span class="ident">empty</span>())<span class="question-mark">?</span>),
+            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">req</span>.<span class="ident">body</span>(<span class="ident">Body::empty</span>())<span class="question-mark">?</span>),
         }
     }
 
     <span class="doccomment">/// Send the given request to the docker daemon and return a Future of the response.</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">send_request</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">req</span>: <span class="ident">Request</span><span class="op">&lt;</span><span class="ident">hyper</span>::<span class="ident">Body</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">hyper</span>::<span class="ident">Response</span><span class="op">&lt;</span><span class="ident">Body</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        <span class="ident">req</span>: <span class="ident">Request</span><span class="op">&lt;</span><span class="ident">hyper::Body</span><span class="op">&gt;</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">hyper::Response</span><span class="op">&lt;</span><span class="ident">Body</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">Transport</span>::<span class="ident">Tcp</span> { <span class="kw-2">ref</span> <span class="ident">client</span>, .. } <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">client</span>.<span class="ident">request</span>(<span class="ident">req</span>).<span class="kw">await</span><span class="question-mark">?</span>),
+            <span class="ident">Transport::Tcp</span> { <span class="kw-2">ref</span> <span class="ident">client</span>, .. } <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">client</span>.<span class="ident">request</span>(<span class="ident">req</span>).<span class="kw">await</span><span class="question-mark">?</span>),
             <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;tls&quot;</span>)]</span>
-            <span class="ident">Transport</span>::<span class="ident">EncryptedTcp</span> { <span class="kw-2">ref</span> <span class="ident">client</span>, .. } <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">client</span>.<span class="ident">request</span>(<span class="ident">req</span>).<span class="kw">await</span><span class="question-mark">?</span>),
+            <span class="ident">Transport::EncryptedTcp</span> { <span class="kw-2">ref</span> <span class="ident">client</span>, .. } <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">client</span>.<span class="ident">request</span>(<span class="ident">req</span>).<span class="kw">await</span><span class="question-mark">?</span>),
             <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;unix-socket&quot;</span>)]</span>
-            <span class="ident">Transport</span>::<span class="ident">Unix</span> { <span class="kw-2">ref</span> <span class="ident">client</span>, .. } <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">client</span>.<span class="ident">request</span>(<span class="ident">req</span>).<span class="kw">await</span><span class="question-mark">?</span>),
+            <span class="ident">Transport::Unix</span> { <span class="kw-2">ref</span> <span class="ident">client</span>, .. } <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">client</span>.<span class="ident">request</span>(<span class="ident">req</span>).<span class="kw">await</span><span class="question-mark">?</span>),
         }
     }
 
@@ -586,7 +586,7 @@
         <span class="ident">method</span>: <span class="ident">Method</span>,
         <span class="ident">endpoint</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span>,
         <span class="ident">body</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">B</span>, <span class="ident">Mime</span>)<span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">hyper</span>::<span class="ident">upgrade</span>::<span class="ident">Upgraded</span><span class="op">&gt;</span>
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">hyper::upgrade::Upgraded</span><span class="op">&gt;</span>
     <span class="kw">where</span>
         <span class="ident">B</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Body</span><span class="op">&gt;</span>,
     {
@@ -595,18 +595,18 @@
                 <span class="ident">method</span>,
                 <span class="ident">endpoint</span>,
                 <span class="ident">body</span>,
-                <span class="prelude-val">None</span>::<span class="op">&lt;</span><span class="ident">iter</span>::<span class="ident">Empty</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-                <span class="ident">Request</span>::<span class="ident">builder</span>()
-                    .<span class="ident">header</span>(<span class="ident">header</span>::<span class="ident">CONNECTION</span>, <span class="string">&quot;Upgrade&quot;</span>)
-                    .<span class="ident">header</span>(<span class="ident">header</span>::<span class="ident">UPGRADE</span>, <span class="string">&quot;tcp&quot;</span>),
+                <span class="prelude-val">None</span>::<span class="op">&lt;</span><span class="ident">iter::Empty</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+                <span class="ident">Request::builder</span>()
+                    .<span class="ident">header</span>(<span class="ident">header::CONNECTION</span>, <span class="string">&quot;Upgrade&quot;</span>)
+                    .<span class="ident">header</span>(<span class="ident">header::UPGRADE</span>, <span class="string">&quot;tcp&quot;</span>),
             )
             .<span class="ident">expect</span>(<span class="string">&quot;Failed to build request!&quot;</span>);
 
         <span class="kw">let</span> <span class="ident">response</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">send_request</span>(<span class="ident">req</span>).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">match</span> <span class="ident">response</span>.<span class="ident">status</span>() {
-            <span class="ident">StatusCode</span>::<span class="ident">SWITCHING_PROTOCOLS</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">hyper</span>::<span class="ident">upgrade</span>::<span class="ident">on</span>(<span class="ident">response</span>).<span class="kw">await</span><span class="question-mark">?</span>),
-            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">ConnectionNotUpgraded</span>),
+            <span class="ident">StatusCode::SWITCHING_PROTOCOLS</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">hyper::upgrade::on</span>(<span class="ident">response</span>).<span class="kw">await</span><span class="question-mark">?</span>),
+            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">Error::ConnectionNotUpgraded</span>),
         }
     }
 
@@ -627,7 +627,7 @@
     <span class="doccomment">/// Extract the error message content from an HTTP response that</span>
     <span class="doccomment">/// contains a Docker JSON error structure.</span>
     <span class="kw">fn</span> <span class="ident">get_error_message</span>(<span class="ident">body</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span> {
-        <span class="ident">serde_json</span>::<span class="ident">from_str</span>::<span class="op">&lt;</span><span class="ident">ErrorResponse</span><span class="op">&gt;</span>(<span class="ident">body</span>)
+        <span class="ident">serde_json::from_str</span>::<span class="op">&lt;</span><span class="ident">ErrorResponse</span><span class="op">&gt;</span>(<span class="ident">body</span>)
             .<span class="ident">map</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">message</span>)
             .<span class="ident">ok</span>()
     }
@@ -641,43 +641,43 @@
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> <span class="ident">AsyncRead</span> <span class="kw">for</span> <span class="ident">Compat</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>
 <span class="kw">where</span>
-    <span class="ident">S</span>: <span class="ident">tokio</span>::<span class="ident">io</span>::<span class="ident">AsyncRead</span>,
+    <span class="ident">S</span>: <span class="ident">tokio::io::AsyncRead</span>,
 {
     <span class="kw">fn</span> <span class="ident">poll_read</span>(
         <span class="self">self</span>: <span class="ident">Pin</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span><span class="op">&gt;</span>,
         <span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
         <span class="ident">buf</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">u8</span>],
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Poll</span><span class="op">&lt;</span><span class="ident">io</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">readbuf</span> <span class="op">=</span> <span class="ident">tokio</span>::<span class="ident">io</span>::<span class="ident">ReadBuf</span>::<span class="ident">new</span>(<span class="ident">buf</span>);
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Poll</span><span class="op">&lt;</span><span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">readbuf</span> <span class="op">=</span> <span class="ident">tokio::io::ReadBuf::new</span>(<span class="ident">buf</span>);
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">project</span>().<span class="ident">tokio_multiplexer</span>.<span class="ident">poll_read</span>(<span class="ident">cx</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">readbuf</span>) {
-            <span class="ident">Poll</span>::<span class="ident">Pending</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Poll</span>::<span class="ident">Pending</span>,
-            <span class="ident">Poll</span>::<span class="ident">Ready</span>(<span class="prelude-val">Ok</span>(())) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Poll</span>::<span class="ident">Ready</span>(<span class="prelude-val">Ok</span>(<span class="ident">readbuf</span>.<span class="ident">filled</span>().<span class="ident">len</span>())),
-            <span class="ident">Poll</span>::<span class="ident">Ready</span>(<span class="prelude-val">Err</span>(<span class="ident">e</span>)) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Poll</span>::<span class="ident">Ready</span>(<span class="prelude-val">Err</span>(<span class="ident">e</span>)),
+            <span class="ident">Poll::Pending</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Poll::Pending</span>,
+            <span class="ident">Poll::Ready</span>(<span class="prelude-val">Ok</span>(())) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">Ok</span>(<span class="ident">readbuf</span>.<span class="ident">filled</span>().<span class="ident">len</span>())),
+            <span class="ident">Poll::Ready</span>(<span class="prelude-val">Err</span>(<span class="ident">e</span>)) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Poll::Ready</span>(<span class="prelude-val">Err</span>(<span class="ident">e</span>)),
         }
     }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> <span class="ident">AsyncWrite</span> <span class="kw">for</span> <span class="ident">Compat</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>
 <span class="kw">where</span>
-    <span class="ident">S</span>: <span class="ident">tokio</span>::<span class="ident">io</span>::<span class="ident">AsyncWrite</span>,
+    <span class="ident">S</span>: <span class="ident">tokio::io::AsyncWrite</span>,
 {
     <span class="kw">fn</span> <span class="ident">poll_write</span>(
         <span class="self">self</span>: <span class="ident">Pin</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span><span class="op">&gt;</span>,
         <span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
         <span class="ident">buf</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Poll</span><span class="op">&lt;</span><span class="ident">io</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Poll</span><span class="op">&lt;</span><span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">project</span>().<span class="ident">tokio_multiplexer</span>.<span class="ident">poll_write</span>(<span class="ident">cx</span>, <span class="ident">buf</span>)
     }
     <span class="kw">fn</span> <span class="ident">poll_flush</span>(
         <span class="self">self</span>: <span class="ident">Pin</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span><span class="op">&gt;</span>,
         <span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Poll</span><span class="op">&lt;</span><span class="ident">io</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span><span class="op">&gt;</span> {
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Poll</span><span class="op">&lt;</span><span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">project</span>().<span class="ident">tokio_multiplexer</span>.<span class="ident">poll_flush</span>(<span class="ident">cx</span>)
     }
     <span class="kw">fn</span> <span class="ident">poll_close</span>(
         <span class="self">self</span>: <span class="ident">Pin</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span><span class="op">&gt;</span>,
         <span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Poll</span><span class="op">&lt;</span><span class="ident">io</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span><span class="op">&gt;</span> {
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Poll</span><span class="op">&lt;</span><span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">project</span>().<span class="ident">tokio_multiplexer</span>.<span class="ident">poll_shutdown</span>(<span class="ident">cx</span>)
     }
 }
@@ -689,13 +689,13 @@
 
 <span class="kw">fn</span> <span class="ident">stream_body</span>(<span class="ident">body</span>: <span class="ident">Body</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Stream</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Bytes</span><span class="op">&gt;</span><span class="op">&gt;</span> {
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">unfold</span>(<span class="kw-2">mut</span> <span class="ident">body</span>: <span class="ident">Body</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Bytes</span><span class="op">&gt;</span>, <span class="ident">Body</span>)<span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">chunk_result</span> <span class="op">=</span> <span class="ident">body</span>.<span class="ident">next</span>().<span class="kw">await</span><span class="question-mark">?</span>.<span class="ident">map_err</span>(<span class="ident">Error</span>::<span class="ident">from</span>);
+        <span class="kw">let</span> <span class="ident">chunk_result</span> <span class="op">=</span> <span class="ident">body</span>.<span class="ident">next</span>().<span class="kw">await</span><span class="question-mark">?</span>.<span class="ident">map_err</span>(<span class="ident">Error::from</span>);
 
         <span class="prelude-val">Some</span>((<span class="ident">chunk_result</span>, <span class="ident">body</span>))
     }
 
-    <span class="ident">futures_util</span>::<span class="ident">stream</span>::<span class="ident">unfold</span>(<span class="ident">body</span>, <span class="ident">unfold</span>)
+    <span class="ident">futures_util::stream::unfold</span>(<span class="ident">body</span>, <span class="ident">unfold</span>)
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="shiplift" data-search-js="../../search-index.js"></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="shiplift" data-search-index-js="../../search-index.js" data-search-js="../../search.js"></div>
     <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script></body></html>

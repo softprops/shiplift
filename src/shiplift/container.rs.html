@@ -1,6 +1,6 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/container.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>container.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><script src="../../crates.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../favicon-16x16.png">
-<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../shiplift/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
+<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../shiplift/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
                 <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">   1</span>
 <span id="2">   2</span>
 <span id="3">   3</span>
@@ -1626,36 +1626,102 @@
 <span id="1623">1623</span>
 <span id="1624">1624</span>
 <span id="1625">1625</span>
+<span id="1626">1626</span>
+<span id="1627">1627</span>
+<span id="1628">1628</span>
+<span id="1629">1629</span>
+<span id="1630">1630</span>
+<span id="1631">1631</span>
+<span id="1632">1632</span>
+<span id="1633">1633</span>
+<span id="1634">1634</span>
+<span id="1635">1635</span>
+<span id="1636">1636</span>
+<span id="1637">1637</span>
+<span id="1638">1638</span>
+<span id="1639">1639</span>
+<span id="1640">1640</span>
+<span id="1641">1641</span>
+<span id="1642">1642</span>
+<span id="1643">1643</span>
+<span id="1644">1644</span>
+<span id="1645">1645</span>
+<span id="1646">1646</span>
+<span id="1647">1647</span>
+<span id="1648">1648</span>
+<span id="1649">1649</span>
+<span id="1650">1650</span>
+<span id="1651">1651</span>
+<span id="1652">1652</span>
+<span id="1653">1653</span>
+<span id="1654">1654</span>
+<span id="1655">1655</span>
+<span id="1656">1656</span>
+<span id="1657">1657</span>
+<span id="1658">1658</span>
+<span id="1659">1659</span>
+<span id="1660">1660</span>
+<span id="1661">1661</span>
+<span id="1662">1662</span>
+<span id="1663">1663</span>
+<span id="1664">1664</span>
+<span id="1665">1665</span>
+<span id="1666">1666</span>
+<span id="1667">1667</span>
+<span id="1668">1668</span>
+<span id="1669">1669</span>
+<span id="1670">1670</span>
+<span id="1671">1671</span>
+<span id="1672">1672</span>
+<span id="1673">1673</span>
+<span id="1674">1674</span>
+<span id="1675">1675</span>
+<span id="1676">1676</span>
+<span id="1677">1677</span>
+<span id="1678">1678</span>
+<span id="1679">1679</span>
+<span id="1680">1680</span>
+<span id="1681">1681</span>
+<span id="1682">1682</span>
+<span id="1683">1683</span>
+<span id="1684">1684</span>
+<span id="1685">1685</span>
+<span id="1686">1686</span>
+<span id="1687">1687</span>
+<span id="1688">1688</span>
+<span id="1689">1689</span>
+<span id="1690">1690</span>
+<span id="1691">1691</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Create and manage containers.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! API Reference: &lt;https://docs.docker.com/engine/api/v1.41/#tag/Container&gt;</span>
 
-<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">collections</span>::<span class="ident">HashMap</span>, <span class="ident">hash</span>::<span class="ident">Hash</span>, <span class="ident">io</span>, <span class="ident">iter</span>::<span class="ident">Peekable</span>, <span class="ident">path</span>::<span class="ident">Path</span>, <span class="ident">time</span>::<span class="ident">Duration</span>};
+<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">collections::HashMap</span>, <span class="ident">hash::Hash</span>, <span class="ident">io</span>, <span class="ident">iter::Peekable</span>, <span class="ident">path::Path</span>, <span class="ident">time::Duration</span>};
 
 <span class="kw">use</span> <span class="ident">futures_util</span>::{
     <span class="ident">io</span>::{<span class="ident">AsyncRead</span>, <span class="ident">AsyncWrite</span>},
-    <span class="ident">stream</span>::<span class="ident">Stream</span>,
+    <span class="ident">stream::Stream</span>,
     <span class="ident">TryStreamExt</span>,
 };
-<span class="kw">use</span> <span class="ident">hyper</span>::<span class="ident">Body</span>;
-<span class="kw">use</span> <span class="ident">mime</span>::<span class="ident">Mime</span>;
+<span class="kw">use</span> <span class="ident">hyper::Body</span>;
+<span class="kw">use</span> <span class="ident">mime::Mime</span>;
 <span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
 <span class="kw">use</span> <span class="ident">serde_json</span>::{<span class="ident">json</span>, <span class="ident">Map</span>, <span class="ident">Value</span>};
-<span class="kw">use</span> <span class="ident">url</span>::<span class="ident">form_urlencoded</span>;
+<span class="kw">use</span> <span class="ident">url::form_urlencoded</span>;
 
 <span class="kw">use</span> <span class="kw">crate</span>::{
-    <span class="ident">docker</span>::<span class="ident">Docker</span>,
+    <span class="ident">docker::Docker</span>,
     <span class="ident">errors</span>::{<span class="ident">Error</span>, <span class="prelude-ty">Result</span>},
     <span class="ident">exec</span>::{<span class="ident">Exec</span>, <span class="ident">ExecContainerOptions</span>},
-    <span class="ident">image</span>::<span class="ident">Config</span>,
-    <span class="ident">network</span>::<span class="ident">NetworkSettings</span>,
-    <span class="ident">transport</span>::<span class="ident">Payload</span>,
+    <span class="ident">image::Config</span>,
+    <span class="ident">network::NetworkSettings</span>,
+    <span class="ident">transport::Payload</span>,
     <span class="ident">tty</span>::{<span class="self">self</span>, <span class="ident">Multiplexer</span> <span class="kw">as</span> <span class="ident">TtyMultiPlexer</span>},
 };
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;chrono&quot;</span>)]</span>
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">datetime</span>::<span class="ident">datetime_from_unix_timestamp</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::datetime::datetime_from_unix_timestamp</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;chrono&quot;</span>)]</span>
 <span class="kw">use</span> <span class="ident">chrono</span>::{<span class="ident">DateTime</span>, <span class="ident">Utc</span>};
 
@@ -1692,7 +1758,7 @@
     <span class="doccomment">/// [Api Reference](https://docs.docker.com/engine/api/v1.41/#operation/ContainerInspect)</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">inspect</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ContainerDetails</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">docker</span>
-            .<span class="ident">get_json</span>::<span class="op">&lt;</span><span class="ident">ContainerDetails</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/containers/{}/json&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>)[..])
+            .<span class="ident">get_json</span>::<span class="op">&lt;</span><span class="ident">ContainerDetails</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;/containers/{}/json&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>)[..])
             .<span class="kw">await</span>
     }
 
@@ -1703,9 +1769,9 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">psargs</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Top</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">path</span> <span class="op">=</span> <span class="macro">vec</span><span class="macro">!</span>[<span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/containers/{}/top&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>)];
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">path</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="macro">format!</span>(<span class="string">&quot;/containers/{}/top&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>)];
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="ident">args</span>) <span class="op">=</span> <span class="ident">psargs</span> {
-            <span class="kw">let</span> <span class="ident">encoded</span> <span class="op">=</span> <span class="ident">form_urlencoded</span>::<span class="ident">Serializer</span>::<span class="ident">new</span>(<span class="ident">String</span>::<span class="ident">new</span>())
+            <span class="kw">let</span> <span class="ident">encoded</span> <span class="op">=</span> <span class="ident">form_urlencoded::Serializer::new</span>(<span class="ident">String::new</span>())
                 .<span class="ident">append_pair</span>(<span class="string">&quot;ps_args&quot;</span>, <span class="ident">args</span>)
                 .<span class="ident">finish</span>();
             <span class="ident">path</span>.<span class="ident">push</span>(<span class="ident">encoded</span>)
@@ -1719,22 +1785,22 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">logs</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">LogsOptions</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Stream</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">tty</span>::<span class="ident">TtyChunk</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Unpin</span> <span class="op">+</span> <span class="lifetime">&#39;docker</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">path</span> <span class="op">=</span> <span class="macro">vec</span><span class="macro">!</span>[<span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/containers/{}/logs&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>)];
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Stream</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">tty::TtyChunk</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Unpin</span> <span class="op">+</span> <span class="lifetime">&#39;docker</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">path</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="macro">format!</span>(<span class="string">&quot;/containers/{}/logs&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>)];
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">query</span>) <span class="op">=</span> <span class="ident">opts</span>.<span class="ident">serialize</span>() {
             <span class="ident">path</span>.<span class="ident">push</span>(<span class="ident">query</span>)
         }
 
-        <span class="kw">let</span> <span class="ident">stream</span> <span class="op">=</span> <span class="ident">Box</span>::<span class="ident">pin</span>(<span class="self">self</span>.<span class="ident">docker</span>.<span class="ident">stream_get</span>(<span class="ident">path</span>.<span class="ident">join</span>(<span class="string">&quot;?&quot;</span>)));
+        <span class="kw">let</span> <span class="ident">stream</span> <span class="op">=</span> <span class="ident">Box::pin</span>(<span class="self">self</span>.<span class="ident">docker</span>.<span class="ident">stream_get</span>(<span class="ident">path</span>.<span class="ident">join</span>(<span class="string">&quot;?&quot;</span>)));
 
-        <span class="ident">Box</span>::<span class="ident">pin</span>(<span class="ident">tty</span>::<span class="ident">decode</span>(<span class="ident">stream</span>))
+        <span class="ident">Box::pin</span>(<span class="ident">tty::decode</span>(<span class="ident">stream</span>))
     }
 
     <span class="doccomment">/// Attaches a multiplexed TCP stream to the container that can be used to read Stdout, Stderr and write Stdin.</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">attach_raw</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">AsyncRead</span> <span class="op">+</span> <span class="ident">AsyncWrite</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="lifetime">&#39;docker</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">docker</span>
             .<span class="ident">stream_post_upgrade</span>(
-                <span class="macro">format</span><span class="macro">!</span>(
+                <span class="macro">format!</span>(
                     <span class="string">&quot;/containers/{}/attach?stream=1&amp;stdout=1&amp;stderr=1&amp;stdin=1&quot;</span>,
                     <span class="self">self</span>.<span class="ident">id</span>
                 ),
@@ -1755,7 +1821,7 @@
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">attach</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">TtyMultiPlexer</span><span class="op">&lt;</span><span class="lifetime">&#39;docker</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">tcp_stream</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">attach_raw</span>().<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(<span class="ident">TtyMultiPlexer</span>::<span class="ident">new</span>(<span class="ident">tcp_stream</span>))
+        <span class="prelude-val">Ok</span>(<span class="ident">TtyMultiPlexer::new</span>(<span class="ident">tcp_stream</span>))
     }
 
     <span class="doccomment">/// Returns a set of changes made to the container instance</span>
@@ -1763,7 +1829,7 @@
     <span class="doccomment">/// [Api Reference](https://docs.docker.com/engine/api/v1.41/#operation/ContainerChanges)</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">changes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Change</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">docker</span>
-            .<span class="ident">get_json</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Change</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/containers/{}/changes&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>)[..])
+            .<span class="ident">get_json</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Change</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;/containers/{}/changes&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>)[..])
             .<span class="kw">await</span>
     }
 
@@ -1772,7 +1838,7 @@
     <span class="doccomment">/// [Api Reference](https://docs.docker.com/engine/api/v1.41/#operation/ContainerExport)</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">export</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Stream</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;docker</span> {
         <span class="self">self</span>.<span class="ident">docker</span>
-            .<span class="ident">stream_get</span>(<span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/containers/{}/export&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>))
+            .<span class="ident">stream_get</span>(<span class="macro">format!</span>(<span class="string">&quot;/containers/{}/export&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>))
             .<span class="ident">map_ok</span>(<span class="op">|</span><span class="ident">c</span><span class="op">|</span> <span class="ident">c</span>.<span class="ident">to_vec</span>())
     }
 
@@ -1780,20 +1846,20 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// [Api Reference](https://docs.docker.com/engine/api/v1.41/#operation/ContainerStats)</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">stats</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Stream</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Stats</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Unpin</span> <span class="op">+</span> <span class="lifetime">&#39;docker</span> {
-        <span class="kw">let</span> <span class="ident">codec</span> <span class="op">=</span> <span class="ident">futures_codec</span>::<span class="ident">LinesCodec</span> {};
+        <span class="kw">let</span> <span class="ident">codec</span> <span class="op">=</span> <span class="ident">futures_codec::LinesCodec</span> {};
 
-        <span class="kw">let</span> <span class="ident">reader</span> <span class="op">=</span> <span class="ident">Box</span>::<span class="ident">pin</span>(
+        <span class="kw">let</span> <span class="ident">reader</span> <span class="op">=</span> <span class="ident">Box::pin</span>(
             <span class="self">self</span>.<span class="ident">docker</span>
-                .<span class="ident">stream_get</span>(<span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/containers/{}/stats&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>))
-                .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">io</span>::<span class="ident">Error</span>::<span class="ident">new</span>(<span class="ident">io</span>::<span class="ident">ErrorKind</span>::<span class="ident">Other</span>, <span class="ident">e</span>)),
+                .<span class="ident">stream_get</span>(<span class="macro">format!</span>(<span class="string">&quot;/containers/{}/stats&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>))
+                .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">io::Error::new</span>(<span class="ident">io::ErrorKind::Other</span>, <span class="ident">e</span>)),
         )
         .<span class="ident">into_async_read</span>();
 
-        <span class="ident">Box</span>::<span class="ident">pin</span>(
-            <span class="ident">futures_codec</span>::<span class="ident">FramedRead</span>::<span class="ident">new</span>(<span class="ident">reader</span>, <span class="ident">codec</span>)
-                .<span class="ident">map_err</span>(<span class="ident">Error</span>::<span class="ident">IO</span>)
+        <span class="ident">Box::pin</span>(
+            <span class="ident">futures_codec::FramedRead::new</span>(<span class="ident">reader</span>, <span class="ident">codec</span>)
+                .<span class="ident">map_err</span>(<span class="ident">Error::IO</span>)
                 .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">s</span>: <span class="ident">String</span><span class="op">|</span> <span class="kw">async</span> <span class="kw">move</span> {
-                    <span class="ident">serde_json</span>::<span class="ident">from_str</span>(<span class="kw-2">&amp;</span><span class="ident">s</span>).<span class="ident">map_err</span>(<span class="ident">Error</span>::<span class="ident">SerdeJsonError</span>)
+                    <span class="ident">serde_json::from_str</span>(<span class="kw-2">&amp;</span><span class="ident">s</span>).<span class="ident">map_err</span>(<span class="ident">Error::SerdeJsonError</span>)
                 }),
         )
     }
@@ -1803,7 +1869,7 @@
     <span class="doccomment">/// [Api Reference](https://docs.docker.com/engine/api/v1.41/#operation/ContainerStart)</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">start</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">docker</span>
-            .<span class="ident">post</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/containers/{}/start&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>)[..], <span class="prelude-val">None</span>)
+            .<span class="ident">post</span>(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;/containers/{}/start&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>)[..], <span class="prelude-val">None</span>)
             .<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
@@ -1815,9 +1881,9 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">wait</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Duration</span><span class="op">&gt;</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">path</span> <span class="op">=</span> <span class="macro">vec</span><span class="macro">!</span>[<span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/containers/{}/stop&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>)];
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">path</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="macro">format!</span>(<span class="string">&quot;/containers/{}/stop&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>)];
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">w</span>) <span class="op">=</span> <span class="ident">wait</span> {
-            <span class="kw">let</span> <span class="ident">encoded</span> <span class="op">=</span> <span class="ident">form_urlencoded</span>::<span class="ident">Serializer</span>::<span class="ident">new</span>(<span class="ident">String</span>::<span class="ident">new</span>())
+            <span class="kw">let</span> <span class="ident">encoded</span> <span class="op">=</span> <span class="ident">form_urlencoded::Serializer::new</span>(<span class="ident">String::new</span>())
                 .<span class="ident">append_pair</span>(<span class="string">&quot;t&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">w</span>.<span class="ident">as_secs</span>().<span class="ident">to_string</span>())
                 .<span class="ident">finish</span>();
 
@@ -1834,9 +1900,9 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">wait</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Duration</span><span class="op">&gt;</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">path</span> <span class="op">=</span> <span class="macro">vec</span><span class="macro">!</span>[<span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/containers/{}/restart&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>)];
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">path</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="macro">format!</span>(<span class="string">&quot;/containers/{}/restart&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>)];
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">w</span>) <span class="op">=</span> <span class="ident">wait</span> {
-            <span class="kw">let</span> <span class="ident">encoded</span> <span class="op">=</span> <span class="ident">form_urlencoded</span>::<span class="ident">Serializer</span>::<span class="ident">new</span>(<span class="ident">String</span>::<span class="ident">new</span>())
+            <span class="kw">let</span> <span class="ident">encoded</span> <span class="op">=</span> <span class="ident">form_urlencoded::Serializer::new</span>(<span class="ident">String::new</span>())
                 .<span class="ident">append_pair</span>(<span class="string">&quot;t&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">w</span>.<span class="ident">as_secs</span>().<span class="ident">to_string</span>())
                 .<span class="ident">finish</span>();
             <span class="ident">path</span>.<span class="ident">push</span>(<span class="ident">encoded</span>)
@@ -1852,9 +1918,9 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">signal</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">path</span> <span class="op">=</span> <span class="macro">vec</span><span class="macro">!</span>[<span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/containers/{}/kill&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>)];
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">path</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="macro">format!</span>(<span class="string">&quot;/containers/{}/kill&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>)];
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">sig</span>) <span class="op">=</span> <span class="ident">signal</span> {
-            <span class="kw">let</span> <span class="ident">encoded</span> <span class="op">=</span> <span class="ident">form_urlencoded</span>::<span class="ident">Serializer</span>::<span class="ident">new</span>(<span class="ident">String</span>::<span class="ident">new</span>())
+            <span class="kw">let</span> <span class="ident">encoded</span> <span class="op">=</span> <span class="ident">form_urlencoded::Serializer::new</span>(<span class="ident">String::new</span>())
                 .<span class="ident">append_pair</span>(<span class="string">&quot;signal&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">sig</span>.<span class="ident">to_owned</span>())
                 .<span class="ident">finish</span>();
             <span class="ident">path</span>.<span class="ident">push</span>(<span class="ident">encoded</span>)
@@ -1870,12 +1936,12 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">query</span> <span class="op">=</span> <span class="ident">form_urlencoded</span>::<span class="ident">Serializer</span>::<span class="ident">new</span>(<span class="ident">String</span>::<span class="ident">new</span>())
+        <span class="kw">let</span> <span class="ident">query</span> <span class="op">=</span> <span class="ident">form_urlencoded::Serializer::new</span>(<span class="ident">String::new</span>())
             .<span class="ident">append_pair</span>(<span class="string">&quot;name&quot;</span>, <span class="ident">name</span>)
             .<span class="ident">finish</span>();
         <span class="self">self</span>.<span class="ident">docker</span>
             .<span class="ident">post</span>(
-                <span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/containers/{}/rename?{}&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>, <span class="ident">query</span>)[..],
+                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;/containers/{}/rename?{}&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>, <span class="ident">query</span>)[..],
                 <span class="prelude-val">None</span>,
             )
             .<span class="kw">await</span><span class="question-mark">?</span>;
@@ -1887,7 +1953,7 @@
     <span class="doccomment">/// [Api Reference](https://docs.docker.com/engine/api/v1.41/#operation/ContainerPause)</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">pause</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">docker</span>
-            .<span class="ident">post</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/containers/{}/pause&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>)[..], <span class="prelude-val">None</span>)
+            .<span class="ident">post</span>(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;/containers/{}/pause&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>)[..], <span class="prelude-val">None</span>)
             .<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
@@ -1897,7 +1963,7 @@
     <span class="doccomment">/// [Api Reference](https://docs.docker.com/engine/api/v1.41/#operation/ContainerUnpause)</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">unpause</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">docker</span>
-            .<span class="ident">post</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/containers/{}/unpause&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>)[..], <span class="prelude-val">None</span>)
+            .<span class="ident">post</span>(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;/containers/{}/unpause&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>)[..], <span class="prelude-val">None</span>)
             .<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
@@ -1907,7 +1973,7 @@
     <span class="doccomment">/// [Api Reference](https://docs.docker.com/engine/api/v1.41/#operation/ContainerWait)</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">wait</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Exit</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">docker</span>
-            .<span class="ident">post_json</span>(<span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/containers/{}/wait&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>), <span class="ident">Payload</span>::<span class="prelude-val">None</span>)
+            .<span class="ident">post_json</span>(<span class="macro">format!</span>(<span class="string">&quot;/containers/{}/wait&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>), <span class="ident">Payload::None</span>)
             .<span class="kw">await</span>
     }
 
@@ -1918,7 +1984,7 @@
     <span class="doccomment">/// [Api Reference](https://docs.docker.com/engine/api/v1.41/#operation/ContainerDelete)</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">delete</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">docker</span>
-            .<span class="ident">delete</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/containers/{}&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>)[..])
+            .<span class="ident">delete</span>(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;/containers/{}&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>)[..])
             .<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
@@ -1930,7 +1996,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">opts</span>: <span class="ident">RmContainerOptions</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">path</span> <span class="op">=</span> <span class="macro">vec</span><span class="macro">!</span>[<span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/containers/{}&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>)];
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">path</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="macro">format!</span>(<span class="string">&quot;/containers/{}&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>)];
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">query</span>) <span class="op">=</span> <span class="ident">opts</span>.<span class="ident">serialize</span>() {
             <span class="ident">path</span>.<span class="ident">push</span>(<span class="ident">query</span>)
         }
@@ -1944,8 +2010,8 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">exec</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">ExecContainerOptions</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Stream</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">tty</span>::<span class="ident">TtyChunk</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Unpin</span> <span class="op">+</span> <span class="lifetime">&#39;docker</span> {
-        <span class="ident">Exec</span>::<span class="ident">create_and_start</span>(<span class="self">self</span>.<span class="ident">docker</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">id</span>, <span class="ident">opts</span>)
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Stream</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">tty::TtyChunk</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Unpin</span> <span class="op">+</span> <span class="lifetime">&#39;docker</span> {
+        <span class="ident">Exec::create_and_start</span>(<span class="self">self</span>.<span class="ident">docker</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">id</span>, <span class="ident">opts</span>)
     }
 
     <span class="doccomment">/// Copy a file/folder from the container.  The resulting stream is a tarball of the extracted</span>
@@ -1962,11 +2028,11 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Stream</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;docker</span> {
-        <span class="kw">let</span> <span class="ident">path_arg</span> <span class="op">=</span> <span class="ident">form_urlencoded</span>::<span class="ident">Serializer</span>::<span class="ident">new</span>(<span class="ident">String</span>::<span class="ident">new</span>())
+        <span class="kw">let</span> <span class="ident">path_arg</span> <span class="op">=</span> <span class="ident">form_urlencoded::Serializer::new</span>(<span class="ident">String::new</span>())
             .<span class="ident">append_pair</span>(<span class="string">&quot;path&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">path</span>.<span class="ident">to_string_lossy</span>())
             .<span class="ident">finish</span>();
 
-        <span class="kw">let</span> <span class="ident">endpoint</span> <span class="op">=</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/containers/{}/archive?{}&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>, <span class="ident">path_arg</span>);
+        <span class="kw">let</span> <span class="ident">endpoint</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;/containers/{}/archive?{}&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>, <span class="ident">path_arg</span>);
         <span class="self">self</span>.<span class="ident">docker</span>.<span class="ident">stream_get</span>(<span class="ident">endpoint</span>).<span class="ident">map_ok</span>(<span class="op">|</span><span class="ident">c</span><span class="op">|</span> <span class="ident">c</span>.<span class="ident">to_vec</span>())
     }
 
@@ -1983,8 +2049,8 @@
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="ident">path</span>.<span class="ident">as_ref</span>();
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ar</span> <span class="op">=</span> <span class="ident">tar</span>::<span class="ident">Builder</span>::<span class="ident">new</span>(<span class="ident">Vec</span>::<span class="ident">new</span>());
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">header</span> <span class="op">=</span> <span class="ident">tar</span>::<span class="ident">Header</span>::<span class="ident">new_gnu</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ar</span> <span class="op">=</span> <span class="ident">tar::Builder::new</span>(<span class="ident">Vec::new</span>());
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">header</span> <span class="op">=</span> <span class="ident">tar::Header::new_gnu</span>();
         <span class="ident">header</span>.<span class="ident">set_size</span>(<span class="ident">bytes</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">u64</span>);
         <span class="ident">header</span>.<span class="ident">set_mode</span>(<span class="number">0o0644</span>);
         <span class="ident">ar</span>.<span class="ident">append_data</span>(
@@ -1992,13 +2058,13 @@
             <span class="ident">path</span>.<span class="ident">to_path_buf</span>()
                 .<span class="ident">iter</span>()
                 .<span class="ident">skip</span>(<span class="number">1</span>)
-                .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">std</span>::<span class="ident">path</span>::<span class="ident">PathBuf</span><span class="op">&gt;</span>(),
+                .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">std::path::PathBuf</span><span class="op">&gt;</span>(),
             <span class="ident">bytes</span>,
         )
         .<span class="ident">unwrap</span>();
         <span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="ident">ar</span>.<span class="ident">into_inner</span>().<span class="ident">unwrap</span>();
 
-        <span class="self">self</span>.<span class="ident">copy_to</span>(<span class="ident">Path</span>::<span class="ident">new</span>(<span class="string">&quot;/&quot;</span>), <span class="ident">data</span>.<span class="ident">into</span>()).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="self">self</span>.<span class="ident">copy_to</span>(<span class="ident">Path::new</span>(<span class="string">&quot;/&quot;</span>), <span class="ident">data</span>.<span class="ident">into</span>()).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
 
@@ -2012,7 +2078,7 @@
         <span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>,
         <span class="ident">body</span>: <span class="ident">Body</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">path_arg</span> <span class="op">=</span> <span class="ident">form_urlencoded</span>::<span class="ident">Serializer</span>::<span class="ident">new</span>(<span class="ident">String</span>::<span class="ident">new</span>())
+        <span class="kw">let</span> <span class="ident">path_arg</span> <span class="op">=</span> <span class="ident">form_urlencoded::Serializer::new</span>(<span class="ident">String::new</span>())
             .<span class="ident">append_pair</span>(<span class="string">&quot;path&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">path</span>.<span class="ident">to_string_lossy</span>())
             .<span class="ident">finish</span>();
 
@@ -2020,7 +2086,7 @@
 
         <span class="self">self</span>.<span class="ident">docker</span>
             .<span class="ident">put</span>(
-                <span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;/containers/{}/archive?{}&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>, <span class="ident">path_arg</span>),
+                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;/containers/{}/archive?{}&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>, <span class="ident">path_arg</span>),
                 <span class="prelude-val">Some</span>((<span class="ident">body</span>, <span class="ident">mime</span>)),
             )
             .<span class="kw">await</span><span class="question-mark">?</span>;
@@ -2048,7 +2114,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">ContainerListOptions</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">ContainerInfo</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">path</span> <span class="op">=</span> <span class="macro">vec</span><span class="macro">!</span>[<span class="string">&quot;/containers/json&quot;</span>.<span class="ident">to_owned</span>()];
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">path</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="string">&quot;/containers/json&quot;</span>.<span class="ident">to_owned</span>()];
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">query</span>) <span class="op">=</span> <span class="ident">opts</span>.<span class="ident">serialize</span>() {
             <span class="ident">path</span>.<span class="ident">push</span>(<span class="ident">query</span>)
         }
@@ -2065,7 +2131,7 @@
     <span class="kw">where</span>
         <span class="ident">S</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
     {
-        <span class="ident">Container</span>::<span class="ident">new</span>(<span class="self">self</span>.<span class="ident">docker</span>, <span class="ident">name</span>)
+        <span class="ident">Container::new</span>(<span class="self">self</span>.<span class="ident">docker</span>, <span class="ident">name</span>)
     }
 
     <span class="doccomment">/// Returns a builder interface for creating a new container instance</span>
@@ -2074,18 +2140,18 @@
         <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">ContainerOptions</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ContainerCreateInfo</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">body</span>: <span class="ident">Body</span> <span class="op">=</span> <span class="ident">opts</span>.<span class="ident">serialize</span>()<span class="question-mark">?</span>.<span class="ident">into</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">path</span> <span class="op">=</span> <span class="macro">vec</span><span class="macro">!</span>[<span class="string">&quot;/containers/create&quot;</span>.<span class="ident">to_owned</span>()];
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">path</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="string">&quot;/containers/create&quot;</span>.<span class="ident">to_owned</span>()];
 
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="ident">name</span>) <span class="op">=</span> <span class="ident">opts</span>.<span class="ident">name</span> {
             <span class="ident">path</span>.<span class="ident">push</span>(
-                <span class="ident">form_urlencoded</span>::<span class="ident">Serializer</span>::<span class="ident">new</span>(<span class="ident">String</span>::<span class="ident">new</span>())
+                <span class="ident">form_urlencoded::Serializer::new</span>(<span class="ident">String::new</span>())
                     .<span class="ident">append_pair</span>(<span class="string">&quot;name&quot;</span>, <span class="ident">name</span>)
                     .<span class="ident">finish</span>(),
             );
         }
 
         <span class="self">self</span>.<span class="ident">docker</span>
-            .<span class="ident">post_json</span>(<span class="kw-2">&amp;</span><span class="ident">path</span>.<span class="ident">join</span>(<span class="string">&quot;?&quot;</span>), <span class="prelude-val">Some</span>((<span class="ident">body</span>, <span class="ident">mime</span>::<span class="ident">APPLICATION_JSON</span>)))
+            .<span class="ident">post_json</span>(<span class="kw-2">&amp;</span><span class="ident">path</span>.<span class="ident">join</span>(<span class="string">&quot;?&quot;</span>), <span class="prelude-val">Some</span>((<span class="ident">body</span>, <span class="ident">mime::APPLICATION_JSON</span>)))
             .<span class="kw">await</span>
     }
 }
@@ -2099,7 +2165,7 @@
 <span class="kw">impl</span> <span class="ident">ContainerListOptions</span> {
     <span class="doccomment">/// return a new instance of a builder for options</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">builder</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">ContainerListOptionsBuilder</span> {
-        <span class="ident">ContainerListOptionsBuilder</span>::<span class="ident">default</span>()
+        <span class="ident">ContainerListOptionsBuilder::default</span>()
     }
 
     <span class="doccomment">/// serialize options as a string. returns None if no options are defined</span>
@@ -2108,7 +2174,7 @@
             <span class="prelude-val">None</span>
         } <span class="kw">else</span> {
             <span class="prelude-val">Some</span>(
-                <span class="ident">form_urlencoded</span>::<span class="ident">Serializer</span>::<span class="ident">new</span>(<span class="ident">String</span>::<span class="ident">new</span>())
+                <span class="ident">form_urlencoded::Serializer::new</span>(<span class="ident">String::new</span>())
                     .<span class="ident">extend_pairs</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">params</span>)
                     .<span class="ident">finish</span>(),
             )
@@ -2135,19 +2201,21 @@
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">filters</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">ContainerFilter</span><span class="op">&gt;</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">param</span> <span class="op">=</span> <span class="ident">HashMap</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">param</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">HashMap::new</span>();
         <span class="kw">for</span> <span class="ident">f</span> <span class="kw">in</span> <span class="ident">filters</span> {
-            <span class="kw">match</span> <span class="ident">f</span> {
-                <span class="ident">ContainerFilter</span>::<span class="ident">ExitCode</span>(<span class="ident">c</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">param</span>.<span class="ident">insert</span>(<span class="string">&quot;exit&quot;</span>, <span class="macro">vec</span><span class="macro">!</span>[<span class="ident">c</span>.<span class="ident">to_string</span>()]),
-                <span class="ident">ContainerFilter</span>::<span class="ident">Status</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">param</span>.<span class="ident">insert</span>(<span class="string">&quot;status&quot;</span>, <span class="macro">vec</span><span class="macro">!</span>[<span class="ident">s</span>]),
-                <span class="ident">ContainerFilter</span>::<span class="ident">LabelName</span>(<span class="ident">n</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">param</span>.<span class="ident">insert</span>(<span class="string">&quot;label&quot;</span>, <span class="macro">vec</span><span class="macro">!</span>[<span class="ident">n</span>]),
-                <span class="ident">ContainerFilter</span>::<span class="ident">Label</span>(<span class="ident">n</span>, <span class="ident">v</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">param</span>.<span class="ident">insert</span>(<span class="string">&quot;label&quot;</span>, <span class="macro">vec</span><span class="macro">!</span>[<span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}={}&quot;</span>, <span class="ident">n</span>, <span class="ident">v</span>)]),
+            <span class="kw">let</span> (<span class="ident">key</span>, <span class="ident">value</span>) <span class="op">=</span> <span class="kw">match</span> <span class="ident">f</span> {
+                <span class="ident">ContainerFilter::ExitCode</span>(<span class="ident">c</span>) <span class="op">=</span><span class="op">&gt;</span> (<span class="string">&quot;exited&quot;</span>, <span class="ident">c</span>.<span class="ident">to_string</span>()),
+                <span class="ident">ContainerFilter::Status</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> (<span class="string">&quot;status&quot;</span>, <span class="ident">s</span>),
+                <span class="ident">ContainerFilter::LabelName</span>(<span class="ident">n</span>) <span class="op">=</span><span class="op">&gt;</span> (<span class="string">&quot;label&quot;</span>, <span class="ident">n</span>),
+                <span class="ident">ContainerFilter::Label</span>(<span class="ident">n</span>, <span class="ident">v</span>) <span class="op">=</span><span class="op">&gt;</span> (<span class="string">&quot;label&quot;</span>, <span class="macro">format!</span>(<span class="string">&quot;{}={}&quot;</span>, <span class="ident">n</span>, <span class="ident">v</span>)),
             };
+
+            <span class="ident">param</span>.<span class="ident">entry</span>(<span class="ident">key</span>).<span class="ident">or_insert_with</span>(<span class="ident">Vec::new</span>).<span class="ident">push</span>(<span class="ident">value</span>);
         }
         <span class="comment">// structure is a a json encoded object mapping string keys to a list</span>
         <span class="comment">// of string values</span>
         <span class="self">self</span>.<span class="ident">params</span>
-            .<span class="ident">insert</span>(<span class="string">&quot;filters&quot;</span>, <span class="ident">serde_json</span>::<span class="ident">to_string</span>(<span class="kw-2">&amp;</span><span class="ident">param</span>).<span class="ident">unwrap</span>());
+            .<span class="ident">insert</span>(<span class="string">&quot;filters&quot;</span>, <span class="ident">serde_json::to_string</span>(<span class="kw-2">&amp;</span><span class="ident">param</span>).<span class="ident">unwrap</span>());
         <span class="self">self</span>
     }
 
@@ -2208,34 +2276,34 @@
             .<span class="ident">as_object_mut</span>()
             .<span class="ident">unwrap</span>()
             .<span class="ident">entry</span>(<span class="ident">local_key</span>.<span class="ident">to_string</span>())
-            .<span class="ident">or_insert</span>(<span class="ident">Value</span>::<span class="ident">Object</span>(<span class="ident">Map</span>::<span class="ident">new</span>()));
+            .<span class="ident">or_insert</span>(<span class="ident">Value::Object</span>(<span class="ident">Map::new</span>()));
 
         <span class="ident">insert</span>(<span class="ident">key_path</span>, <span class="ident">value</span>, <span class="ident">node</span>);
     } <span class="kw">else</span> {
         <span class="ident">parent_node</span>
             .<span class="ident">as_object_mut</span>()
             .<span class="ident">unwrap</span>()
-            .<span class="ident">insert</span>(<span class="ident">local_key</span>.<span class="ident">to_string</span>(), <span class="ident">serde_json</span>::<span class="ident">to_value</span>(<span class="ident">value</span>).<span class="ident">unwrap</span>());
+            .<span class="ident">insert</span>(<span class="ident">local_key</span>.<span class="ident">to_string</span>(), <span class="ident">serde_json::to_value</span>(<span class="ident">value</span>).<span class="ident">unwrap</span>());
     }
 }
 
 <span class="kw">impl</span> <span class="ident">ContainerOptions</span> {
     <span class="doccomment">/// return a new instance of a builder for options</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">builder</span>(<span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">ContainerOptionsBuilder</span> {
-        <span class="ident">ContainerOptionsBuilder</span>::<span class="ident">new</span>(<span class="ident">name</span>)
+        <span class="ident">ContainerOptionsBuilder::new</span>(<span class="ident">name</span>)
     }
 
     <span class="doccomment">/// serialize options as a string. returns None if no options are defined</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">serialize</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span> {
-        <span class="ident">serde_json</span>::<span class="ident">to_string</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">to_json</span>()).<span class="ident">map_err</span>(<span class="ident">Error</span>::<span class="ident">from</span>)
+        <span class="ident">serde_json::to_string</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">to_json</span>()).<span class="ident">map_err</span>(<span class="ident">Error::from</span>)
     }
 
     <span class="kw">fn</span> <span class="ident">to_json</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Value</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">body_members</span> <span class="op">=</span> <span class="ident">Map</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">body_members</span> <span class="op">=</span> <span class="ident">Map::new</span>();
         <span class="comment">// The HostConfig element gets initialized to an empty object,</span>
         <span class="comment">// for backward compatibility.</span>
-        <span class="ident">body_members</span>.<span class="ident">insert</span>(<span class="string">&quot;HostConfig&quot;</span>.<span class="ident">to_string</span>(), <span class="ident">Value</span>::<span class="ident">Object</span>(<span class="ident">Map</span>::<span class="ident">new</span>()));
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">body</span> <span class="op">=</span> <span class="ident">Value</span>::<span class="ident">Object</span>(<span class="ident">body_members</span>);
+        <span class="ident">body_members</span>.<span class="ident">insert</span>(<span class="string">&quot;HostConfig&quot;</span>.<span class="ident">to_string</span>(), <span class="ident">Value::Object</span>(<span class="ident">Map::new</span>()));
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">body</span> <span class="op">=</span> <span class="ident">Value::Object</span>(<span class="ident">body_members</span>);
         <span class="self">self</span>.<span class="ident">parse_from</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">params</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">body</span>);
         <span class="ident">body</span>
     }
@@ -2264,9 +2332,9 @@
 
 <span class="kw">impl</span> <span class="ident">ContainerOptionsBuilder</span> {
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">image</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">params</span> <span class="op">=</span> <span class="ident">HashMap</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">params</span> <span class="op">=</span> <span class="ident">HashMap::new</span>();
 
-        <span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;Image&quot;</span>, <span class="ident">Value</span>::<span class="ident">String</span>(<span class="ident">image</span>.<span class="ident">to_owned</span>()));
+        <span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;Image&quot;</span>, <span class="ident">Value::String</span>(<span class="ident">image</span>.<span class="ident">to_owned</span>()));
         <span class="ident">ContainerOptionsBuilder</span> { <span class="ident">name</span>: <span class="prelude-val">None</span>, <span class="ident">params</span> }
     }
 
@@ -2283,7 +2351,7 @@
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">working_dir</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;WorkingDir&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">working_dir</span>));
+        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;WorkingDir&quot;</span>, <span class="macro">json!</span>(<span class="ident">working_dir</span>));
         <span class="self">self</span>
     }
 
@@ -2292,14 +2360,14 @@
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">volumes</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;HostConfig.Binds&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">volumes</span>));
+        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;HostConfig.Binds&quot;</span>, <span class="macro">json!</span>(<span class="ident">volumes</span>));
         <span class="self">self</span>
     }
 
     <span class="doccomment">/// enable all exposed ports on the container to be mapped to random, available, ports on the host</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">publish_all_ports</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
         <span class="self">self</span>.<span class="ident">params</span>
-            .<span class="ident">insert</span>(<span class="string">&quot;HostConfig.PublishAllPorts&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="bool-val">true</span>));
+            .<span class="ident">insert</span>(<span class="string">&quot;HostConfig.PublishAllPorts&quot;</span>, <span class="macro">json!</span>(<span class="bool-val">true</span>));
         <span class="self">self</span>
     }
 
@@ -2309,38 +2377,38 @@
         <span class="ident">protocol</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
         <span class="ident">hostport</span>: <span class="ident">u32</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">exposedport</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">String</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">HashMap</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">exposedport</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">String</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">HashMap::new</span>();
         <span class="ident">exposedport</span>.<span class="ident">insert</span>(<span class="string">&quot;HostPort&quot;</span>.<span class="ident">to_string</span>(), <span class="ident">hostport</span>.<span class="ident">to_string</span>());
 
         <span class="comment">// The idea here is to go thought the &#39;old&#39; port binds and to apply them to the local</span>
         <span class="comment">// &#39;port_bindings&#39; variable, add the bind we want and replace the &#39;old&#39; value</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">port_bindings</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">Value</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">HashMap</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">port_bindings</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">Value</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">HashMap::new</span>();
         <span class="kw">for</span> (<span class="ident">key</span>, <span class="ident">val</span>) <span class="kw">in</span> <span class="self">self</span>
             .<span class="ident">params</span>
             .<span class="ident">get</span>(<span class="string">&quot;HostConfig.PortBindings&quot;</span>)
-            .<span class="ident">unwrap_or</span>(<span class="kw-2">&amp;</span><span class="macro">json</span><span class="macro">!</span>(<span class="ident">null</span>))
+            .<span class="ident">unwrap_or</span>(<span class="kw-2">&amp;</span><span class="macro">json!</span>(<span class="ident">null</span>))
             .<span class="ident">as_object</span>()
-            .<span class="ident">unwrap_or</span>(<span class="kw-2">&amp;</span><span class="ident">Map</span>::<span class="ident">new</span>())
+            .<span class="ident">unwrap_or</span>(<span class="kw-2">&amp;</span><span class="ident">Map::new</span>())
             .<span class="ident">iter</span>()
         {
-            <span class="ident">port_bindings</span>.<span class="ident">insert</span>(<span class="ident">key</span>.<span class="ident">to_string</span>(), <span class="macro">json</span><span class="macro">!</span>(<span class="ident">val</span>));
+            <span class="ident">port_bindings</span>.<span class="ident">insert</span>(<span class="ident">key</span>.<span class="ident">to_string</span>(), <span class="macro">json!</span>(<span class="ident">val</span>));
         }
         <span class="ident">port_bindings</span>.<span class="ident">insert</span>(
-            <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}/{}&quot;</span>, <span class="ident">srcport</span>, <span class="ident">protocol</span>),
-            <span class="macro">json</span><span class="macro">!</span>(<span class="macro">vec</span><span class="macro">!</span>[<span class="ident">exposedport</span>]),
+            <span class="macro">format!</span>(<span class="string">&quot;{}/{}&quot;</span>, <span class="ident">srcport</span>, <span class="ident">protocol</span>),
+            <span class="macro">json!</span>(<span class="macro">vec!</span>[<span class="ident">exposedport</span>]),
         );
 
         <span class="self">self</span>.<span class="ident">params</span>
-            .<span class="ident">insert</span>(<span class="string">&quot;HostConfig.PortBindings&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">port_bindings</span>));
+            .<span class="ident">insert</span>(<span class="string">&quot;HostConfig.PortBindings&quot;</span>, <span class="macro">json!</span>(<span class="ident">port_bindings</span>));
 
         <span class="comment">// Replicate the port bindings over to the exposed ports config</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">exposed_ports</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">Value</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">HashMap</span>::<span class="ident">new</span>();
-        <span class="kw">let</span> <span class="ident">empty_config</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">Value</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">HashMap</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">exposed_ports</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">Value</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">HashMap::new</span>();
+        <span class="kw">let</span> <span class="ident">empty_config</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">Value</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">HashMap::new</span>();
         <span class="kw">for</span> <span class="ident">key</span> <span class="kw">in</span> <span class="ident">port_bindings</span>.<span class="ident">keys</span>() {
-            <span class="ident">exposed_ports</span>.<span class="ident">insert</span>(<span class="ident">key</span>.<span class="ident">to_string</span>(), <span class="macro">json</span><span class="macro">!</span>(<span class="ident">empty_config</span>));
+            <span class="ident">exposed_ports</span>.<span class="ident">insert</span>(<span class="ident">key</span>.<span class="ident">to_string</span>(), <span class="macro">json!</span>(<span class="ident">empty_config</span>));
         }
 
-        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;ExposedPorts&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">exposed_ports</span>));
+        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;ExposedPorts&quot;</span>, <span class="macro">json!</span>(<span class="ident">exposed_ports</span>));
 
         <span class="self">self</span>
     }
@@ -2354,27 +2422,27 @@
         <span class="comment">/* The idea here is to go thought the &#39;old&#39; port binds
          * and to apply them to the local &#39;exposedport_bindings&#39; variable,
          * add the bind we want and replace the &#39;old&#39; value */</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">exposed_port_bindings</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">Value</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">HashMap</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">exposed_port_bindings</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">Value</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">HashMap::new</span>();
         <span class="kw">for</span> (<span class="ident">key</span>, <span class="ident">val</span>) <span class="kw">in</span> <span class="self">self</span>
             .<span class="ident">params</span>
             .<span class="ident">get</span>(<span class="string">&quot;ExposedPorts&quot;</span>)
-            .<span class="ident">unwrap_or</span>(<span class="kw-2">&amp;</span><span class="macro">json</span><span class="macro">!</span>(<span class="ident">null</span>))
+            .<span class="ident">unwrap_or</span>(<span class="kw-2">&amp;</span><span class="macro">json!</span>(<span class="ident">null</span>))
             .<span class="ident">as_object</span>()
-            .<span class="ident">unwrap_or</span>(<span class="kw-2">&amp;</span><span class="ident">Map</span>::<span class="ident">new</span>())
+            .<span class="ident">unwrap_or</span>(<span class="kw-2">&amp;</span><span class="ident">Map::new</span>())
             .<span class="ident">iter</span>()
         {
-            <span class="ident">exposed_port_bindings</span>.<span class="ident">insert</span>(<span class="ident">key</span>.<span class="ident">to_string</span>(), <span class="macro">json</span><span class="macro">!</span>(<span class="ident">val</span>));
+            <span class="ident">exposed_port_bindings</span>.<span class="ident">insert</span>(<span class="ident">key</span>.<span class="ident">to_string</span>(), <span class="macro">json!</span>(<span class="ident">val</span>));
         }
-        <span class="ident">exposed_port_bindings</span>.<span class="ident">insert</span>(<span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}/{}&quot;</span>, <span class="ident">srcport</span>, <span class="ident">protocol</span>), <span class="macro">json</span><span class="macro">!</span>({}));
+        <span class="ident">exposed_port_bindings</span>.<span class="ident">insert</span>(<span class="macro">format!</span>(<span class="string">&quot;{}/{}&quot;</span>, <span class="ident">srcport</span>, <span class="ident">protocol</span>), <span class="macro">json!</span>({}));
 
         <span class="comment">// Replicate the port bindings over to the exposed ports config</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">exposed_ports</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">Value</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">HashMap</span>::<span class="ident">new</span>();
-        <span class="kw">let</span> <span class="ident">empty_config</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">Value</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">HashMap</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">exposed_ports</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">Value</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">HashMap::new</span>();
+        <span class="kw">let</span> <span class="ident">empty_config</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">Value</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">HashMap::new</span>();
         <span class="kw">for</span> <span class="ident">key</span> <span class="kw">in</span> <span class="ident">exposed_port_bindings</span>.<span class="ident">keys</span>() {
-            <span class="ident">exposed_ports</span>.<span class="ident">insert</span>(<span class="ident">key</span>.<span class="ident">to_string</span>(), <span class="macro">json</span><span class="macro">!</span>(<span class="ident">empty_config</span>));
+            <span class="ident">exposed_ports</span>.<span class="ident">insert</span>(<span class="ident">key</span>.<span class="ident">to_string</span>(), <span class="macro">json!</span>(<span class="ident">empty_config</span>));
         }
 
-        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;ExposedPorts&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">exposed_ports</span>));
+        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;ExposedPorts&quot;</span>, <span class="macro">json!</span>(<span class="ident">exposed_ports</span>));
 
         <span class="self">self</span>
     }
@@ -2383,7 +2451,7 @@
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">links</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;HostConfig.Links&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">links</span>));
+        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;HostConfig.Links&quot;</span>, <span class="macro">json!</span>(<span class="ident">links</span>));
         <span class="self">self</span>
     }
 
@@ -2391,7 +2459,7 @@
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">memory</span>: <span class="ident">u64</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;HostConfig.Memory&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">memory</span>));
+        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;HostConfig.Memory&quot;</span>, <span class="macro">json!</span>(<span class="ident">memory</span>));
         <span class="self">self</span>
     }
 
@@ -2401,7 +2469,7 @@
         <span class="ident">memory_swap</span>: <span class="ident">i64</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
         <span class="self">self</span>.<span class="ident">params</span>
-            .<span class="ident">insert</span>(<span class="string">&quot;HostConfig.MemorySwap&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">memory_swap</span>));
+            .<span class="ident">insert</span>(<span class="string">&quot;HostConfig.MemorySwap&quot;</span>, <span class="macro">json!</span>(<span class="ident">memory_swap</span>));
         <span class="self">self</span>
     }
 
@@ -2413,7 +2481,7 @@
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">nano_cpus</span>: <span class="ident">u64</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;HostConfig.NanoCpus&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">nano_cpus</span>));
+        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;HostConfig.NanoCpus&quot;</span>, <span class="macro">json!</span>(<span class="ident">nano_cpus</span>));
         <span class="self">self</span>
     }
 
@@ -2434,7 +2502,7 @@
         <span class="ident">cpu_shares</span>: <span class="ident">u32</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
         <span class="self">self</span>.<span class="ident">params</span>
-            .<span class="ident">insert</span>(<span class="string">&quot;HostConfig.CpuShares&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">cpu_shares</span>));
+            .<span class="ident">insert</span>(<span class="string">&quot;HostConfig.CpuShares&quot;</span>, <span class="macro">json!</span>(<span class="ident">cpu_shares</span>));
         <span class="self">self</span>
     }
 
@@ -2442,7 +2510,7 @@
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">labels</span>: <span class="kw-2">&amp;</span><span class="ident">HashMap</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;Labels&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">labels</span>));
+        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;Labels&quot;</span>, <span class="macro">json!</span>(<span class="ident">labels</span>));
         <span class="self">self</span>
     }
 
@@ -2451,8 +2519,8 @@
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">attach</span>: <span class="ident">bool</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;AttachStdin&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">attach</span>));
-        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;OpenStdin&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">attach</span>));
+        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;AttachStdin&quot;</span>, <span class="macro">json!</span>(<span class="ident">attach</span>));
+        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;OpenStdin&quot;</span>, <span class="macro">json!</span>(<span class="ident">attach</span>));
         <span class="self">self</span>
     }
 
@@ -2461,7 +2529,7 @@
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">attach</span>: <span class="ident">bool</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;AttachStdout&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">attach</span>));
+        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;AttachStdout&quot;</span>, <span class="macro">json!</span>(<span class="ident">attach</span>));
         <span class="self">self</span>
     }
 
@@ -2470,7 +2538,7 @@
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">attach</span>: <span class="ident">bool</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;AttachStderr&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">attach</span>));
+        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;AttachStderr&quot;</span>, <span class="macro">json!</span>(<span class="ident">attach</span>));
         <span class="self">self</span>
     }
 
@@ -2479,7 +2547,7 @@
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">tty</span>: <span class="ident">bool</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;Tty&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">tty</span>));
+        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;Tty&quot;</span>, <span class="macro">json!</span>(<span class="ident">tty</span>));
         <span class="self">self</span>
     }
 
@@ -2487,7 +2555,7 @@
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">hosts</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;HostConfig.ExtraHosts&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">hosts</span>));
+        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;HostConfig.ExtraHosts&quot;</span>, <span class="macro">json!</span>(<span class="ident">hosts</span>));
         <span class="self">self</span>
     }
 
@@ -2495,7 +2563,7 @@
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">volumes</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;HostConfig.VolumesFrom&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">volumes</span>));
+        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;HostConfig.VolumesFrom&quot;</span>, <span class="macro">json!</span>(<span class="ident">volumes</span>));
         <span class="self">self</span>
     }
 
@@ -2503,7 +2571,7 @@
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">network</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;HostConfig.NetworkMode&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">network</span>));
+        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;HostConfig.NetworkMode&quot;</span>, <span class="macro">json!</span>(<span class="ident">network</span>));
         <span class="self">self</span>
     }
 
@@ -2515,7 +2583,7 @@
         <span class="ident">S</span>: <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Serialize</span>,
         <span class="ident">E</span>: <span class="ident">AsRef</span><span class="op">&lt;</span>[<span class="ident">S</span>]<span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Serialize</span>,
     {
-        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;Env&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">envs</span>));
+        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;Env&quot;</span>, <span class="macro">json!</span>(<span class="ident">envs</span>));
         <span class="self">self</span>
     }
 
@@ -2523,7 +2591,7 @@
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">cmds</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;Cmd&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">cmds</span>));
+        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;Cmd&quot;</span>, <span class="macro">json!</span>(<span class="ident">cmds</span>));
         <span class="self">self</span>
     }
 
@@ -2531,7 +2599,7 @@
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">entrypoint</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;Entrypoint&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">entrypoint</span>));
+        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;Entrypoint&quot;</span>, <span class="macro">json!</span>(<span class="ident">entrypoint</span>));
         <span class="self">self</span>
     }
 
@@ -2539,7 +2607,7 @@
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">capabilities</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;HostConfig.CapAdd&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">capabilities</span>));
+        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;HostConfig.CapAdd&quot;</span>, <span class="macro">json!</span>(<span class="ident">capabilities</span>));
         <span class="self">self</span>
     }
 
@@ -2547,7 +2615,7 @@
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">devices</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;HostConfig.Devices&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">devices</span>));
+        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;HostConfig.Devices&quot;</span>, <span class="macro">json!</span>(<span class="ident">devices</span>));
         <span class="self">self</span>
     }
 
@@ -2556,7 +2624,7 @@
         <span class="ident">log_driver</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
         <span class="self">self</span>.<span class="ident">params</span>
-            .<span class="ident">insert</span>(<span class="string">&quot;HostConfig.LogConfig.Type&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">log_driver</span>));
+            .<span class="ident">insert</span>(<span class="string">&quot;HostConfig.LogConfig.Type&quot;</span>, <span class="macro">json!</span>(<span class="ident">log_driver</span>));
         <span class="self">self</span>
     }
 
@@ -2566,11 +2634,11 @@
         <span class="ident">maximum_retry_count</span>: <span class="ident">u64</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
         <span class="self">self</span>.<span class="ident">params</span>
-            .<span class="ident">insert</span>(<span class="string">&quot;HostConfig.RestartPolicy.Name&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">name</span>));
+            .<span class="ident">insert</span>(<span class="string">&quot;HostConfig.RestartPolicy.Name&quot;</span>, <span class="macro">json!</span>(<span class="ident">name</span>));
         <span class="kw">if</span> <span class="ident">name</span> <span class="op">=</span><span class="op">=</span> <span class="string">&quot;on-failure&quot;</span> {
             <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(
                 <span class="string">&quot;HostConfig.RestartPolicy.MaximumRetryCount&quot;</span>,
-                <span class="macro">json</span><span class="macro">!</span>(<span class="ident">maximum_retry_count</span>),
+                <span class="macro">json!</span>(<span class="ident">maximum_retry_count</span>),
             );
         }
         <span class="self">self</span>
@@ -2580,7 +2648,7 @@
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">set</span>: <span class="ident">bool</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;HostConfig.AutoRemove&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">set</span>));
+        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;HostConfig.AutoRemove&quot;</span>, <span class="macro">json!</span>(<span class="ident">set</span>));
         <span class="self">self</span>
     }
 
@@ -2589,7 +2657,7 @@
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">sig</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;StopSignal&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">sig</span>));
+        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;StopSignal&quot;</span>, <span class="macro">json!</span>(<span class="ident">sig</span>));
         <span class="self">self</span>
     }
 
@@ -2598,7 +2666,7 @@
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">sig</span>: <span class="ident">u64</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;StopSignal&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">sig</span>));
+        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;StopSignal&quot;</span>, <span class="macro">json!</span>(<span class="ident">sig</span>));
         <span class="self">self</span>
     }
 
@@ -2607,7 +2675,7 @@
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">timeout</span>: <span class="ident">Duration</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;StopTimeout&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">timeout</span>.<span class="ident">as_secs</span>()));
+        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;StopTimeout&quot;</span>, <span class="macro">json!</span>(<span class="ident">timeout</span>.<span class="ident">as_secs</span>()));
         <span class="self">self</span>
     }
 
@@ -2615,7 +2683,7 @@
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">mode</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;HostConfig.UsernsMode&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">mode</span>));
+        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;HostConfig.UsernsMode&quot;</span>, <span class="macro">json!</span>(<span class="ident">mode</span>));
         <span class="self">self</span>
     }
 
@@ -2623,7 +2691,7 @@
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">set</span>: <span class="ident">bool</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;HostConfig.Privileged&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">set</span>));
+        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;HostConfig.Privileged&quot;</span>, <span class="macro">json!</span>(<span class="ident">set</span>));
         <span class="self">self</span>
     }
 
@@ -2631,7 +2699,7 @@
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">user</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;User&quot;</span>, <span class="macro">json</span><span class="macro">!</span>(<span class="ident">user</span>));
+        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">insert</span>(<span class="string">&quot;User&quot;</span>, <span class="macro">json!</span>(<span class="ident">user</span>));
         <span class="self">self</span>
     }
 
@@ -2652,7 +2720,7 @@
 <span class="kw">impl</span> <span class="ident">LogsOptions</span> {
     <span class="doccomment">/// return a new instance of a builder for options</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">builder</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">LogsOptionsBuilder</span> {
-        <span class="ident">LogsOptionsBuilder</span>::<span class="ident">default</span>()
+        <span class="ident">LogsOptionsBuilder::default</span>()
     }
 
     <span class="doccomment">/// serialize options as a string. returns None if no options are defined</span>
@@ -2661,7 +2729,7 @@
             <span class="prelude-val">None</span>
         } <span class="kw">else</span> {
             <span class="prelude-val">Some</span>(
-                <span class="ident">form_urlencoded</span>::<span class="ident">Serializer</span>::<span class="ident">new</span>(<span class="ident">String</span>::<span class="ident">new</span>())
+                <span class="ident">form_urlencoded::Serializer::new</span>(<span class="ident">String::new</span>())
                     .<span class="ident">extend_pairs</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">params</span>)
                     .<span class="ident">finish</span>(),
             )
@@ -2720,10 +2788,10 @@
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;chrono&quot;</span>)]</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">since</span><span class="op">&lt;</span><span class="ident">Tz</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
-        <span class="ident">timestamp</span>: <span class="kw-2">&amp;</span><span class="ident">chrono</span>::<span class="ident">DateTime</span><span class="op">&lt;</span><span class="ident">Tz</span><span class="op">&gt;</span>,
+        <span class="ident">timestamp</span>: <span class="kw-2">&amp;</span><span class="ident">chrono::DateTime</span><span class="op">&lt;</span><span class="ident">Tz</span><span class="op">&gt;</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span>
     <span class="kw">where</span>
-        <span class="ident">Tz</span>: <span class="ident">chrono</span>::<span class="ident">TimeZone</span>,
+        <span class="ident">Tz</span>: <span class="ident">chrono::TimeZone</span>,
     {
         <span class="self">self</span>.<span class="ident">params</span>
             .<span class="ident">insert</span>(<span class="string">&quot;since&quot;</span>, <span class="ident">timestamp</span>.<span class="ident">timestamp</span>().<span class="ident">to_string</span>());
@@ -2755,7 +2823,7 @@
 <span class="kw">impl</span> <span class="ident">RmContainerOptions</span> {
     <span class="doccomment">/// return a new instance of a builder for options</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">builder</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">RmContainerOptionsBuilder</span> {
-        <span class="ident">RmContainerOptionsBuilder</span>::<span class="ident">default</span>()
+        <span class="ident">RmContainerOptionsBuilder::default</span>()
     }
 
     <span class="doccomment">/// serialize options as a string. returns None if no options are defined</span>
@@ -2764,7 +2832,7 @@
             <span class="prelude-val">None</span>
         } <span class="kw">else</span> {
             <span class="prelude-val">Some</span>(
-                <span class="ident">form_urlencoded</span>::<span class="ident">Serializer</span>::<span class="ident">new</span>(<span class="ident">String</span>::<span class="ident">new</span>())
+                <span class="ident">form_urlencoded::Serializer::new</span>(<span class="ident">String::new</span>())
                     .<span class="ident">extend_pairs</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">params</span>)
                     .<span class="ident">finish</span>(),
             )
@@ -3052,13 +3120,14 @@
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::container::ContainerFilter</span>::{<span class="ident">ExitCode</span>, <span class="ident">Label</span>, <span class="ident">LabelName</span>, <span class="ident">Status</span>};
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">container_options_simple</span>() {
-        <span class="kw">let</span> <span class="ident">builder</span> <span class="op">=</span> <span class="ident">ContainerOptionsBuilder</span>::<span class="ident">new</span>(<span class="string">&quot;test_image&quot;</span>);
+        <span class="kw">let</span> <span class="ident">builder</span> <span class="op">=</span> <span class="ident">ContainerOptionsBuilder::new</span>(<span class="string">&quot;test_image&quot;</span>);
         <span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">builder</span>.<span class="ident">build</span>();
 
-        <span class="macro">assert_eq</span><span class="macro">!</span>(
+        <span class="macro">assert_eq!</span>(
             <span class="string">r#&quot;{&quot;HostConfig&quot;:{},&quot;Image&quot;:&quot;test_image&quot;}&quot;#</span>,
             <span class="ident">options</span>.<span class="ident">serialize</span>().<span class="ident">unwrap</span>()
         );
@@ -3066,11 +3135,11 @@
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">container_options_env</span>() {
-        <span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">ContainerOptionsBuilder</span>::<span class="ident">new</span>(<span class="string">&quot;test_image&quot;</span>)
-            .<span class="ident">env</span>(<span class="macro">vec</span><span class="macro">!</span>[<span class="string">&quot;foo&quot;</span>, <span class="string">&quot;bar&quot;</span>])
+        <span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">ContainerOptionsBuilder::new</span>(<span class="string">&quot;test_image&quot;</span>)
+            .<span class="ident">env</span>(<span class="macro">vec!</span>[<span class="string">&quot;foo&quot;</span>, <span class="string">&quot;bar&quot;</span>])
             .<span class="ident">build</span>();
 
-        <span class="macro">assert_eq</span><span class="macro">!</span>(
+        <span class="macro">assert_eq!</span>(
             <span class="string">r#&quot;{&quot;Env&quot;:[&quot;foo&quot;,&quot;bar&quot;],&quot;HostConfig&quot;:{},&quot;Image&quot;:&quot;test_image&quot;}&quot;#</span>,
             <span class="ident">options</span>.<span class="ident">serialize</span>().<span class="ident">unwrap</span>()
         );
@@ -3080,12 +3149,12 @@
     <span class="kw">fn</span> <span class="ident">container_options_env_dynamic</span>() {
         <span class="kw">let</span> <span class="ident">env</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span> <span class="op">=</span> [<span class="string">&quot;foo&quot;</span>, <span class="string">&quot;bar&quot;</span>, <span class="string">&quot;baz&quot;</span>]
             .<span class="ident">iter</span>()
-            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">String</span>::<span class="ident">from</span>(<span class="kw-2">*</span><span class="ident">s</span>))
+            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">String::from</span>(<span class="kw-2">*</span><span class="ident">s</span>))
             .<span class="ident">collect</span>();
 
-        <span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">ContainerOptionsBuilder</span>::<span class="ident">new</span>(<span class="string">&quot;test_image&quot;</span>).<span class="ident">env</span>(<span class="kw-2">&amp;</span><span class="ident">env</span>).<span class="ident">build</span>();
+        <span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">ContainerOptionsBuilder::new</span>(<span class="string">&quot;test_image&quot;</span>).<span class="ident">env</span>(<span class="kw-2">&amp;</span><span class="ident">env</span>).<span class="ident">build</span>();
 
-        <span class="macro">assert_eq</span><span class="macro">!</span>(
+        <span class="macro">assert_eq!</span>(
             <span class="string">r#&quot;{&quot;Env&quot;:[&quot;foo&quot;,&quot;bar&quot;,&quot;baz&quot;],&quot;HostConfig&quot;:{},&quot;Image&quot;:&quot;test_image&quot;}&quot;#</span>,
             <span class="ident">options</span>.<span class="ident">serialize</span>().<span class="ident">unwrap</span>()
         );
@@ -3093,11 +3162,11 @@
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">container_options_user</span>() {
-        <span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">ContainerOptionsBuilder</span>::<span class="ident">new</span>(<span class="string">&quot;test_image&quot;</span>)
+        <span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">ContainerOptionsBuilder::new</span>(<span class="string">&quot;test_image&quot;</span>)
             .<span class="ident">user</span>(<span class="string">&quot;alice&quot;</span>)
             .<span class="ident">build</span>();
 
-        <span class="macro">assert_eq</span><span class="macro">!</span>(
+        <span class="macro">assert_eq!</span>(
             <span class="string">r#&quot;{&quot;HostConfig&quot;:{},&quot;Image&quot;:&quot;test_image&quot;,&quot;User&quot;:&quot;alice&quot;}&quot;#</span>,
             <span class="ident">options</span>.<span class="ident">serialize</span>().<span class="ident">unwrap</span>()
         );
@@ -3105,13 +3174,13 @@
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">container_options_host_config</span>() {
-        <span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">ContainerOptionsBuilder</span>::<span class="ident">new</span>(<span class="string">&quot;test_image&quot;</span>)
+        <span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">ContainerOptionsBuilder::new</span>(<span class="string">&quot;test_image&quot;</span>)
             .<span class="ident">network_mode</span>(<span class="string">&quot;host&quot;</span>)
             .<span class="ident">auto_remove</span>(<span class="bool-val">true</span>)
             .<span class="ident">privileged</span>(<span class="bool-val">true</span>)
             .<span class="ident">build</span>();
 
-        <span class="macro">assert_eq</span><span class="macro">!</span>(
+        <span class="macro">assert_eq!</span>(
             <span class="string">r#&quot;{&quot;HostConfig&quot;:{&quot;AutoRemove&quot;:true,&quot;NetworkMode&quot;:&quot;host&quot;,&quot;Privileged&quot;:true},&quot;Image&quot;:&quot;test_image&quot;}&quot;#</span>,
             <span class="ident">options</span>.<span class="ident">serialize</span>().<span class="ident">unwrap</span>()
         );
@@ -3119,19 +3188,19 @@
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">container_options_expose</span>() {
-        <span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">ContainerOptionsBuilder</span>::<span class="ident">new</span>(<span class="string">&quot;test_image&quot;</span>)
+        <span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">ContainerOptionsBuilder::new</span>(<span class="string">&quot;test_image&quot;</span>)
             .<span class="ident">expose</span>(<span class="number">80</span>, <span class="string">&quot;tcp&quot;</span>, <span class="number">8080</span>)
             .<span class="ident">build</span>();
-        <span class="macro">assert_eq</span><span class="macro">!</span>(
+        <span class="macro">assert_eq!</span>(
             <span class="string">r#&quot;{&quot;ExposedPorts&quot;:{&quot;80/tcp&quot;:{}},&quot;HostConfig&quot;:{&quot;PortBindings&quot;:{&quot;80/tcp&quot;:[{&quot;HostPort&quot;:&quot;8080&quot;}]}},&quot;Image&quot;:&quot;test_image&quot;}&quot;#</span>,
             <span class="ident">options</span>.<span class="ident">serialize</span>().<span class="ident">unwrap</span>()
         );
         <span class="comment">// try exposing two</span>
-        <span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">ContainerOptionsBuilder</span>::<span class="ident">new</span>(<span class="string">&quot;test_image&quot;</span>)
+        <span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">ContainerOptionsBuilder::new</span>(<span class="string">&quot;test_image&quot;</span>)
             .<span class="ident">expose</span>(<span class="number">80</span>, <span class="string">&quot;tcp&quot;</span>, <span class="number">8080</span>)
             .<span class="ident">expose</span>(<span class="number">81</span>, <span class="string">&quot;tcp&quot;</span>, <span class="number">8081</span>)
             .<span class="ident">build</span>();
-        <span class="macro">assert_eq</span><span class="macro">!</span>(
+        <span class="macro">assert_eq!</span>(
             <span class="string">r#&quot;{&quot;ExposedPorts&quot;:{&quot;80/tcp&quot;:{},&quot;81/tcp&quot;:{}},&quot;HostConfig&quot;:{&quot;PortBindings&quot;:{&quot;80/tcp&quot;:[{&quot;HostPort&quot;:&quot;8080&quot;}],&quot;81/tcp&quot;:[{&quot;HostPort&quot;:&quot;8081&quot;}]}},&quot;Image&quot;:&quot;test_image&quot;}&quot;#</span>,
             <span class="ident">options</span>.<span class="ident">serialize</span>().<span class="ident">unwrap</span>()
         );
@@ -3139,19 +3208,19 @@
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">container_options_publish</span>() {
-        <span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">ContainerOptionsBuilder</span>::<span class="ident">new</span>(<span class="string">&quot;test_image&quot;</span>)
+        <span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">ContainerOptionsBuilder::new</span>(<span class="string">&quot;test_image&quot;</span>)
             .<span class="ident">publish</span>(<span class="number">80</span>, <span class="string">&quot;tcp&quot;</span>)
             .<span class="ident">build</span>();
-        <span class="macro">assert_eq</span><span class="macro">!</span>(
+        <span class="macro">assert_eq!</span>(
             <span class="string">r#&quot;{&quot;ExposedPorts&quot;:{&quot;80/tcp&quot;:{}},&quot;HostConfig&quot;:{},&quot;Image&quot;:&quot;test_image&quot;}&quot;#</span>,
             <span class="ident">options</span>.<span class="ident">serialize</span>().<span class="ident">unwrap</span>()
         );
         <span class="comment">// try exposing two</span>
-        <span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">ContainerOptionsBuilder</span>::<span class="ident">new</span>(<span class="string">&quot;test_image&quot;</span>)
+        <span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">ContainerOptionsBuilder::new</span>(<span class="string">&quot;test_image&quot;</span>)
             .<span class="ident">publish</span>(<span class="number">80</span>, <span class="string">&quot;tcp&quot;</span>)
             .<span class="ident">publish</span>(<span class="number">81</span>, <span class="string">&quot;tcp&quot;</span>)
             .<span class="ident">build</span>();
-        <span class="macro">assert_eq</span><span class="macro">!</span>(
+        <span class="macro">assert_eq!</span>(
             <span class="string">r#&quot;{&quot;ExposedPorts&quot;:{&quot;80/tcp&quot;:{},&quot;81/tcp&quot;:{}},&quot;HostConfig&quot;:{},&quot;Image&quot;:&quot;test_image&quot;}&quot;#</span>,
             <span class="ident">options</span>.<span class="ident">serialize</span>().<span class="ident">unwrap</span>()
         );
@@ -3160,11 +3229,11 @@
     <span class="doccomment">/// Test container option PublishAllPorts</span>
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">container_options_publish_all_ports</span>() {
-        <span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">ContainerOptionsBuilder</span>::<span class="ident">new</span>(<span class="string">&quot;test_image&quot;</span>)
+        <span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">ContainerOptionsBuilder::new</span>(<span class="string">&quot;test_image&quot;</span>)
             .<span class="ident">publish_all_ports</span>()
             .<span class="ident">build</span>();
 
-        <span class="macro">assert_eq</span><span class="macro">!</span>(
+        <span class="macro">assert_eq!</span>(
             <span class="string">r#&quot;{&quot;HostConfig&quot;:{&quot;PublishAllPorts&quot;:true},&quot;Image&quot;:&quot;test_image&quot;}&quot;#</span>,
             <span class="ident">options</span>.<span class="ident">serialize</span>().<span class="ident">unwrap</span>()
         );
@@ -3173,11 +3242,11 @@
     <span class="doccomment">/// Test container options that are nested 3 levels deep.</span>
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">container_options_nested</span>() {
-        <span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">ContainerOptionsBuilder</span>::<span class="ident">new</span>(<span class="string">&quot;test_image&quot;</span>)
+        <span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">ContainerOptionsBuilder::new</span>(<span class="string">&quot;test_image&quot;</span>)
             .<span class="ident">log_driver</span>(<span class="string">&quot;fluentd&quot;</span>)
             .<span class="ident">build</span>();
 
-        <span class="macro">assert_eq</span><span class="macro">!</span>(
+        <span class="macro">assert_eq!</span>(
             <span class="string">r#&quot;{&quot;HostConfig&quot;:{&quot;LogConfig&quot;:{&quot;Type&quot;:&quot;fluentd&quot;}},&quot;Image&quot;:&quot;test_image&quot;}&quot;#</span>,
             <span class="ident">options</span>.<span class="ident">serialize</span>().<span class="ident">unwrap</span>()
         );
@@ -3186,32 +3255,95 @@
     <span class="doccomment">/// Test the restart policy settings</span>
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">container_options_restart_policy</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">ContainerOptionsBuilder</span>::<span class="ident">new</span>(<span class="string">&quot;test_image&quot;</span>)
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">ContainerOptionsBuilder::new</span>(<span class="string">&quot;test_image&quot;</span>)
             .<span class="ident">restart_policy</span>(<span class="string">&quot;on-failure&quot;</span>, <span class="number">10</span>)
             .<span class="ident">build</span>();
 
-        <span class="macro">assert_eq</span><span class="macro">!</span>(
+        <span class="macro">assert_eq!</span>(
             <span class="string">r#&quot;{&quot;HostConfig&quot;:{&quot;RestartPolicy&quot;:{&quot;MaximumRetryCount&quot;:10,&quot;Name&quot;:&quot;on-failure&quot;}},&quot;Image&quot;:&quot;test_image&quot;}&quot;#</span>,
             <span class="ident">options</span>.<span class="ident">serialize</span>().<span class="ident">unwrap</span>()
         );
 
-        <span class="ident">options</span> <span class="op">=</span> <span class="ident">ContainerOptionsBuilder</span>::<span class="ident">new</span>(<span class="string">&quot;test_image&quot;</span>)
+        <span class="ident">options</span> <span class="op">=</span> <span class="ident">ContainerOptionsBuilder::new</span>(<span class="string">&quot;test_image&quot;</span>)
             .<span class="ident">restart_policy</span>(<span class="string">&quot;always&quot;</span>, <span class="number">0</span>)
             .<span class="ident">build</span>();
 
-        <span class="macro">assert_eq</span><span class="macro">!</span>(
+        <span class="macro">assert_eq!</span>(
             <span class="string">r#&quot;{&quot;HostConfig&quot;:{&quot;RestartPolicy&quot;:{&quot;Name&quot;:&quot;always&quot;}},&quot;Image&quot;:&quot;test_image&quot;}&quot;#</span>,
             <span class="ident">options</span>.<span class="ident">serialize</span>().<span class="ident">unwrap</span>()
         );
     }
 
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">container_list_options_multiple_labels</span>() {
+        <span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">ContainerListOptions::builder</span>()
+            .<span class="ident">filter</span>(<span class="macro">vec!</span>[
+                <span class="ident">Label</span>(<span class="string">&quot;label1&quot;</span>.<span class="ident">to_string</span>(), <span class="string">&quot;value&quot;</span>.<span class="ident">to_string</span>()),
+                <span class="ident">LabelName</span>(<span class="string">&quot;label2&quot;</span>.<span class="ident">to_string</span>()),
+            ])
+            .<span class="ident">build</span>();
+
+        <span class="kw">let</span> <span class="ident">form</span> <span class="op">=</span> <span class="ident">form_urlencoded::Serializer::new</span>(<span class="ident">String::new</span>())
+            .<span class="ident">append_pair</span>(<span class="string">&quot;filters&quot;</span>, <span class="string">r#&quot;{&quot;label&quot;:[&quot;label1=value&quot;,&quot;label2&quot;]}&quot;#</span>)
+            .<span class="ident">finish</span>();
+
+        <span class="macro">assert_eq!</span>(<span class="ident">form</span>, <span class="ident">options</span>.<span class="ident">serialize</span>().<span class="ident">unwrap</span>())
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">container_list_options_exit_code</span>() {
+        <span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">ContainerListOptions::builder</span>()
+            .<span class="ident">filter</span>(<span class="macro">vec!</span>[<span class="ident">ExitCode</span>(<span class="number">0</span>)])
+            .<span class="ident">build</span>();
+
+        <span class="kw">let</span> <span class="ident">form</span> <span class="op">=</span> <span class="ident">form_urlencoded::Serializer::new</span>(<span class="ident">String::new</span>())
+            .<span class="ident">append_pair</span>(<span class="string">&quot;filters&quot;</span>, <span class="string">r#&quot;{&quot;exited&quot;:[&quot;0&quot;]}&quot;#</span>)
+            .<span class="ident">finish</span>();
+
+        <span class="macro">assert_eq!</span>(<span class="ident">form</span>, <span class="ident">options</span>.<span class="ident">serialize</span>().<span class="ident">unwrap</span>())
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">container_list_options_status</span>() {
+        <span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">ContainerListOptions::builder</span>()
+            .<span class="ident">filter</span>(<span class="macro">vec!</span>[<span class="ident">Status</span>(<span class="string">&quot;running&quot;</span>.<span class="ident">to_string</span>())])
+            .<span class="ident">build</span>();
+
+        <span class="kw">let</span> <span class="ident">form</span> <span class="op">=</span> <span class="ident">form_urlencoded::Serializer::new</span>(<span class="ident">String::new</span>())
+            .<span class="ident">append_pair</span>(<span class="string">&quot;filters&quot;</span>, <span class="string">r#&quot;{&quot;status&quot;:[&quot;running&quot;]}&quot;#</span>)
+            .<span class="ident">finish</span>();
+
+        <span class="macro">assert_eq!</span>(<span class="ident">form</span>, <span class="ident">options</span>.<span class="ident">serialize</span>().<span class="ident">unwrap</span>())
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">container_list_options_combined</span>() {
+        <span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">ContainerListOptions::builder</span>()
+            .<span class="ident">all</span>()
+            .<span class="ident">filter</span>(<span class="macro">vec!</span>[
+                <span class="ident">Label</span>(<span class="string">&quot;label1&quot;</span>.<span class="ident">to_string</span>(), <span class="string">&quot;value&quot;</span>.<span class="ident">to_string</span>()),
+                <span class="ident">LabelName</span>(<span class="string">&quot;label2&quot;</span>.<span class="ident">to_string</span>()),
+                <span class="ident">ExitCode</span>(<span class="number">0</span>),
+                <span class="ident">Status</span>(<span class="string">&quot;running&quot;</span>.<span class="ident">to_string</span>()),
+            ])
+            .<span class="ident">build</span>();
+
+        <span class="kw">let</span> <span class="ident">serialized</span> <span class="op">=</span> <span class="ident">options</span>.<span class="ident">serialize</span>().<span class="ident">unwrap</span>();
+
+        <span class="macro">assert!</span>(<span class="ident">serialized</span>.<span class="ident">contains</span>(<span class="string">&quot;all=true&quot;</span>));
+        <span class="macro">assert!</span>(<span class="ident">serialized</span>.<span class="ident">contains</span>(<span class="string">&quot;filters=&quot;</span>));
+        <span class="macro">assert!</span>(<span class="ident">serialized</span>.<span class="ident">contains</span>(<span class="string">&quot;%22label%22%3A%5B%22label1%3Dvalue%22%2C%22label2%22%5D&quot;</span>));
+        <span class="macro">assert!</span>(<span class="ident">serialized</span>.<span class="ident">contains</span>(<span class="string">&quot;%22status%22%3A%5B%22running%22%5D&quot;</span>));
+        <span class="macro">assert!</span>(<span class="ident">serialized</span>.<span class="ident">contains</span>(<span class="string">&quot;%22exited%22%3A%5B%220%22%5D&quot;</span>));
+    }
+
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;chrono&quot;</span>)]</span>
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">logs_options</span>() {
-        <span class="kw">let</span> <span class="ident">timestamp</span> <span class="op">=</span> <span class="ident">chrono</span>::<span class="ident">NaiveDateTime</span>::<span class="ident">from_timestamp</span>(<span class="number">2_147_483_647</span>, <span class="number">0</span>);
-        <span class="kw">let</span> <span class="ident">since</span> <span class="op">=</span> <span class="ident">chrono</span>::<span class="ident">DateTime</span>::<span class="op">&lt;</span><span class="ident">chrono</span>::<span class="ident">Utc</span><span class="op">&gt;</span>::<span class="ident">from_utc</span>(<span class="ident">timestamp</span>, <span class="ident">chrono</span>::<span class="ident">Utc</span>);
+        <span class="kw">let</span> <span class="ident">timestamp</span> <span class="op">=</span> <span class="ident">chrono::NaiveDateTime::from_timestamp</span>(<span class="number">2_147_483_647</span>, <span class="number">0</span>);
+        <span class="kw">let</span> <span class="ident">since</span> <span class="op">=</span> <span class="ident">chrono::DateTime</span>::<span class="op">&lt;</span><span class="ident">chrono::Utc</span><span class="op">&gt;</span><span class="ident">::from_utc</span>(<span class="ident">timestamp</span>, <span class="ident">chrono::Utc</span>);
 
-        <span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">LogsOptionsBuilder</span>::<span class="ident">default</span>()
+        <span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">LogsOptionsBuilder::default</span>()
             .<span class="ident">follow</span>(<span class="bool-val">true</span>)
             .<span class="ident">stdout</span>(<span class="bool-val">true</span>)
             .<span class="ident">stderr</span>(<span class="bool-val">true</span>)
@@ -3222,18 +3354,18 @@
 
         <span class="kw">let</span> <span class="ident">serialized</span> <span class="op">=</span> <span class="ident">options</span>.<span class="ident">serialize</span>().<span class="ident">unwrap</span>();
 
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">serialized</span>.<span class="ident">contains</span>(<span class="string">&quot;follow=true&quot;</span>));
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">serialized</span>.<span class="ident">contains</span>(<span class="string">&quot;stdout=true&quot;</span>));
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">serialized</span>.<span class="ident">contains</span>(<span class="string">&quot;stderr=true&quot;</span>));
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">serialized</span>.<span class="ident">contains</span>(<span class="string">&quot;timestamps=true&quot;</span>));
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">serialized</span>.<span class="ident">contains</span>(<span class="string">&quot;tail=all&quot;</span>));
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">serialized</span>.<span class="ident">contains</span>(<span class="string">&quot;since=2147483647&quot;</span>));
+        <span class="macro">assert!</span>(<span class="ident">serialized</span>.<span class="ident">contains</span>(<span class="string">&quot;follow=true&quot;</span>));
+        <span class="macro">assert!</span>(<span class="ident">serialized</span>.<span class="ident">contains</span>(<span class="string">&quot;stdout=true&quot;</span>));
+        <span class="macro">assert!</span>(<span class="ident">serialized</span>.<span class="ident">contains</span>(<span class="string">&quot;stderr=true&quot;</span>));
+        <span class="macro">assert!</span>(<span class="ident">serialized</span>.<span class="ident">contains</span>(<span class="string">&quot;timestamps=true&quot;</span>));
+        <span class="macro">assert!</span>(<span class="ident">serialized</span>.<span class="ident">contains</span>(<span class="string">&quot;tail=all&quot;</span>));
+        <span class="macro">assert!</span>(<span class="ident">serialized</span>.<span class="ident">contains</span>(<span class="string">&quot;since=2147483647&quot;</span>));
     }
 
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;chrono&quot;</span>))]</span>
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">logs_options</span>() {
-        <span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">LogsOptionsBuilder</span>::<span class="ident">default</span>()
+        <span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">LogsOptionsBuilder::default</span>()
             .<span class="ident">follow</span>(<span class="bool-val">true</span>)
             .<span class="ident">stdout</span>(<span class="bool-val">true</span>)
             .<span class="ident">stderr</span>(<span class="bool-val">true</span>)
@@ -3244,14 +3376,14 @@
 
         <span class="kw">let</span> <span class="ident">serialized</span> <span class="op">=</span> <span class="ident">options</span>.<span class="ident">serialize</span>().<span class="ident">unwrap</span>();
 
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">serialized</span>.<span class="ident">contains</span>(<span class="string">&quot;follow=true&quot;</span>));
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">serialized</span>.<span class="ident">contains</span>(<span class="string">&quot;stdout=true&quot;</span>));
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">serialized</span>.<span class="ident">contains</span>(<span class="string">&quot;stderr=true&quot;</span>));
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">serialized</span>.<span class="ident">contains</span>(<span class="string">&quot;timestamps=true&quot;</span>));
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">serialized</span>.<span class="ident">contains</span>(<span class="string">&quot;tail=all&quot;</span>));
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">serialized</span>.<span class="ident">contains</span>(<span class="string">&quot;since=2147483647&quot;</span>));
+        <span class="macro">assert!</span>(<span class="ident">serialized</span>.<span class="ident">contains</span>(<span class="string">&quot;follow=true&quot;</span>));
+        <span class="macro">assert!</span>(<span class="ident">serialized</span>.<span class="ident">contains</span>(<span class="string">&quot;stdout=true&quot;</span>));
+        <span class="macro">assert!</span>(<span class="ident">serialized</span>.<span class="ident">contains</span>(<span class="string">&quot;stderr=true&quot;</span>));
+        <span class="macro">assert!</span>(<span class="ident">serialized</span>.<span class="ident">contains</span>(<span class="string">&quot;timestamps=true&quot;</span>));
+        <span class="macro">assert!</span>(<span class="ident">serialized</span>.<span class="ident">contains</span>(<span class="string">&quot;tail=all&quot;</span>));
+        <span class="macro">assert!</span>(<span class="ident">serialized</span>.<span class="ident">contains</span>(<span class="string">&quot;since=2147483647&quot;</span>));
     }
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="shiplift" data-search-js="../../search-index.js"></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="shiplift" data-search-index-js="../../search-index.js" data-search-js="../../search.js"></div>
     <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script></body></html>
