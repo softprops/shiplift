@@ -1692,6 +1692,8 @@
 <span id="1689">1689</span>
 <span id="1690">1690</span>
 <span id="1691">1691</span>
+<span id="1692">1692</span>
+<span id="1693">1693</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Create and manage containers.</span>
 <span class="doccomment">//!</span>
@@ -2188,6 +2190,7 @@
     <span class="ident">Status</span>(<span class="ident">String</span>),
     <span class="ident">LabelName</span>(<span class="ident">String</span>),
     <span class="ident">Label</span>(<span class="ident">String</span>, <span class="ident">String</span>),
+    <span class="ident">Name</span>(<span class="ident">String</span>),
 }
 
 <span class="doccomment">/// Builder interface for `ContainerListOptions`</span>
@@ -2208,6 +2211,7 @@
                 <span class="ident">ContainerFilter::Status</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> (<span class="string">&quot;status&quot;</span>, <span class="ident">s</span>),
                 <span class="ident">ContainerFilter::LabelName</span>(<span class="ident">n</span>) <span class="op">=</span><span class="op">&gt;</span> (<span class="string">&quot;label&quot;</span>, <span class="ident">n</span>),
                 <span class="ident">ContainerFilter::Label</span>(<span class="ident">n</span>, <span class="ident">v</span>) <span class="op">=</span><span class="op">&gt;</span> (<span class="string">&quot;label&quot;</span>, <span class="macro">format!</span>(<span class="string">&quot;{}={}&quot;</span>, <span class="ident">n</span>, <span class="ident">v</span>)),
+                <span class="ident">ContainerFilter::Name</span>(<span class="ident">n</span>) <span class="op">=</span><span class="op">&gt;</span> (<span class="string">&quot;name&quot;</span>, <span class="ident">n</span>.<span class="ident">to_string</span>()),
             };
 
             <span class="ident">param</span>.<span class="ident">entry</span>(<span class="ident">key</span>).<span class="ident">or_insert_with</span>(<span class="ident">Vec::new</span>).<span class="ident">push</span>(<span class="ident">value</span>);
