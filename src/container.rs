@@ -493,6 +493,7 @@ pub enum ContainerFilter {
     Status(String),
     LabelName(String),
     Label(String, String),
+    Name(String),
 }
 
 /// Builder interface for `ContainerListOptions`
@@ -513,6 +514,7 @@ impl ContainerListOptionsBuilder {
                 ContainerFilter::Status(s) => ("status", s),
                 ContainerFilter::LabelName(n) => ("label", n),
                 ContainerFilter::Label(n, v) => ("label", format!("{}={}", n, v)),
+                ContainerFilter::Name(n) => ("name", n.to_string()),
             };
 
             param.entry(key).or_insert_with(Vec::new).push(value);
