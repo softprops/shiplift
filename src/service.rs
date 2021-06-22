@@ -199,11 +199,16 @@ impl ServiceListOptionsBuilder {
                 ServiceFilter::Name(n) => param.insert("name", vec![n.to_string()]),
             };
         }
-        // structure is a a json encoded object mapping string keys to a list
-        // of string values
-        self.params
-            .insert("filters", serde_json::to_string(&param).unwrap());
-        self
+
+        if let Ok(structure) = serde_json::to_string(&param) {
+            // structure is a a json encoded object mapping string keys to a list
+            // of string values
+            self.params.insert("filters", structure);
+            return self;
+        } else {
+            // TODO: Handle serde_json::to_string serialization error
+            panic!();
+        }
     }
 
     pub fn enable_status(&mut self) -> &mut Self {

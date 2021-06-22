@@ -305,9 +305,9 @@ impl ExecResizeOptions {
     {
         for (k, v) in params.iter() {
             let key = k.to_string();
-            let value = serde_json::to_value(v).unwrap();
-
-            body.insert(key, value);
+            if let Ok(value) = serde_json::to_value(v) {
+                body.insert(key, value);
+            }
         }
     }
 

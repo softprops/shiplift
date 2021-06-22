@@ -41,8 +41,11 @@ where
 
     {
         let base_path = Path::new(path).canonicalize()?;
-        // todo: don't unwrap
-        let mut base_path_str = base_path.to_str().unwrap().to_owned();
+        let mut base_path_str = String::new();
+        if let Some(value) = base_path.to_str() {
+            base_path_str = value.to_owned();
+        } 
+
         if let Some(last) = base_path_str.chars().last() {
             if last != MAIN_SEPARATOR {
                 base_path_str.push(MAIN_SEPARATOR)
@@ -51,16 +54,14 @@ where
 
         let mut append = |path: &Path| {
             let canonical = path.canonicalize()?;
-            // todo: don't unwrap
-            let relativized = canonical
-                .to_str()
-                .unwrap()
-                .trim_start_matches(&base_path_str[..]);
-            if path.is_dir() {
-                archive.append_dir(Path::new(relativized), &canonical)?
-            } else {
-                archive.append_file(Path::new(relativized), &mut File::open(&canonical)?)?
+            if let Some(relativized) = canonical.to_str() {
+                if path.is_dir() {
+                    archive.append_dir(Path::new(relativized.trim_start_matches(&base_path_str[..])), &canonical)?
+                } else {
+                    archive.append_file(Path::new(relativized.trim_start_matches(&base_path_str[..])), &mut File::open(&canonical)?)?
+                }
             }
+             
             Ok(())
         };
         bundle(Path::new(path), &mut append, false)?;
