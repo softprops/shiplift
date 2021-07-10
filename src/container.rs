@@ -365,9 +365,8 @@ impl<'docker> Container<'docker> {
                 .skip(1)
                 .collect::<std::path::PathBuf>(),
             bytes,
-        )
-        .unwrap();
-        let data = ar.into_inner().unwrap();
+        )?;
+        let data = ar.into_inner()?;
 
         self.copy_to(Path::new("/"), data.into()).await?;
         Ok(())
