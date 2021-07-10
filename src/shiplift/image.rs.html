@@ -1759,7 +1759,7 @@
     <span class="kw">pub</span> <span class="ident">architecture</span>: <span class="ident">String</span>,
     <span class="kw">pub</span> <span class="ident">author</span>: <span class="ident">String</span>,
     <span class="kw">pub</span> <span class="ident">comment</span>: <span class="ident">String</span>,
-    <span class="kw">pub</span> <span class="ident">config</span>: <span class="ident">Config</span>,
+    <span class="kw">pub</span> <span class="ident">config</span>: <span class="ident">ContainerConfig</span>,
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;chrono&quot;</span>)]</span>
     <span class="kw">pub</span> <span class="ident">created</span>: <span class="ident">DateTime</span><span class="op">&lt;</span><span class="ident">Utc</span><span class="op">&gt;</span>,
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;chrono&quot;</span>))]</span>
@@ -1776,7 +1776,7 @@
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
 <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename_all</span> <span class="op">=</span> <span class="string">&quot;PascalCase&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Config</span> {
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ContainerConfig</span> {
     <span class="kw">pub</span> <span class="ident">attach_stderr</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span> <span class="ident">attach_stdin</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span> <span class="ident">attach_stdout</span>: <span class="ident">bool</span>,
@@ -1798,7 +1798,7 @@
     <span class="kw">pub</span> <span class="ident">working_dir</span>: <span class="ident">String</span>,
 }
 
-<span class="kw">impl</span> <span class="ident">Config</span> {
+<span class="kw">impl</span> <span class="ident">ContainerConfig</span> {
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">env</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">String</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">map</span> <span class="op">=</span> <span class="ident">HashMap::new</span>();
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="ident">vars</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">env</span> {
