@@ -1693,7 +1693,6 @@
 <span id="1690">1690</span>
 <span id="1691">1691</span>
 <span id="1692">1692</span>
-<span id="1693">1693</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Create and manage containers.</span>
 <span class="doccomment">//!</span>
@@ -2062,9 +2061,8 @@
                 .<span class="ident">skip</span>(<span class="number">1</span>)
                 .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">std::path::PathBuf</span><span class="op">&gt;</span>(),
             <span class="ident">bytes</span>,
-        )
-        .<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="ident">ar</span>.<span class="ident">into_inner</span>().<span class="ident">unwrap</span>();
+        )<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="ident">ar</span>.<span class="ident">into_inner</span>()<span class="question-mark">?</span>;
 
         <span class="self">self</span>.<span class="ident">copy_to</span>(<span class="ident">Path::new</span>(<span class="string">&quot;/&quot;</span>), <span class="ident">data</span>.<span class="ident">into</span>()).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
