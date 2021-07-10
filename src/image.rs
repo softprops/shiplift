@@ -799,7 +799,7 @@ pub struct ImageDetails {
     pub architecture: String,
     pub author: String,
     pub comment: String,
-    pub config: Config,
+    pub config: ContainerConfig,
     #[cfg(feature = "chrono")]
     pub created: DateTime<Utc>,
     #[cfg(not(feature = "chrono"))]
@@ -816,7 +816,7 @@ pub struct ImageDetails {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-pub struct Config {
+pub struct ContainerConfig {
     pub attach_stderr: bool,
     pub attach_stdin: bool,
     pub attach_stdout: bool,
@@ -838,7 +838,7 @@ pub struct Config {
     pub working_dir: String,
 }
 
-impl Config {
+impl ContainerConfig {
     pub fn env(&self) -> HashMap<String, String> {
         let mut map = HashMap::new();
         if let Some(ref vars) = self.env {
