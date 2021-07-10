@@ -101,6 +101,20 @@ impl<'docker> Container<'docker> {
         Box::pin(tty::decode(stream))
     }
 
+    pub fn logs_tty(
+        &self,
+        opts: &LogsOptions,
+    ) -> impl Stream<Item = Result<tty::TtyChunk>> + Unpin + 'docker {
+        let mut path = vec![format!("/containers/{}/logs", self.id)];
+        if let Some(query) = opts.serialize() {
+            path.push(query)
+        }
+
+        let stream = Box::pin(self.docker.stream_get(path.join("?")));
+
+        Box::pin(tty::forward(stream))
+    }
+
     /// Attaches a multiplexed TCP stream to the container that can be used to read Stdout, Stderr and write Stdin.
     async fn attach_raw(&self) -> Result<impl AsyncRead + AsyncWrite + Send + 'docker> {
         self.docker
