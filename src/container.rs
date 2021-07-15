@@ -565,8 +565,6 @@ pub struct ContainerOptions {
     params: HashMap<&'static str, Value>,
 }
 
-// TODO
-
 /// Function to insert a JSON value into a tree where the desired
 /// location of the value is given as a path of JSON keys.
 fn insert<'a, I, V>(
