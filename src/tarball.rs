@@ -25,14 +25,14 @@ where
     {
         if fs::metadata(dir)?.is_dir() {
             if bundle_dir {
-                f(&dir)?;
+                f(dir)?;
             }
             for entry in fs::read_dir(dir)? {
                 let entry = entry?;
                 if fs::metadata(entry.path())?.is_dir() {
                     bundle(&entry.path(), f, true)?;
                 } else {
-                    f(&entry.path().as_path())?;
+                    f(entry.path().as_path())?;
                 }
             }
         }
@@ -41,8 +41,15 @@ where
 
     {
         let base_path = Path::new(path).canonicalize()?;
-        // todo: don't unwrap
-        let mut base_path_str = base_path.to_str().unwrap().to_owned();
+        let mut base_path_str = match base_path.to_str() {
+            Some(path) => path.to_owned(),
+            None => {
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    "Path uses non UTF-8 characters",
+                ))
+            }
+        };
         if let Some(last) = base_path_str.chars().last() {
             if last != MAIN_SEPARATOR {
                 base_path_str.push(MAIN_SEPARATOR)
@@ -51,11 +58,16 @@ where
 
         let mut append = |path: &Path| {
             let canonical = path.canonicalize()?;
-            // todo: don't unwrap
-            let relativized = canonical
-                .to_str()
-                .unwrap()
-                .trim_start_matches(&base_path_str[..]);
+
+            let relativized = match canonical.to_str() {
+                Some(path) => path.trim_start_matches(&base_path_str[..]),
+                None => {
+                    return Err(io::Error::new(
+                        io::ErrorKind::InvalidData,
+                        "Path uses non UTF-8 characters",
+                    ))
+                }
+            };
             if path.is_dir() {
                 archive.append_dir(Path::new(relativized), &canonical)?
             } else {

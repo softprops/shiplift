@@ -48,24 +48,18 @@ fn get_http_connector() -> HttpConnector {
 }
 
 #[cfg(feature = "tls")]
-fn get_docker_for_tcp(tcp_host_str: String) -> Docker {
+fn get_docker_for_tcp(tcp_host_str: String) -> Result<Docker> {
     let http = get_http_connector();
     if let Ok(ref certs) = env::var("DOCKER_CERT_PATH") {
-        // fixme: don't unwrap before you know what's in the box
-        // https://github.com/hyperium/hyper/blob/master/src/net.rs#L427-L428
-        let mut connector = SslConnector::builder(SslMethod::tls()).unwrap();
-        connector.set_cipher_list("DEFAULT").unwrap();
+        let mut connector = SslConnector::builder(SslMethod::tls())?;
+        connector.set_cipher_list("DEFAULT")?;
         let cert = &format!("{}/cert.pem", certs);
         let key = &format!("{}/key.pem", certs);
-        connector
-            .set_certificate_file(&Path::new(cert), SslFiletype::PEM)
-            .unwrap();
-        connector
-            .set_private_key_file(&Path::new(key), SslFiletype::PEM)
-            .unwrap();
+        connector.set_certificate_file(&Path::new(cert), SslFiletype::PEM)?;
+        connector.set_private_key_file(&Path::new(key), SslFiletype::PEM)?;
         if env::var("DOCKER_TLS_VERIFY").is_ok() {
             let ca = &format!("{}/ca.pem", certs);
-            connector.set_ca_file(&Path::new(ca)).unwrap();
+            connector.set_ca_file(&Path::new(ca))?;
         }
 
         // If we are attempting to connec to the docker daemon via tcp
@@ -78,32 +72,31 @@ fn get_docker_for_tcp(tcp_host_str: String) -> Docker {
             tcp_host_str
         };
 
-        Docker {
+        Ok(Docker {
             transport: Transport::EncryptedTcp {
-                client: Client::builder()
-                    .build(HttpsConnector::with_connector(http, connector).unwrap()),
+                client: Client::builder().build(HttpsConnector::with_connector(http, connector)?),
                 host: tcp_host_str,
             },
-        }
+        })
     } else {
-        Docker {
+        Ok(Docker {
             transport: Transport::Tcp {
                 client: Client::builder().build(http),
                 host: tcp_host_str,
             },
-        }
+        })
     }
 }
 
 #[cfg(not(feature = "tls"))]
-fn get_docker_for_tcp(tcp_host_str: String) -> Docker {
+fn get_docker_for_tcp(tcp_host_str: String) -> Result<Docker> {
     let http = get_http_connector();
-    Docker {
+    Ok(Docker {
         transport: Transport::Tcp {
             client: Client::builder().build(http),
             host: tcp_host_str,
         },
-    }
+    })
 }
 
 // https://docs.docker.com/reference/api/docker_remote_api_v1.17/
@@ -165,7 +158,7 @@ impl Docker {
             #[cfg(not(feature = "unix-socket"))]
             Some("unix") => panic!("Unix socket support is disabled"),
 
-            _ => get_docker_for_tcp(tcp_host_str),
+            _ => get_docker_for_tcp(tcp_host_str).unwrap(),
         }
     }
 

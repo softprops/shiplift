@@ -75,7 +75,7 @@ impl<'docker> Container<'docker> {
         psargs: Option<&str>,
     ) -> Result<Top> {
         let mut path = vec![format!("/containers/{}/top", self.id)];
-        if let Some(ref args) = psargs {
+        if let Some(args) = psargs {
             let encoded = form_urlencoded::Serializer::new(String::new())
                 .append_pair("ps_args", args)
                 .finish();
@@ -386,7 +386,7 @@ impl<'docker> Container<'docker> {
             .append_pair("path", &path.to_string_lossy())
             .finish();
 
-        let mime = "application/x-tar".parse::<Mime>().unwrap();
+        let mime = "application/x-tar".parse::<Mime>()?;
 
         self.docker
             .put(
@@ -565,32 +565,57 @@ pub struct ContainerOptions {
     params: HashMap<&'static str, Value>,
 }
 
+// TODO
+
 /// Function to insert a JSON value into a tree where the desired
 /// location of the value is given as a path of JSON keys.
 fn insert<'a, I, V>(
     key_path: &mut Peekable<I>,
     value: &V,
     parent_node: &mut Value,
-) where
+) -> io::Result<()>
+where
     V: Serialize,
     I: Iterator<Item = &'a str>,
 {
-    let local_key = key_path.next().unwrap();
+    let local_key = match key_path.next() {
+        Some(val) => val,
+        None => {
+            return Err(io::Error::new(
+                io::ErrorKind::Other,
+                "Key path is not provided!",
+            ))
+        }
+    };
 
     if key_path.peek().is_some() {
-        let node = parent_node
-            .as_object_mut()
-            .unwrap()
-            .entry(local_key.to_string())
-            .or_insert(Value::Object(Map::new()));
+        let node = match parent_node.as_object_mut() {
+            Some(object) => object
+                .entry(local_key.to_string())
+                .or_insert(Value::Object(Map::new())),
+            None => {
+                return Err(io::Error::new(
+                    io::ErrorKind::Other,
+                    format!("Value {} is not an object", local_key.to_string()),
+                ))
+            }
+        };
 
-        insert(key_path, value, node);
+        insert(key_path, value, node)?;
     } else {
-        parent_node
-            .as_object_mut()
-            .unwrap()
-            .insert(local_key.to_string(), serde_json::to_value(value).unwrap());
+        match parent_node.as_object_mut() {
+            Some(object) => {
+                object.insert(local_key.to_string(), serde_json::to_value(value).unwrap())
+            }
+            None => {
+                return Err(io::Error::new(
+                    io::ErrorKind::Other,
+                    format!("Value {} is not an object", local_key.to_string()),
+                ))
+            }
+        };
     }
+    Ok(())
 }
 
 impl ContainerOptions {
@@ -625,7 +650,7 @@ impl ContainerOptions {
     {
         for (k, v) in params.iter() {
             let key_string = k.to_string();
-            insert(&mut key_string.split('.').peekable(), v, body)
+            insert(&mut key_string.split('.').peekable(), v, body).unwrap();
         }
     }
 }
