@@ -111,6 +111,8 @@ impl StdError for Error {
             Error::Http(ref err) => Some(err),
             Error::IO(ref err) => Some(err),
             Error::Encoding(e) => Some(e),
+            Error::Ssl(ref e) => Some(e),
+            Error::Mime(ref e) => Some(e),
             _ => None,
         }
     }
