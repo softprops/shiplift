@@ -93,8 +93,8 @@ impl fmt::Display for Error {
             Error::InvalidResponse(ref cause) => {
                 write!(f, "Response doesn't have the expected format: {}", cause)
             }
-            Error::Ssl(ref err) => err.fmt(f),
-            Error::Mime(ref err) => err.fmt(f),
+            Error::Ssl(ref err) => write!(f, "SSL error: {}", err),
+            Error::Mime(ref err) => write!(f, "Mime error: {}", err),
             Error::Fault { code, message } => write!(f, "{}: {}", code, message),
             Error::ConnectionNotUpgraded => write!(
                 f,
@@ -111,8 +111,8 @@ impl StdError for Error {
             Error::Http(ref err) => Some(err),
             Error::IO(ref err) => Some(err),
             Error::Encoding(e) => Some(e),
-            Error::Ssl(ref e) => Some(e),
-            Error::Mime(ref e) => Some(e),
+            Error::Ssl(ref err) => Some(err),
+            Error::Mime(ref err) => Some(err),
             _ => None,
         }
     }
