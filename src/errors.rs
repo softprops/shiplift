@@ -1,7 +1,6 @@
 //! Representations of various client errors
 
 use hyper::{self, http, StatusCode};
-use mime::FromStrError;
 use openssl::error::ErrorStack;
 use serde_json::Error as SerdeError;
 use std::{error::Error as StdError, fmt, string::FromUtf8Error};
@@ -21,7 +20,6 @@ pub enum Error {
     Encoding(FromUtf8Error),
     InvalidResponse(String),
     Ssl(ErrorStack),
-    Mime(FromStrError),
     Fault {
         code: StatusCode,
         message: String,
@@ -72,12 +70,6 @@ impl From<ErrorStack> for Error {
     }
 }
 
-impl From<FromStrError> for Error {
-    fn from(error: FromStrError) -> Error {
-        Error::Mime(error)
-    }
-}
-
 impl fmt::Display for Error {
     fn fmt(
         &self,
@@ -94,7 +86,6 @@ impl fmt::Display for Error {
                 write!(f, "Response doesn't have the expected format: {}", cause)
             }
             Error::Ssl(ref err) => write!(f, "SSL error: {}", err),
-            Error::Mime(ref err) => write!(f, "Mime error: {}", err),
             Error::Fault { code, message } => write!(f, "{}: {}", code, message),
             Error::ConnectionNotUpgraded => write!(
                 f,
@@ -112,7 +103,6 @@ impl StdError for Error {
             Error::IO(ref err) => Some(err),
             Error::Encoding(e) => Some(e),
             Error::Ssl(ref err) => Some(err),
-            Error::Mime(ref err) => Some(err),
             _ => None,
         }
     }

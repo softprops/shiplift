@@ -386,7 +386,7 @@ impl<'docker> Container<'docker> {
             .append_pair("path", &path.to_string_lossy())
             .finish();
 
-        let mime = "application/x-tar".parse::<Mime>()?;
+        let mime = "application/x-tar".parse::<Mime>().unwrap();
 
         self.docker
             .put(
