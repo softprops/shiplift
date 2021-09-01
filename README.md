@@ -1,6 +1,6 @@
 # shiplift
 
-[![GitHub Actions](https://github.com/softprops/shiplift/workflows/Main/badge.svg)](https://github.com/softprops/shiplift/actions) [![crates.io](http://meritbadge.herokuapp.com/shiplift)](https://crates.io/crates/shiplift) [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE) [![Released API docs](https://docs.rs/shiplift/badge.svg)](http://docs.rs/shiplift) [![Master API docs](https://img.shields.io/badge/docs-master-green.svg)](https://softprops.github.io/shiplift)
+[![GitHub Actions](https://github.com/softprops/shiplift/workflows/Main/badge.svg)](https://github.com/softprops/shiplift/actions) [![crates.io](https://img.shields.io/crates/v/shiplift.svg)](https://crates.io/crates/shiplift) [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE) [![Released API docs](https://docs.rs/shiplift/badge.svg)](http://docs.rs/shiplift) [![Master API docs](https://img.shields.io/badge/docs-master-green.svg)](https://softprops.github.io/shiplift)
 
 > a rust interface for maneuvering [docker](https://www.docker.com/) containers
 
