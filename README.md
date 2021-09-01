@@ -11,6 +11,7 @@ Add the following to your `Cargo.toml` file
 ```toml
 [dependencies]
 shiplift = "0.7"
+tokio = { version = "1.2.0", features = ["full"] }
 ```
 
 ## usage
