@@ -1,5 +1,7 @@
 //! Representations of various client errors
 
+use std::path::PathBuf;
+
 use hyper::{self, http, StatusCode};
 use serde_json::Error as SerdeError;
 use std::{error::Error as StdError, fmt, string::FromUtf8Error};
@@ -23,6 +25,7 @@ pub enum Error {
         message: String,
     },
     ConnectionNotUpgraded,
+    PathNotUtf8(PathBuf),
 }
 
 impl From<SerdeError> for Error {
@@ -82,6 +85,7 @@ impl fmt::Display for Error {
                 f,
                 "expected the docker host to upgrade the HTTP connection but it did not"
             ),
+            Error::PathNotUtf8(pb) => write!(f, "Path is not UTF-8: '{}'", pb.display()),
         }
     }
 }
