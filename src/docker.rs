@@ -268,6 +268,17 @@ impl Docker {
             .await
     }
 
+    pub(crate) async fn post_with_headers<'a, H>(
+        &self,
+        endpoint: &str,
+        body: Option<(Body, Mime)>,
+        headers: Option<H>,
+    ) -> Result<String> where H: IntoIterator<Item = (&'static str, String)> + 'a{
+        self.transport
+            .request(Method::POST, endpoint, body, headers)
+            .await
+    }
+    
     pub(crate) async fn put(
         &self,
         endpoint: &str,
