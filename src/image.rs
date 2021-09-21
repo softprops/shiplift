@@ -819,7 +819,7 @@ pub struct PushOptionsBuilder {
 
 impl PushOptionsBuilder {
 
-    pub fn tag<T>(&mut self, t: String) -> &mut Self {
+    pub fn tag(&mut self, t: String) -> &mut Self {
         self.params.insert("tag", t);
         self
     }
