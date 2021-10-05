@@ -202,6 +202,20 @@ impl<'docker> Images<'docker> {
         Box::pin(self.docker.stream_post_into(path.join("?"), None, headers))
     }
 
+    pub async fn push(&self, image : &str, push_options : &PushOptions) -> Result<()> {
+        let mut path = vec![format!("/images/{}/push", image)];
+        if let Some(query) = push_options.serialize() {
+            path.push(query)
+        }
+
+        let headers = push_options
+            .auth_header()
+            .map(|a| iter::once(("X-Registry-Auth", a)));
+
+        let _ = self.docker.post_with_headers(&path.join("?"), None, headers).await?;
+        Ok(())
+    }
+    
     /// exports a collection of named images,
     /// either by name, name:tag, or image id, into a tarball
     ///
@@ -763,6 +777,61 @@ impl ImageListOptionsBuilder {
 
     pub fn build(&self) -> ImageListOptions {
         ImageListOptions {
+            params: self.params.clone(),
+        }
+    }
+}
+
+#[derive(Default, Debug)]
+pub struct PushOptions {
+    auth: Option<RegistryAuth>,
+    params: HashMap<&'static str, String>,
+}
+
+impl PushOptions {
+
+    pub fn builder() -> PushOptionsBuilder {
+        PushOptionsBuilder::default()
+    }
+
+    fn serialize(&self) -> Option<String> {
+        if self.params.is_empty() {
+            None
+        } else {
+            Some(
+                form_urlencoded::Serializer::new(String::new())
+                    .extend_pairs(&self.params)
+                    .finish(),
+            )
+        }
+    }
+
+    fn auth_header(&self) -> Option<String> {
+        self.auth.clone().map(|a| a.serialize())
+    }
+}
+
+#[derive(Default)]
+pub struct PushOptionsBuilder {
+    auth: Option<RegistryAuth>,
+    params: HashMap<&'static str, String>,
+}
+
+impl PushOptionsBuilder {
+
+    pub fn tag(&mut self, t: String) -> &mut Self {
+        self.params.insert("tag", t);
+        self
+    }
+
+    pub fn auth(&mut self, auth: RegistryAuth) -> &mut Self {
+        self.auth = Some(auth);
+        self
+    }
+
+    pub fn build(&mut self) -> PushOptions {
+        PushOptions {
+            auth: self.auth.take(),
             params: self.params.clone(),
         }
     }
