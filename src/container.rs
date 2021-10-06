@@ -84,7 +84,7 @@ impl<'docker> Container<'docker> {
         self.docker.get_json(&path.join("?")).await
     }
 
-    /// Returns a stream of logs emitted but the container instance
+    /// Returns a stream of logs emitted by the container instance
     ///
     /// [Api Reference](https://docs.docker.com/engine/api/v1.41/#operation/ContainerLogs)
     pub fn logs(
