@@ -40,7 +40,7 @@ jobs:
         with:
           components: clippy
       - uses: actions/checkout@v1
-      - run: cargo clippy --all-targets -- -D clippy::all
+      - run: cargo clippy --all-targets
 
   compile:
     runs-on: ubuntu-latest
