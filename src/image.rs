@@ -86,9 +86,9 @@ impl<'docker> Image<'docker> {
     ) -> Result<()> {
         let mut path = vec![format!("/images/{}/tag", self.name)];
         if let Some(query) = opts.serialize() {
-            path.push(query)
+            path.push(query);
         }
-        let _ = self.docker.post(&path.join("?"), None).await?;
+        self.docker.post(&path.join("?"), None).await?;
         Ok(())
     }
 }
@@ -113,7 +113,7 @@ impl<'docker> Images<'docker> {
     ) -> impl Stream<Item = Result<ImageBuildChunk>> + Unpin + 'docker {
         let mut endpoint = vec!["/build".to_owned()];
         if let Some(query) = opts.serialize() {
-            endpoint.push(query)
+            endpoint.push(query);
         }
 
         // To not tie the lifetime of `opts` to the 'stream, we do the tarring work outside of the
@@ -578,7 +578,7 @@ impl BuildOptionsBuilder {
     {
         BuildOptionsBuilder {
             path: path.into(),
-            ..Default::default()
+            ..Self::default()
         }
     }
 

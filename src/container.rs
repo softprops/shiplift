@@ -75,11 +75,11 @@ impl<'docker> Container<'docker> {
         psargs: Option<&str>,
     ) -> Result<Top> {
         let mut path = vec![format!("/containers/{}/top", self.id)];
-        if let Some(ref args) = psargs {
+        if let Some(args) = psargs {
             let encoded = form_urlencoded::Serializer::new(String::new())
                 .append_pair("ps_args", args)
                 .finish();
-            path.push(encoded)
+            path.push(encoded);
         }
         self.docker.get_json(&path.join("?")).await
     }
@@ -93,7 +93,7 @@ impl<'docker> Container<'docker> {
     ) -> impl Stream<Item = Result<tty::TtyChunk>> + Unpin + 'docker {
         let mut path = vec![format!("/containers/{}/logs", self.id)];
         if let Some(query) = opts.serialize() {
-            path.push(query)
+            path.push(query);
         }
 
         let stream = Box::pin(self.docker.stream_get(path.join("?")));
@@ -192,7 +192,7 @@ impl<'docker> Container<'docker> {
                 .append_pair("t", &w.as_secs().to_string())
                 .finish();
 
-            path.push(encoded)
+            path.push(encoded);
         }
         self.docker.post(&path.join("?"), None).await?;
         Ok(())
@@ -210,7 +210,7 @@ impl<'docker> Container<'docker> {
             let encoded = form_urlencoded::Serializer::new(String::new())
                 .append_pair("t", &w.as_secs().to_string())
                 .finish();
-            path.push(encoded)
+            path.push(encoded);
         }
         self.docker.post(&path.join("?"), None).await?;
         Ok(())
@@ -228,7 +228,7 @@ impl<'docker> Container<'docker> {
             let encoded = form_urlencoded::Serializer::new(String::new())
                 .append_pair("signal", &sig.to_owned())
                 .finish();
-            path.push(encoded)
+            path.push(encoded);
         }
         self.docker.post(&path.join("?"), None).await?;
         Ok(())
@@ -303,7 +303,7 @@ impl<'docker> Container<'docker> {
     ) -> Result<()> {
         let mut path = vec![format!("/containers/{}", self.id)];
         if let Some(query) = opts.serialize() {
-            path.push(query)
+            path.push(query);
         }
         self.docker.delete(&path.join("?")).await?;
         Ok(())
@@ -420,7 +420,7 @@ impl<'docker> Containers<'docker> {
     ) -> Result<Vec<ContainerInfo>> {
         let mut path = vec!["/containers/json".to_owned()];
         if let Some(query) = opts.serialize() {
-            path.push(query)
+            path.push(query);
         }
         self.docker
             .get_json::<Vec<ContainerInfo>>(&path.join("?"))
@@ -625,7 +625,7 @@ impl ContainerOptions {
     {
         for (k, v) in params.iter() {
             let key_string = k.to_string();
-            insert(&mut key_string.split('.').peekable(), v, body)
+            insert(&mut key_string.split('.').peekable(), v, body);
         }
     }
 }
@@ -1720,7 +1720,7 @@ mod tests {
             .append_pair("filters", r#"{"label":["label1=value","label2"]}"#)
             .finish();
 
-        assert_eq!(form, options.serialize().unwrap())
+        assert_eq!(form, options.serialize().unwrap());
     }
 
     #[test]
@@ -1733,7 +1733,7 @@ mod tests {
             .append_pair("filters", r#"{"exited":["0"]}"#)
             .finish();
 
-        assert_eq!(form, options.serialize().unwrap())
+        assert_eq!(form, options.serialize().unwrap());
     }
 
     #[test]
@@ -1746,7 +1746,7 @@ mod tests {
             .append_pair("filters", r#"{"status":["running"]}"#)
             .finish();
 
-        assert_eq!(form, options.serialize().unwrap())
+        assert_eq!(form, options.serialize().unwrap());
     }
 
     #[test]
