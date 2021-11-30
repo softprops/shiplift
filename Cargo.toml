@@ -41,6 +41,7 @@ url = "2.1"
 # XXX: This is a temporary dependency for the reexport! macro in lib.rs. Remove
 # me before 0.9.0 is released.
 paste = "1.0"
+thiserror = "1.0.30"
 
 [dev-dependencies]
 env_logger = "0.8"
