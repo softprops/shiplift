@@ -235,12 +235,12 @@ mod test {
 
         assert_eq!(volume_info.driver, Some("my_driver".to_string()));
         assert_eq!(volume_info.name, None);
-        assert_eq!(volume_info.driver_opts, None)
+        assert_eq!(volume_info.driver_opts, None);
     }
 
     #[test]
     fn test_volumecreateoptionsbuilder_driver_opts() {
-        let opts: HashMap<&str, &str> = [("option", "value")].iter().cloned().collect();
+        let opts: HashMap<&str, &str> = [("option", "value")].iter().copied().collect();
         let volume = VolumeCreateOptions::builder()
             .driver("my_driver", Some(&opts))
             .build();
@@ -252,6 +252,6 @@ mod test {
 
         assert_eq!(volume_info.driver, Some("my_driver".to_string()));
         assert_eq!(volume_info.name, None);
-        assert_eq!(volume_info.driver_opts, Some(driver_options))
+        assert_eq!(volume_info.driver_opts, Some(driver_options));
     }
 }

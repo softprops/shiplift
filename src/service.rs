@@ -132,7 +132,7 @@ impl<'docker> Service<'docker> {
     ) -> impl Stream<Item = Result<tty::TtyChunk>> + Unpin + 'docker {
         let mut path = vec![format!("/services/{}/logs", self.name)];
         if let Some(query) = opts.serialize() {
-            path.push(query)
+            path.push(query);
         }
 
         let stream = Box::pin(self.docker.stream_get(path.join("?")));
@@ -343,7 +343,7 @@ impl ServiceOptionsBuilder {
     pub fn build(&mut self) -> Result<ServiceOptions> {
         let params = std::mem::take(&mut self.params);
         let mut new_params = HashMap::new();
-        for (k, v) in params.into_iter() {
+        for (k, v) in params {
             new_params.insert(k, v?);
         }
         Ok(ServiceOptions {

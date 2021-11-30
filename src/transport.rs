@@ -198,7 +198,7 @@ impl Transport {
         let mut req = req.header(header::HOST, "");
 
         if let Some(h) = headers {
-            for (k, v) in h.into_iter() {
+            for (k, v) in h {
                 req = req.header(k, v);
             }
         }

@@ -1,3 +1,5 @@
+#![deny(clippy::all)]
+
 //! Shiplift is a multi-transport utility for maneuvering [docker](https://www.docker.com/) containers
 //!
 //! # examples

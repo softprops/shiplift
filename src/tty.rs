@@ -66,9 +66,7 @@ where
 
     let mut data = vec![0u8; data_length as usize];
 
-    if stream.read_exact(&mut data).await.is_err() {
-        return None;
-    }
+    stream.read_exact(&mut data).await.ok()?;
 
     let chunk = match header_bytes[0] {
         0 => TtyChunk::StdIn(data),
