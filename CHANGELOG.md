@@ -13,6 +13,7 @@
 * `HostConfig.port_bindings` inner elements now have a clear type `PortBinding` instead of `HashMap<String, String>` [#266](https://github.com/softprops/shiplift/pull/266)
 * `ContainerDetails` contains new fields [#266](https://github.com/softprops/shiplift/pull/266)
 * Units of `ContainerInfo` `size_rw` and `size_root_fs` units changed to match API [#266](https://github.com/softprops/shiplift/pull/266)
+* add missing field ([API version 1.41](https://docs.docker.com/engine/api/v1.41/#operation/ContainerInspect)) to State (ContainerDetails::state) [#323](https://github.com/softprops/shiplift/pull/323)
 
 # 0.7.0
 

@@ -1267,6 +1267,42 @@ pub struct State {
     #[cfg(not(feature = "chrono"))]
     pub started_at: String,
     pub status: String,
+    #[serde(default)]
+    pub health: Option<Health>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct Health {
+    pub status: HealthStatus,
+    pub failing_streak: u64,
+    pub log: Vec<HealthLog>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum HealthStatus {
+    None,
+    Starting,
+    Healthy,
+    Unhealthy,
+    #[serde(other)]
+    Unknown,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct HealthLog {
+    #[cfg(feature = "chrono")]
+    pub start: DateTime<Utc>,
+    #[cfg(not(feature = "chrono"))]
+    pub start: String,
+    #[cfg(feature = "chrono")]
+    pub end: DateTime<Utc>,
+    #[cfg(not(feature = "chrono"))]
+    pub end: String,
+    pub exit_code: u8,
+    pub output: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
