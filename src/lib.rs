@@ -43,7 +43,7 @@ pub use crate::{
     },
     docker::{Docker, EventsOptions},
     errors::{Error, Result},
-    exec::{Exec, ExecContainerOptions, ExecResizeOptions},
+    exec::{Exec, ExecContainerOptions, ExecContainerUserFormat, ExecResizeOptions},
     image::{
         BuildOptions, Image, ImageFilter, ImageListOptions, Images, PullOptions, RegistryAuth,
         TagOptions,

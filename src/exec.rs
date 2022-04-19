@@ -191,6 +191,7 @@ impl<'docker> Exec<'docker> {
 pub struct ExecContainerOptions {
     params: HashMap<&'static str, Vec<String>>,
     params_bool: HashMap<&'static str, bool>,
+    params_str: HashMap<&'static str, String>,
 }
 
 impl ExecContainerOptions {
@@ -217,6 +218,13 @@ impl ExecContainerOptions {
             );
         }
 
+        for (k, v) in &self.params_str {
+            body.insert(
+                (*k).to_owned(),
+                serde_json::to_value(v).map_err(Error::SerdeJsonError)?,
+            );
+        }
+
         serde_json::to_string(&body).map_err(Error::from)
     }
 }
@@ -225,6 +233,7 @@ impl ExecContainerOptions {
 pub struct ExecContainerOptionsBuilder {
     params: HashMap<&'static str, Vec<String>>,
     params_bool: HashMap<&'static str, bool>,
+    params_str: HashMap<&'static str, String>,
 }
 
 impl ExecContainerOptionsBuilder {
@@ -256,6 +265,47 @@ impl ExecContainerOptionsBuilder {
         self
     }
 
+    /// The working directory for the exec process inside the container
+    pub fn working_dir(
+        &mut self,
+        working_dir: &str,
+    ) -> &mut Self {
+        self.params_str.insert("WorkingDir", working_dir.to_owned());
+        self
+    }
+
+    /// The user, and optionally, group to run the exec process inside the container. Format is one of: user, user:group, uid, or uid:gid
+    pub fn user(
+        &mut self,
+        user: ExecContainerUserFormat,
+    ) -> &mut Self {
+        self.params_str.insert(
+            "User",
+            match user {
+                ExecContainerUserFormat::User(user) => user,
+                ExecContainerUserFormat::Uid(uid) => {
+                    format!("{uid}", uid = uid)
+                }
+                ExecContainerUserFormat::UserGroup { user, group } => {
+                    format!("{user}:{group}", user = user, group = group)
+                }
+                ExecContainerUserFormat::UidGid { uid, gid } => {
+                    format!("{uid}:{gid}", uid = uid, gid = gid)
+                }
+            },
+        );
+        self
+    }
+
+    /// Runs the exec process with extended privileges
+    pub fn privileged(
+        &mut self,
+        privileged: bool,
+    ) -> &mut Self {
+        self.params_bool.insert("Privileged", privileged);
+        self
+    }
+
     /// Attach to stdout of the exec command
     pub fn attach_stdout(
         &mut self,
@@ -278,8 +328,16 @@ impl ExecContainerOptionsBuilder {
         ExecContainerOptions {
             params: self.params.clone(),
             params_bool: self.params_bool.clone(),
+            params_str: self.params_str.clone(),
         }
     }
+}
+
+pub enum ExecContainerUserFormat {
+    User(String),
+    Uid(u64),
+    UserGroup { user: String, group: String },
+    UidGid { uid: u64, gid: u64 },
 }
 
 /// Interface for creating volumes

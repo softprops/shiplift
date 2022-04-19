@@ -1,5 +1,5 @@
 use futures::StreamExt;
-use shiplift::{tty::TtyChunk, Docker, ExecContainerOptions};
+use shiplift::{tty::TtyChunk, Docker, ExecContainerOptions, ExecContainerUserFormat};
 use std::{env, str::from_utf8};
 
 #[tokio::main]
@@ -13,9 +13,12 @@ async fn main() {
         .cmd(vec![
             "bash",
             "-c",
-            "echo -n \"echo VAR=$VAR on stdout\"; echo -n \"echo VAR=$VAR on stderr\" >&2",
+            "echo -n \"user: `id`, dir: `pwd`, echo VAR=$VAR on stdout\"; echo -n \"echo VAR=$VAR on stderr\" >&2",
         ])
         .env(vec!["VAR=value"])
+        .privileged(true)
+        .user(ExecContainerUserFormat::UidGid { uid: 0, gid: 0 })
+        .working_dir("/tmp")
         .attach_stdout(true)
         .attach_stderr(true)
         .build();
