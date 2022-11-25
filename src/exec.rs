@@ -90,7 +90,7 @@ impl<'docker> Exec<'docker> {
         }
 
         // To not tie the lifetime of `opts` to the stream, we do the serializing work outside of
-        // the stream. But for backwards compatability, we have to return the error inside of the
+        // the stream. But for backwards compatibility, we have to return the error inside of the
         // stream.
         let body_result = opts.serialize();
 
@@ -100,7 +100,7 @@ impl<'docker> Exec<'docker> {
 
         Box::pin(
             async move {
-                // Bubble up the error inside the stream for backwards compatability
+                // Bubble up the error inside the stream for backwards compatibility
                 let body: Body = body_result?.into();
 
                 let exec_id = docker
@@ -159,7 +159,7 @@ impl<'docker> Exec<'docker> {
         )
     }
 
-    /// Inspect this exec instance to aquire detailed information
+    /// Inspect this exec instance to acquire detailed information
     ///
     /// [Api Reference](https://docs.docker.com/engine/api/v1.41/#operation/ExecInpsect)
     pub async fn inspect(&self) -> Result<ExecDetails> {
