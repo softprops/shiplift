@@ -1306,8 +1306,8 @@ pub struct HostConfig {
     pub cpu_percent: i64,
     #[serde(rename = "IOMaximumIOps")]
     pub io_maximum_iops: u64,
-    #[serde(rename = "IOMaximumBandwith")]
-    pub io_maximum_bandwith: Option<u64>,
+    #[serde(rename = "IOMaximumBandwidth")]
+    pub io_maximum_bandwidth: Option<u64>,
     pub binds: Option<Vec<String>>,
     #[serde(rename = "ContainerIDFile")]
     pub container_id_file: String,

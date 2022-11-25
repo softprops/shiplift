@@ -117,7 +117,7 @@ impl<'docker> Images<'docker> {
         }
 
         // To not tie the lifetime of `opts` to the 'stream, we do the tarring work outside of the
-        // stream. But for backwards compatability, we have to return the error inside of the
+        // stream. But for backwards compatibility, we have to return the error inside of the
         // stream.
         let mut bytes = Vec::default();
         let tar_result = tarball::dir(&mut bytes, opts.path.as_str());
@@ -127,7 +127,7 @@ impl<'docker> Images<'docker> {
         let docker = self.docker;
         Box::pin(
             async move {
-                // Bubble up error inside the stream for backwards compatability
+                // Bubble up error inside the stream for backwards compatibility
                 tar_result?;
 
                 let value_stream = docker.stream_post_into(
